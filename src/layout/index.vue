@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
 import Header from './Header.vue'
 import Sidebar from './Sidebar.vue'
-import Footer from './Footer.vue'
 import Breadcrumb from './Breadcrumb.vue'
 
-const route = useRoute()
-const collapsed = ref(false)
+
+const collapsed = ref(true)
 
 const toggleCollapse = () => {
   collapsed.value = !collapsed.value
@@ -17,14 +15,8 @@ const toggleCollapse = () => {
 <template>
   <a-layout class="layout-container">
     <!-- 侧边栏 -->
-    <a-layout-sider
-      v-model:collapsed="collapsed"
-      :trigger="null"
-      collapsible
-      :width="200"
-      :collapsed-width="80"
-      :class="['layout-sider', { 'layout-sider-collapsed': collapsed }]"
-    >
+    <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible :width="200" :collapsed-width="80"
+      :class="['layout-sider', { 'layout-sider-collapsed': collapsed }]">
       <Sidebar :collapsed="collapsed" />
     </a-layout-sider>
 
@@ -45,6 +37,9 @@ const toggleCollapse = () => {
           <router-view />
         </div>
       </a-layout-content>
+      <a-layout-footer style="text-align: center;color: grey;">
+        Powered by 数字技术服务中心 ©2025
+      </a-layout-footer>
     </a-layout>
   </a-layout>
 </template>
@@ -61,7 +56,7 @@ const toggleCollapse = () => {
   left: 0;
   top: 0;
   bottom: 0;
-  box-shadow: 2px 0 8px 0 rgba(29, 35, 41, 0.05);
+  box-shadow: 2px 0 8px 0 rgba(49, 51, 53, 0.157);
 }
 
 .layout-main {
@@ -90,17 +85,40 @@ const toggleCollapse = () => {
 }
 
 .layout-content {
-  margin: 64px 0 48px 0;
-  padding: 24px;
-  min-height: calc(100vh - 112px);
+  margin: 64px 0 0 0;
+  padding: 10px;
   background: #f0f2f5;
 }
 
 .content-wrapper {
   background: #fff;
-  padding: 2%;
+  padding: 1%;
+  border-radius: 10px;
+  height: calc(100vh - 190px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+
+.content-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
   border-radius: 4px;
-  min-height: calc(100vh - 200px);
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Firefox 滚动条样式 */
+.content-wrapper {
+  scrollbar-color: #c3cee7 #ffffff;
 }
 
 .layout-main-collapsed {
@@ -114,17 +132,15 @@ const toggleCollapse = () => {
     z-index: 1000;
   }
 
-  .layout-header {
-    left: 0 !important;
-  }
-
   .layout-content {
     margin-left: 0 !important;
-    padding: 16px;
+ 
   }
 
   .content-wrapper {
     padding: 16px;
   }
+
+  
 }
 </style>

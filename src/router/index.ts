@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('@/layout/index.vue'),
     meta: {
-      requiresAuth: true, // 需要登录
+      requiresAuth: false, // 需要登录
     },
     children: [
       {
@@ -27,7 +27,25 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '首页',
         },
+
       },
+      {
+        path: 'usersManage',
+        name: 'usersManage',
+        component: () => import('@/views/usersManage.vue').catch(() => import('@/views/NotFound.vue')),
+        meta: {
+          title: '用户管理',
+        },
+      },
+      {
+        path: 'settingsManage',
+        name: 'settingsManage',
+        component: () => import('@/views/settingsManage.vue').catch(() => import('@/views/NotFound.vue')),
+        meta: {
+          title: '用户管理',
+        },
+      },
+
     ],
   },
   {

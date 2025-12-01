@@ -1,48 +1,43 @@
 <script setup lang="ts">
-import { computed, h } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { HomeOutlined } from '@ant-design/icons-vue'
 
 const route = useRoute()
-const router = useRouter()
 
 const breadcrumbItems = computed(() => {
-  const items: any[] = [
-    {
-      title: h('span', [
-        h(HomeOutlined),
-        h('span', { style: 'margin-left: 4px' }, '首页'),
-      ]),
-      href: '/',
-    },
-  ]
-
-  // 根据路由路径生成面包屑
-  const pathSegments = route.path.split('/').filter(Boolean)
+  const items: any[] = []
   
-  if (pathSegments.length === 0) {
-    return items
+  // 如果当前在首页，只显示首页
+  if (route.path === '/' || route.path === '') {
+    return [
+      {
+        title: '首页',
+      },
+    ]
   }
 
-  let currentPath = ''
-  pathSegments.forEach((segment, index) => {
-    currentPath += `/${segment}`
-    const isLast = index === pathSegments.length - 1
+  // 添加首页
+  items.push({
+    title: '首页',
+    path: '/',
+  })
+
+  // 使用 route.matched 获取匹配的路由记录
+  // 过滤掉布局组件（没有 meta.title 的父路由）和首页路由
+  const matched = route.matched.filter((record) => {
+    return record.meta?.title && record.path !== '/' && record.path !== ''
+  })
+
+  matched.forEach((record, index) => {
+    const isLast = index === matched.length - 1
+    // 确保路径是完整的
+    const fullPath = record.path.startsWith('/') ? record.path : `/${record.path}`
     
-    // 从路由 meta 中获取标题，如果没有则使用路径名
-    const routeTitle = route.matched.find((r) => r.path === currentPath)?.meta?.title || segment
-    
-    if (isLast) {
-      items.push({
-        title: routeTitle,
-      })
-    } else {
-      items.push({
-        title: h('a', {
-          onClick: () => router.push(currentPath),
-        }, routeTitle),
-      })
-    }
+    items.push({
+      title: record.meta?.title || record.name || '',
+      ...(isLast ? {} : { path: fullPath }),
+    })
   })
 
   return items
@@ -50,12 +45,23 @@ const breadcrumbItems = computed(() => {
 </script>
 
 <template>
-  <a-breadcrumb class="breadcrumb-container" :items="breadcrumbItems" />
+  <a-breadcrumb class="breadcrumb-container">
+    <a-breadcrumb-item v-for="(item, index) in breadcrumbItems" :key="index">
+      <template v-if="index === 0">
+        <HomeOutlined />
+        <span style="margin-left: 4px">{{ item.title }}</span>
+      </template>
+      <router-link v-else-if="item.path" :to="item.path">
+        {{ item.title }}
+      </router-link>
+      <span v-else>{{ item.title }}</span>
+    </a-breadcrumb-item>
+  </a-breadcrumb>
 </template>
 
 <style scoped>
 .breadcrumb-container {
-  margin-bottom: 16px;
+  margin-bottom: 0.5%;
 }
 </style>
 

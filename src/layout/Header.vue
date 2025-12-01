@@ -53,7 +53,7 @@ const toggleCollapse = () => {
     <div class="header-right">
       <a-dropdown>
         <a class="user-info" @click.prevent>
-          <a-avatar :size="40" class="user-avatar">
+          <a-avatar :size="32" shape="square" class="user-avatar">
             <template #icon><UserOutlined /></template>
           </a-avatar>
           <span class="username">{{ username }}</span>
@@ -84,9 +84,9 @@ const toggleCollapse = () => {
 }
 
 .trigger {
-  margin-left: 5%;
   cursor: pointer;
   transition: color 0.3s;
+  margin-left: 10px;
 }
 
 .trigger:hover {
@@ -97,43 +97,31 @@ const toggleCollapse = () => {
   display: flex;
   align-items: center;
   gap: 16px;
-  width: 8%;
+  
 }
 
 .user-info {
   display: flex;
   align-items: center;
   cursor: pointer;
-  border-radius: 15px;
   transition: background-color 0.3s;
 }
 
 .user-info:hover {
-  background-color: #f5f5f5;
+  background-color: #e6e6e6;
 }
 
 .user-avatar {
+  margin-left: 10px;
   background-color: #1890ff;
 }
 
 .username {
   margin-left: 10px;
+  margin-right: 10px;
   font-size: 14px;
   color: rgba(0, 0, 0, 0.85);
 }
 
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .header-container {
-    padding: 0 16px;
-  }
 
-  .trigger {
-    padding: 0 12px;
-  }
-
-  .username {
-    display: none;
-  }
-}
 </style>

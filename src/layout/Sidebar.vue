@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { HomeOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { appConfig } from '@/config';
 
 defineProps<{
   collapsed: boolean
@@ -19,13 +20,13 @@ const menuItems = ref([
     title: '首页',
   },
   {
-    key: '/users',
+    key: '/usersManage',
     icon: UserOutlined,
     label: '用户管理',
     title: '用户管理',
   },
   {
-    key: '/settings',
+    key: '/settingsManage',
     icon: SettingOutlined,
     label: '系统设置',
     title: '系统设置',
@@ -53,8 +54,8 @@ const handleMenuClick = ({ key }: { key: string }) => {
 <template>
   <div class="sidebar-container">
     <div class="sidebar-logo">
-      <h1 v-if="!collapsed" class="logo-text">WhiteRS-system</h1>
-      <h1 v-else class="logo-text-mini">W</h1>
+      <h1 v-if="!collapsed" class="logo-text">{{ appConfig.siteTitle }}</h1>
+      <h1 v-else class="logo-text-mini">{{ appConfig.siteTitle[0] }}</h1>
     </div>
     <a-menu
       v-model:selectedKeys="selectedKeys"
