@@ -1,3 +1,3 @@
-import { createCRUDService }from '../../utils/createApi'
+import { createCRUDService } from '../../utils/createApi'
 
-export const userApi = createCRUDService('/user');
+export const userApi = createCRUDService('/user')

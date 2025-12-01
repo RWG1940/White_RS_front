@@ -1,137 +1,310 @@
 <template>
-    <div class="manage-page-wrapper">
-        <!-- 搜索、添加、删除等功能区 -->
-        <div class="header">
-            <a-flex wrap="wrap" gap="small">
-                <!-- 插槽 -->
-                <slot name="header"></slot>
-                <a-row :gutter="[8, 8]">
-                    <a-col>
-                        <a-input-search v-model:value="value" placeholder="搜索" enter-button @search="onSearch" />
-                    </a-col>
-                    <a-col>
-                        <a-button type="primary"><PlusOutlined /></a-button>
-                    </a-col>
-                    <a-col>
-                        <a-button type="primary"><DeleteOutlined /></a-button>
-                    </a-col>
-                </a-row>
-            </a-flex>
-        </div>
-        <!-- 表格、数据区 -->
-        <div class="content">
-            <a-table :scroll="{ x: 600 }" :columns="columns" :data-source="dataSource" :row-selection="rowSelection" bordered>
-                <template #bodyCell="{ column, text, record }">
-                    <template v-if="['name', 'age', 'address'].includes(column.dataIndex)">
-                        <div>
-                            <a-input v-if="editableData[record.key]"
-                                v-model:value="editableData[record.key][column.dataIndex]" style="margin: -5px 0" />
-                            <template v-else>
-                                {{ text }}
-                            </template>
-                        </div>
-                    </template>
-                    <template v-else-if="column.dataIndex === 'operation'">
-                        <div class="editable-row-operations">
-                            <span v-if="editableData[record.key]">
-                                <a-typography-link @click="save(record.key)">保存</a-typography-link>
-                                <a-popconfirm title="确认取消?" @confirm="cancel(record.key)">
-                                    <a style="margin-left: 8px;">取消</a>
-                                </a-popconfirm>
-                                <a-popconfirm v-if="dataSource.length" title="确认删除?" @confirm="onDelete(record.key)">
-                                    <a style="margin-left: 8px;">删除</a>
-                                </a-popconfirm>
-                            </span>
-                            <span v-else>
-                                <a @click="edit(record.key)">编辑</a>
-                            </span>
-                        </div>
-                    </template>
-
-                </template>
-            </a-table>
-        </div>
-        <!-- 分页、翻页等功能区 -->
-        <div class="footer"></div>
+  <div class="manage-page-wrapper">
+    <div v-if="showToolbar" class="header">
+      <slot
+        name="toolbar"
+        :search-value="searchValue"
+        :trigger-search="onSearch"
+        :add="handleAdd"
+        :batch-delete="handleBatchDelete"
+      >
+        <a-row :gutter="[8, 8]" align="middle">
+          <a-col v-if="showSearch">
+            <a-input-search
+              v-model:value="searchValue"
+              :placeholder="searchPlaceholder"
+              enter-button
+              @search="onSearch"
+            />
+          </a-col>
+          <a-col v-if="showAdd">
+            <a-button type="primary" @click="handleAdd">
+              <PlusOutlined />
+            </a-button>
+          </a-col>
+          <a-col v-if="showBatchDelete">
+            <a-button
+              type="primary"
+              danger
+              :disabled="!selectedRowKeys.length"
+              @click="handleBatchDelete"
+            >
+              <DeleteOutlined />
+            </a-button>
+          </a-col>
+        </a-row>
+      </slot>
     </div>
+    <div class="content">
+      <a-table
+        :scroll="scroll"
+        :columns="mergedColumns"
+        :data-source="tableData"
+        :row-selection="mergedRowSelection"
+        bordered
+        :row-key="resolvedRowKey"
+      >
+        <template #bodyCell="{ column, text, record }">
+          <slot
+            name="bodyCell"
+            :column="column"
+            :text="text"
+            :record="record"
+            :is-editing="isEditing(record)"
+          >
+            <template v-if="isEditing(record) && isEditableColumn(column)">
+              <a-input
+                v-model:value="editableData[getInternalKey(record)]![column.dataIndex as string]"
+                style="margin: -5px 0"
+              />
+            </template>
+            <template v-else-if="isOperationColumn(column)">
+              <slot
+                name="operation"
+                :record="record"
+                :is-editing="isEditing(record)"
+                :save="save"
+                :cancel="cancel"
+                :edit="edit"
+                :remove="onDeleteRow"
+              >
+                <div class="editable-row-operations">
+                  <span v-if="isEditing(record)">
+                    <a-typography-link @click="save(getRowKeyValue(record))"
+                      >保存</a-typography-link
+                    >
+                    <a-popconfirm
+                      title="确认取消?"
+                      ok-text="是"
+                      cancel-text="否"
+                      @confirm="cancel(getRowKeyValue(record))"
+                    >
+                      <a style="margin-left: 8px">取消</a>
+                    </a-popconfirm>
+                    <a-popconfirm
+                      title="确认删除?"
+                      ok-text="是"
+                      cancel-text="否"
+                      @confirm="onDeleteRow(getRowKeyValue(record))"
+                    >
+                      <a style="margin-left: 8px">删除</a>
+                    </a-popconfirm>
+                  </span>
+                  <span v-else>
+                    <a @click="edit(getRowKeyValue(record))">编辑</a>
+                  </span>
+                </div>
+              </slot>
+            </template>
+            <template v-else>
+              {{ text }}
+            </template>
+          </slot>
+        </template>
+      </a-table>
+    </div>
+    <div class="footer">
+      <slot name="footer" :selected-rows="selectedRows" :selected-row-keys="selectedRowKeys" />
+    </div>
+  </div>
 </template>
+
 <script setup lang="ts">
-import { cloneDeep } from 'lodash-es';
-import { reactive, ref } from 'vue';
-import type { UnwrapRef } from 'vue';
-import { PlusOutlined,DeleteOutlined } from '@ant-design/icons-vue'
+import { computed, reactive, ref, watch, type UnwrapRef } from 'vue'
+import type { TableColumnType, TableProps } from 'ant-design-vue'
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 
-const columns = [
+type RecordType = Record<string, any>
+const OPERATION_DATA_INDEX = '__operation__'
+
+const cloneDeep = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+
+const props = withDefaults(
+  defineProps<{
+    dataSource: RecordType[]
+    columns: TableColumnType<RecordType>[]
+    editableFields?: string[]
+    rowKey?: string
+    scroll?: TableProps<RecordType>['scroll']
+    rowSelection?: TableProps<RecordType>['rowSelection'] | null
+    showToolbar?: boolean
+    showSearch?: boolean
+    searchPlaceholder?: string
+    showAdd?: boolean
+    showBatchDelete?: boolean
+  }>(),
+  {
+    dataSource: () => [],
+    editableFields: () => [],
+    rowKey: 'key',
+    scroll: () => ({ x: 600 }),
+    rowSelection: undefined,
+    showToolbar: true,
+    showSearch: true,
+    searchPlaceholder: '搜索',
+    showAdd: true,
+    showBatchDelete: true,
+  },
+)
+
+const emit = defineEmits<{
+  (e: 'update:dataSource', value: RecordType[]): void
+  (e: 'search', value: string): void
+  (e: 'add'): void
+  (e: 'batch-delete', payload: { keys: (string | number)[]; rows: RecordType[] }): void
+  (e: 'row-delete', key: string | number): void
+  (e: 'selection-change', payload: { keys: (string | number)[]; rows: RecordType[] }): void
+  (e: 'save', record: RecordType): void
+  (e: 'cancel', key: string | number): void
+  (e: 'edit', record: RecordType): void
+}>()
+
+const searchValue = ref('')
+const resolvedRowKey = computed(() => props.rowKey ?? 'key')
+const tableData = ref<RecordType[]>([])
+const editableData: UnwrapRef<Record<string, RecordType>> = reactive({})
+const selectedRowKeys = ref<(string | number)[]>([])
+const selectedRows = ref<RecordType[]>([])
+
+watch(
+  () => props.dataSource,
+  (value) => {
+    tableData.value = cloneDeep(value)
+  },
+  { immediate: true, deep: true },
+)
+
+watch(
+  () => tableData.value,
+  () => {
+    const keys = new Set(tableData.value.map((item) => String(getRowKeyValue(item))))
+    selectedRowKeys.value = selectedRowKeys.value.filter((key) => keys.has(String(key)))
+    selectedRows.value = selectedRows.value.filter((row) =>
+      selectedRowKeys.value.includes(getRowKeyValue(row)),
+    )
+  },
+)
+
+const mergedColumns = computed(() => {
+  const hasOperation = props.columns.some((column) => column.dataIndex === OPERATION_DATA_INDEX)
+  if (hasOperation) {
+    return props.columns
+  }
+  return [
+    ...props.columns,
     {
-        title: 'name',
-        dataIndex: 'name',
-        width: '25%',
+      title: '操作',
+      dataIndex: OPERATION_DATA_INDEX,
+      fixed: 'right',
+      width: 150,
     },
-    {
-        title: 'age',
-        dataIndex: 'age',
-        width: '15%',
+  ]
+})
+
+const mergedRowSelection = computed(() => {
+  if (props.rowSelection === null) {
+    return undefined
+  }
+  if (props.rowSelection) {
+    return props.rowSelection
+  }
+  return {
+    selectedRowKeys: selectedRowKeys.value,
+    onChange: (keys: (string | number)[], rows: RecordType[]) => {
+      selectedRowKeys.value = keys
+      selectedRows.value = rows
+      emit('selection-change', { keys, rows })
     },
-    {
-        title: 'address',
-        dataIndex: 'address',
-        width: '40%',
-    },
-    {
-        title: '操作',
-        dataIndex: 'operation',
-        fixed: 'right',
-    },
-];
-interface DataItem {
-    key: string;
-    name: string;
-    age: number;
-    address: string;
+  }
+})
+
+const editableFieldSet = computed(() => new Set(props.editableFields))
+
+const updateParent = () => {
+  emit('update:dataSource', cloneDeep(tableData.value))
 }
-const data: DataItem[] = [];
-for (let i = 0; i < 100; i++) {
-    data.push({
-        key: i.toString(),
-        name: `Edrward ${i}`,
-        age: 32,
-        address: `London Park no. ${i}`,
-    });
+
+const getRowKeyValue = (record: RecordType): string | number => {
+  const keyField = resolvedRowKey.value
+  if (record[keyField] !== undefined) {
+    return record[keyField]
+  }
+  return record.key ?? ''
 }
 
-const dataSource = ref(data);
-const editableData: UnwrapRef<Record<string, DataItem>> = reactive({});
+const getInternalKey = (recordOrKey: RecordType | string | number): string => {
+  if (typeof recordOrKey === 'object') {
+    return String(getRowKeyValue(recordOrKey))
+  }
+  return String(recordOrKey)
+}
 
-const edit = (key: string) => {
-    editableData[key] = cloneDeep(dataSource.value.filter(item => key === item.key)[0]);
-};
-const save = (key: string) => {
-    Object.assign(dataSource.value.filter(item => key === item.key)[0], editableData[key]);
-    delete editableData[key];
-};
-const cancel = (key: string) => {
-    delete editableData[key];
-};
-const onDelete = (key: string) => {
-    dataSource.value = dataSource.value.filter(item => item.key !== key);
-};
+const isEditing = (record: RecordType) => Boolean(editableData[getInternalKey(record)])
+const isEditableColumn = (column: TableColumnType<RecordType>) =>
+  typeof column.dataIndex === 'string' && editableFieldSet.value.has(column.dataIndex)
+const isOperationColumn = (column: TableColumnType<RecordType>) =>
+  column.dataIndex === OPERATION_DATA_INDEX
 
-const rowSelection = ref({
-  checkStrictly: false,
-  onChange: (selectedRowKeys: (string | number)[], selectedRows: DataItem[]) => {
-    console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
-  },
-  onSelect: (record: DataItem, selected: boolean, selectedRows: DataItem[]) => {
-    console.log(record, selected, selectedRows);
-  },
-  onSelectAll: (selected: boolean, selectedRows: DataItem[], changeRows: DataItem[]) => {
-    console.log(selected, selectedRows, changeRows);
-  },
-});
+const edit = (key: string | number) => {
+  const target = tableData.value.find((item) => getRowKeyValue(item) === key)
+  if (!target) return
+  editableData[String(key)] = cloneDeep(target)
+  emit('edit', cloneDeep(target))
+}
+
+const save = (key: string | number) => {
+  const target = tableData.value.find((item) => getRowKeyValue(item) === key)
+  if (!target) return
+  const current = editableData[String(key)]
+  if (!current) return
+  Object.assign(target, current)
+  emit('save', cloneDeep(target))
+  delete editableData[String(key)]
+  updateParent()
+}
+
+const cancel = (key: string | number) => {
+  delete editableData[String(key)]
+  emit('cancel', key)
+}
+
+const onDeleteRow = (key: string | number) => {
+  tableData.value = tableData.value.filter((item) => getRowKeyValue(item) !== key)
+  delete editableData[String(key)]
+  selectedRowKeys.value = selectedRowKeys.value.filter((selectedKey) => selectedKey !== key)
+  selectedRows.value = selectedRows.value.filter((row) => getRowKeyValue(row) !== key)
+  updateParent()
+  emit('row-delete', key)
+}
+
+const onSearch = () => {
+  emit('search', searchValue.value.trim())
+}
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleBatchDelete = () => {
+  if (!selectedRowKeys.value.length) {
+    return
+  }
+  const keysToRemove = new Set(selectedRowKeys.value.map((key) => String(key)))
+  tableData.value = tableData.value.filter(
+    (item) => !keysToRemove.has(String(getRowKeyValue(item))),
+  )
+  updateParent()
+  emit('batch-delete', {
+    keys: [...selectedRowKeys.value],
+    rows: cloneDeep(selectedRows.value),
+  })
+  selectedRowKeys.value = []
+  selectedRows.value = []
+}
 </script>
 
 <style scoped>
 .header {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 </style>

@@ -4,7 +4,6 @@ import Header from './Header.vue'
 import Sidebar from './Sidebar.vue'
 import Breadcrumb from './Breadcrumb.vue'
 
-
 const collapsed = ref(true)
 
 const toggleCollapse = () => {
@@ -15,8 +14,14 @@ const toggleCollapse = () => {
 <template>
   <a-layout class="layout-container">
     <!-- 侧边栏 -->
-    <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible :width="200" :collapsed-width="80"
-      :class="['layout-sider', { 'layout-sider-collapsed': collapsed }]">
+    <a-layout-sider
+      v-model:collapsed="collapsed"
+      :trigger="null"
+      collapsible
+      :width="150"
+      :collapsed-width="60"
+      :class="['layout-sider', { 'layout-sider-collapsed': collapsed }]"
+    >
       <Sidebar :collapsed="collapsed" />
     </a-layout-sider>
 
@@ -37,9 +42,7 @@ const toggleCollapse = () => {
           <router-view />
         </div>
       </a-layout-content>
-      <a-layout-footer style="text-align: center;color: grey;">
-        Powered by 数字技术服务中心 ©2025
-      </a-layout-footer>
+      <a-layout-footer class="layout-footer"> Powered by 数字技术服务中心 ©2025 </a-layout-footer>
     </a-layout>
   </a-layout>
 </template>
@@ -60,12 +63,12 @@ const toggleCollapse = () => {
 }
 
 .layout-main {
-  margin-left: 200px;
+  margin-left: 150px;
   transition: margin-left 0.2s;
 }
 
 .layout-main-collapsed {
-  margin-left: 80px;
+  margin-left: 60px;
 }
 
 .layout-header {
@@ -75,13 +78,13 @@ const toggleCollapse = () => {
   position: fixed;
   top: 0;
   right: 0;
-  left: 200px;
+  left: 150px;
   z-index: 100;
   transition: left 0.2s;
 }
 
 .layout-main-collapsed .layout-header {
-  left: 80px;
+  left: 60px;
 }
 
 .layout-content {
@@ -93,13 +96,11 @@ const toggleCollapse = () => {
 .content-wrapper {
   background: #fff;
   padding: 1%;
-  border-radius: 10px;
-  height: calc(100vh - 190px);
+  /* 减小 footer 后调整内容区高度 */
+  height: calc(100vh - 141px);
   overflow-y: auto;
   overflow-x: hidden;
 }
-
-
 
 .content-wrapper::-webkit-scrollbar-track {
   background: #f1f1f1;
@@ -122,7 +123,15 @@ const toggleCollapse = () => {
 }
 
 .layout-main-collapsed {
-  left: 80px;
+  left: 60px;
+}
+
+/* Footer 样式，减小高度和字体 */
+.layout-footer {
+  text-align: center;
+  color: grey;
+  padding: 6px 0;
+  font-size: 12px;
 }
 
 /* 移动端适配 */
@@ -134,13 +143,10 @@ const toggleCollapse = () => {
 
   .layout-content {
     margin-left: 0 !important;
- 
   }
 
   .content-wrapper {
     padding: 16px;
   }
-
-  
 }
 </style>
