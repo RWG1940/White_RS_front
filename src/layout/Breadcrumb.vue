@@ -7,7 +7,7 @@ const route = useRoute()
 
 const breadcrumbItems = computed(() => {
   const items: any[] = []
-  
+
   // 如果当前在首页，只显示首页
   if (route.path === '/' || route.path === '') {
     return [
@@ -33,7 +33,7 @@ const breadcrumbItems = computed(() => {
     const isLast = index === matched.length - 1
     // 确保路径是完整的
     const fullPath = record.path.startsWith('/') ? record.path : `/${record.path}`
-    
+
     items.push({
       title: record.meta?.title || record.name || '',
       ...(isLast ? {} : { path: fullPath }),
@@ -61,7 +61,6 @@ const breadcrumbItems = computed(() => {
 
 <style scoped>
 .breadcrumb-container {
-  margin-bottom: 0.5%;
+  margin-bottom: 5px;
 }
 </style>
-

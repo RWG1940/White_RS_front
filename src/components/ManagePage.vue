@@ -37,12 +37,13 @@
     </div>
     <div class="content">
       <a-table
-        :scroll="scroll"
         :columns="mergedColumns"
         :data-source="tableData"
         :row-selection="mergedRowSelection"
         bordered
         :row-key="resolvedRowKey"
+        :pagination="paginationConfig"
+        :scroll="{ y: 370 }"
       >
         <template #bodyCell="{ column, text, record }">
           <slot
@@ -132,6 +133,8 @@ const props = withDefaults(
     searchPlaceholder?: string
     showAdd?: boolean
     showBatchDelete?: boolean
+    pageSize?: number
+    pagination?: false | TableProps<RecordType>['pagination']
   }>(),
   {
     dataSource: () => [],
@@ -144,6 +147,8 @@ const props = withDefaults(
     searchPlaceholder: '搜索',
     showAdd: true,
     showBatchDelete: true,
+    pageSize: 10,
+    pagination: undefined,
   },
 )
 
@@ -219,6 +224,18 @@ const mergedRowSelection = computed(() => {
 })
 
 const editableFieldSet = computed(() => new Set(props.editableFields))
+const paginationConfig = computed(() => {
+  if (props.pagination === false) {
+    return false
+  }
+  if (props.pagination) {
+    return props.pagination
+  }
+  return {
+    pageSize: props.pageSize,
+    showSizeChanger: false,
+  }
+})
 
 const updateParent = () => {
   emit('update:dataSource', cloneDeep(tableData.value))

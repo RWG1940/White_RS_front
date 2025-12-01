@@ -96,10 +96,11 @@ const toggleCollapse = () => {
 .content-wrapper {
   background: #fff;
   padding: 1%;
+  border-radius: 10px;
   /* 减小 footer 后调整内容区高度 */
-  height: calc(100vh - 141px);
-  overflow-y: auto;
-  overflow-x: hidden;
+  height: calc(100vh - 140px);
+  /* overflow-y: auto;
+  overflow-x: hidden; */
 }
 
 .content-wrapper::-webkit-scrollbar-track {

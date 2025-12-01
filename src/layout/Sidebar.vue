@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { HomeOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { appConfig } from '@/config';
+import { appConfig } from '@/config'
 
 defineProps<{
   collapsed: boolean

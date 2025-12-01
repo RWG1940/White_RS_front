@@ -97,7 +97,6 @@ const toggleCollapse = () => {
   display: flex;
   align-items: center;
   gap: 16px;
-  
 }
 
 .user-info {
@@ -122,6 +121,4 @@ const toggleCollapse = () => {
   font-size: 14px;
   color: rgba(0, 0, 0, 0.85);
 }
-
-
 </style>
