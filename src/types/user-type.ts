@@ -5,6 +5,7 @@ export interface userType {
   username?: string
   passwordHash?: string
   status?: number
+  onlineStatus?: boolean
   version?: number
   created_at?: string
   createdAt?: string

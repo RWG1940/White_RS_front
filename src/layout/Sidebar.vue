@@ -31,6 +31,7 @@ const menuItems = ref([
     label: '系统设置',
     title: '系统设置',
   },
+
 ])
 
 const selectedKeys = computed(() => [route.path])
@@ -89,7 +90,7 @@ const handleMenuClick = ({ key }: { key: string }) => {
   justify-content: center;
   background: rgba(255, 255, 255, 0.1);
   margin: 3%;
-  border-radius: 15px;
+  border-radius: 5px;
 }
 
 .logo-text {

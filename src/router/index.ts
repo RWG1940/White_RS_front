@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('@/layout/index.vue'),
     meta: {
-      requiresAuth: false, // 需要登录
+      requiresAuth: true, // 需要登录
     },
     children: [
       {

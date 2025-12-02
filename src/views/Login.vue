@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { message } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
+import LoginLoading from '@/components/LoginLoading.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -50,7 +51,7 @@ const handleLogin = async () => {
     loading.value = true
     const result = await authStore.login(loginForm.value)
     if (result && result.success) {
-      console.log('登录成功')
+
       // 登录成功提示
       message.success({
         content: '登录成功',
@@ -95,6 +96,7 @@ const handleLogin = async () => {
             <h2 class="login-title">登录</h2>
           </template>
           <a-form
+          v-show="!loading"
             ref="formRef"
             :model="loginForm"
             :rules="rules"
@@ -118,6 +120,7 @@ const handleLogin = async () => {
               </a-button>
             </a-form-item>
           </a-form>
+          <LoginLoading v-show="loading"/>
         </a-card>
       </a-col>
     </a-row>

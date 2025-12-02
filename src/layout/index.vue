@@ -147,7 +147,7 @@ const toggleCollapse = () => {
   }
 
   .content-wrapper {
-    padding: 16px;
+    padding: 10px;
   }
 }
 </style>

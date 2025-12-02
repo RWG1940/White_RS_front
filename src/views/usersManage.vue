@@ -13,7 +13,26 @@
       @row-delete="handleRowDelete"
       @batch-delete="handleBatchDelete"
       @selection-change="handleSelectionChange"
-    />
+    >
+      <template #cell-status="{ record, isEditing }">
+        <template v-if="!isEditing">
+          <a-tag :color="record.status === 1 ? 'blue' : 'red'">
+            {{ record.status === 1 ? '启用' : '禁用' }}
+          </a-tag>
+        </template>
+      </template>
+      <template #cell-onlineStatus="{ record }">
+        <div class="online-status-cell">
+          <a-spin v-if="onlineStatusLoading" size="small" />
+          <a-tag
+            v-else
+            :color="isUserOnline(record) ? 'success' : 'default'"
+          >
+            {{ isUserOnline(record) ? '在线' : '离线' }}
+          </a-tag>
+        </div>
+      </template>
+    </ManagePage>
   </div>
 </template>
 
@@ -24,9 +43,10 @@ import ManagePage from '@/components/ManagePage.vue'
 import { cooperaMsgStore } from '@/stores/user-store'
 import type { userType } from '@/types/user-type'
 import dayjs from 'dayjs'
+import { batchCheckUsersOnline } from '@/api/services/websocket-api'
 
 const store = cooperaMsgStore
-const PAGE_SIZE = 8
+const PAGE_SIZE = 15
 store.pageSize = PAGE_SIZE
 
 const columns: TableColumnType<userType>[] = [
@@ -58,27 +78,48 @@ const columns: TableColumnType<userType>[] = [
   {
     title: '用户名',
     dataIndex: 'username',
-    width: '20%',
+    width: '140px',
   },
   {
     title: '邮箱',
     dataIndex: 'email',
-    width: '25%',
+    width: '180px',
   },
   {
     title: '手机号',
     dataIndex: 'phone',
-    width: '20%',
+    width: '140px',
   },
   {
     title: '状态',
     dataIndex: 'status',
-    width: '10%',
+    width: '70px',
+    filters: [
+      { text: '启用', value: 1 },
+      { text: '禁用', value: 0 },
+    ],
+    onFilter: (value, record) => {
+      const target = Number(value)
+      return (record.status ?? 0) === target
+    },
+  },
+  {
+    title: '在线状态',
+    dataIndex: 'onlineStatus',
+    width: '100px',
+    filters: [
+      { text: '在线', value: 'online' },
+      { text: '离线', value: 'offline' },
+    ],
+    onFilter: (value, record) => {
+      const isOnline = Boolean(record.onlineStatus)
+      return value === 'online' ? isOnline : !isOnline
+    },
   },
   {
     title: '创建时间',
     dataIndex: 'createdAt',
-    width: '20%',
+    width: '130px',
     sorter: (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
     sortDirections: ['descend', 'ascend'],
     filters: [
@@ -106,13 +147,73 @@ const columns: TableColumnType<userType>[] = [
   },
 ]
 
+const rawRows = ref<userType[]>([])
 const dataSource = ref<userType[]>([])
-const editableFields = ['username', 'email', 'phone', 'status']
+const editableFields = ['username', 'email', 'phone']
+const onlineStatusMap = ref<Record<string, boolean>>({})
+const onlineStatusLoading = ref(false)
+
+const getUserKey = (user?: userType) => {
+  if (!user) return ''
+  const id = user.userId ?? user.id
+  return id === undefined || id === null ? '' : String(id)
+}
+
+const isUserOnline = (user: userType) => {
+  const key = getUserKey(user)
+  if (!key) return false
+  return Boolean(onlineStatusMap.value[key])
+}
+
+const applyOnlineStatus = () => {
+  dataSource.value = rawRows.value.map((row) => ({
+    ...row,
+    onlineStatus: isUserOnline(row),
+  }))
+}
+
+const normalizeOnlineMap = (payload?: Record<string | number, boolean>) => {
+  const normalized: Record<string, boolean> = {}
+  if (!payload) return normalized
+  Object.entries(payload).forEach(([key, value]) => {
+    normalized[String(key)] = Boolean(value)
+  })
+  return normalized
+}
+
+const refreshOnlineStatus = async () => {
+  const ids = rawRows.value
+    .map((item) => item?.userId ?? item?.id)
+    .filter((id): id is number => typeof id === 'number')
+
+  if (!ids.length) {
+    onlineStatusMap.value = {}
+    applyOnlineStatus()
+    return
+  }
+
+  try {
+    onlineStatusLoading.value = true
+    const result = await batchCheckUsersOnline(ids)
+    onlineStatusMap.value = normalizeOnlineMap(result)
+    applyOnlineStatus()
+  } catch (error) {
+    console.error('获取在线状态失败:', error)
+  } finally {
+    onlineStatusLoading.value = false
+  }
+}
+
+const setTableRows = (rows: userType[]) => {
+  rawRows.value = rows.map((item) => ({ ...item }))
+  applyOnlineStatus()
+  refreshOnlineStatus()
+}
 
 watch(
   () => store.pagedList,
   (list) => {
-    dataSource.value = list as userType[]
+    setTableRows(list as userType[])
   },
   { immediate: true, deep: true },
 )
@@ -128,7 +229,7 @@ const handleSearch = async (keyword: string) => {
     return
   }
   await store.search({ column: 'username', keyword: trimmed } as any)
-  dataSource.value = store.searchResults as userType[]
+  setTableRows(store.searchResults as userType[])
 }
 
 // 生成一个类似 UUID 的 6 位用户名。优先使用浏览器的 crypto.randomUUID，失败时回退到 Math.random。
@@ -164,4 +265,10 @@ const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: user
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.online-status-cell {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+}
+</style>

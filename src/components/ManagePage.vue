@@ -8,8 +8,8 @@
         :add="handleAdd"
         :batch-delete="handleBatchDelete"
       >
-        <a-row :gutter="[8, 8]" align="middle">
-          <a-col v-if="showSearch">
+        <a-row :gutter="[8, 8]" align="middle" :class="{ 'mobile-toolbar': isMobile }">
+          <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
             <a-input-search
               v-model:value="searchValue"
               :placeholder="searchPlaceholder"
@@ -17,19 +17,23 @@
               @search="onSearch"
             />
           </a-col>
-          <a-col v-if="showAdd">
-            <a-button type="primary" @click="handleAdd">
+          <a-col v-if="showAdd" :span="isMobile ? 12 : undefined"> 
+            <a-button type="primary" block :class="{ 'mobile-button': isMobile }" @click="handleAdd">
               <PlusOutlined />
+              <span v-if="isMobile" style="margin-left: 4px">添加</span>
             </a-button>
           </a-col>
-          <a-col v-if="showBatchDelete">
+          <a-col v-if="showBatchDelete" :span="isMobile ? 12 : undefined">
             <a-button
               type="primary"
               danger
+              block
+              :class="{ 'mobile-button': isMobile }"
               :disabled="!selectedRowKeys.length"
               @click="handleBatchDelete"
             >
               <DeleteOutlined />
+              <span v-if="isMobile" style="margin-left: 4px">删除</span>
             </a-button>
           </a-col>
         </a-row>
@@ -43,10 +47,19 @@
         bordered
         :row-key="resolvedRowKey"
         :pagination="paginationConfig"
-        :scroll="{ y: 370 }"
+        :scroll="mergedScroll"
       >
         <template #bodyCell="{ column, text, record }">
           <slot
+            v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
+            :name="`cell-${String(column?.dataIndex ?? '')}`"
+            :column="column"
+            :text="text"
+            :record="record"
+            :is-editing="isEditing(record)"
+          />
+          <slot
+            v-else
             name="bodyCell"
             :column="column"
             :text="text"
@@ -111,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, type UnwrapRef } from 'vue'
+import { computed, reactive, ref, watch, onMounted, onUnmounted, type UnwrapRef } from 'vue'
 import type { TableColumnType, TableProps } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 
@@ -170,6 +183,32 @@ const tableData = ref<RecordType[]>([])
 const editableData: UnwrapRef<Record<string, RecordType>> = reactive({})
 const selectedRowKeys = ref<(string | number)[]>([])
 const selectedRows = ref<RecordType[]>([])
+const windowSize = ref({ width: 0, height: 0 })
+const isMobile = ref(false)
+
+// 检测是否为移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// 监听窗口大小变化
+const updateWindowSize = () => {
+  windowSize.value = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }
+  checkMobile()
+}
+
+onMounted(() => {
+  updateWindowSize()
+  checkMobile()
+  window.addEventListener('resize', updateWindowSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWindowSize)
+})
 
 watch(
   () => props.dataSource,
@@ -201,7 +240,7 @@ const mergedColumns = computed(() => {
       title: '操作',
       dataIndex: OPERATION_DATA_INDEX,
       fixed: 'right',
-      width: 150,
+      width: '100px',
     },
   ]
 })
@@ -234,6 +273,47 @@ const paginationConfig = computed(() => {
   return {
     pageSize: props.pageSize,
     showSizeChanger: false,
+  }
+})
+
+// 计算表格滚动区域大小
+const mergedScroll = computed(() => {
+  const baseScroll = props.scroll || {}
+  
+  if (isMobile.value) {
+    // 移动端计算
+    // Y 轴：视口高度 - header(64px) - 工具栏高度(约60px) - 分页器高度(约56px) - 额外边距(约100px)
+    const scrollY = windowSize.value.height > 0
+      ? windowSize.value.height - 64 - (props.showToolbar ? 60 : 0) - (paginationConfig.value ? 56 : 0) - 198
+      : 250
+    
+    // X 轴：移动端侧边栏隐藏，使用全宽减去边距
+    const scrollX = windowSize.value.width > 0
+      ? windowSize.value.width - 20
+      : 300
+    
+    return {
+      ...baseScroll,
+      x: baseScroll.x ?? scrollX,
+      y: baseScroll.y ?? scrollY,
+    }
+  }
+  
+  // 桌面端计算
+  // Y 轴：视口高度 - header(64px) - 工具栏高度(约60px) - 分页器高度(约56px) - 边距(约140px)
+  const scrollY = windowSize.value.height > 0
+    ? windowSize.value.height - 64 - (props.showToolbar ? 60 : 0) - (paginationConfig.value ? 56 : 0) - 140
+    : 390
+  
+  // X 轴：视口宽度 - 侧边栏宽度(200px) - 边距(约40px)
+  const scrollX = windowSize.value.width > 0
+    ? windowSize.value.width - 200 - 40
+    : 600
+  
+  return {
+    ...baseScroll,
+    x: baseScroll.x ?? scrollX,
+    y: baseScroll.y ?? scrollY,
   }
 })
 
@@ -323,5 +403,32 @@ const handleBatchDelete = () => {
 <style scoped>
 .header {
   margin-bottom: 10px;
+}
+
+.mobile-toolbar {
+  margin-bottom: 8px;
+}
+
+.mobile-button {
+  font-size: 14px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .header {
+    margin-bottom: 8px;
+  }
+
+  .content {
+    overflow-x: auto;
+  }
+
+  .manage-page-wrapper {
+    padding: 0;
+  }
+
+  .mobile-toolbar :deep(.ant-col) {
+    margin-bottom: 8px;
+  }
 }
 </style>

@@ -21,7 +21,7 @@ const defaultConfig: AppConfig = {
   siteTitle: 'WhiteRS-system',
   browserTitle: 'WhiteRS-system',
   frontendPort: 8888,
-  backendUrl: 'http://localhost:8080',
+  backendUrl: 'http://192.168.24.77:8080',
   enableDebug: true, // 生产环境建议设置为 false
 }
 
