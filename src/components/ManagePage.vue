@@ -1,6 +1,8 @@
 <template>
+  <!-- 表格管理页面, 带工具栏、搜索框、添加、删除、编辑功能, 带分页功能 -->
   <div class="manage-page-wrapper">
     <div v-if="showToolbar" class="header">
+      <!-- 工具栏 -->
       <slot
         name="toolbar"
         :search-value="searchValue"
@@ -39,6 +41,7 @@
         </a-row>
       </slot>
     </div>
+    <!-- 表格  -->
     <div class="content">
       <a-table
         :columns="mergedColumns"
@@ -57,6 +60,8 @@
             :text="text"
             :record="record"
             :is-editing="isEditing(record)"
+            :editable-data="editableData"
+            :get-internal-key="getInternalKey"
           />
           <slot
             v-else
@@ -128,11 +133,13 @@ import { computed, reactive, ref, watch, onMounted, onUnmounted, type UnwrapRef 
 import type { TableColumnType, TableProps } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 
+// RecordType 定义为任意键值对对象 
 type RecordType = Record<string, any>
+// 操作列的 dataIndex 常量
 const OPERATION_DATA_INDEX = '__operation__'
-
+// 深拷贝函数
 const cloneDeep = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
-
+// 定义组件属性及默认值
 const props = withDefaults(
   defineProps<{
     dataSource: RecordType[]
@@ -164,7 +171,7 @@ const props = withDefaults(
     pagination: undefined,
   },
 )
-
+// 定义组件事件
 const emit = defineEmits<{
   (e: 'update:dataSource', value: RecordType[]): void
   (e: 'search', value: string): void
@@ -176,7 +183,7 @@ const emit = defineEmits<{
   (e: 'cancel', key: string | number): void
   (e: 'edit', record: RecordType): void
 }>()
-
+// 组件内部状态
 const searchValue = ref('')
 const resolvedRowKey = computed(() => props.rowKey ?? 'key')
 const tableData = ref<RecordType[]>([])
@@ -199,7 +206,7 @@ const updateWindowSize = () => {
   }
   checkMobile()
 }
-
+// 组件挂载和卸载时添加和移除事件监听
 onMounted(() => {
   updateWindowSize()
   checkMobile()
@@ -209,7 +216,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', updateWindowSize)
 })
-
+// 监听 dataSource 属性变化，更新表格数据
 watch(
   () => props.dataSource,
   (value) => {
@@ -217,7 +224,7 @@ watch(
   },
   { immediate: true, deep: true },
 )
-
+// 监听 tableData 变化，更新已选择的行
 watch(
   () => tableData.value,
   () => {
@@ -228,7 +235,7 @@ watch(
     )
   },
 )
-
+// 计算合并后的列配置，确保包含操作列
 const mergedColumns = computed(() => {
   const hasOperation = props.columns.some((column) => column.dataIndex === OPERATION_DATA_INDEX)
   if (hasOperation) {
@@ -240,11 +247,11 @@ const mergedColumns = computed(() => {
       title: '操作',
       dataIndex: OPERATION_DATA_INDEX,
       fixed: 'right',
-      width: '100px',
+      width: '110px',
     },
   ]
 })
-
+// 计算合并后的行选择配置
 const mergedRowSelection = computed(() => {
   if (props.rowSelection === null) {
     return undefined
@@ -261,7 +268,7 @@ const mergedRowSelection = computed(() => {
     },
   }
 })
-
+// 计算可编辑字段集合和分页配置
 const editableFieldSet = computed(() => new Set(props.editableFields))
 const paginationConfig = computed(() => {
   if (props.pagination === false) {

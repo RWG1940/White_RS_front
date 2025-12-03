@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { HomeOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, UserOutlined, SettingOutlined,DesktopOutlined  } from '@ant-design/icons-vue'
 import { appConfig } from '@/config'
 
 defineProps<{
@@ -18,6 +18,24 @@ const menuItems = ref([
     icon: HomeOutlined,
     label: '首页',
     title: '首页',
+  },
+  {
+    key: '/youding-workbench',
+    icon: DesktopOutlined,
+    label: '优鼎工作台',
+    title: '优鼎工作台',
+  },
+  {
+    key: '/factory-workbench',
+    icon: DesktopOutlined,
+    label: '工厂工作台',
+    title: '工厂工作台',
+  },
+  {
+    key: '/accessories-factory-workbench',
+    icon: DesktopOutlined,
+    label: '辅料工厂工作台',
+    title: '辅料工厂工作台',
   },
   {
     key: '/usersManage',
@@ -94,10 +112,10 @@ const handleMenuClick = ({ key }: { key: string }) => {
 }
 
 .logo-text {
+  margin: 10%;
   color: #fff;
   font-size: 20px;
   font-weight: 600;
-  margin: 0;
   text-align: center;
 }
 

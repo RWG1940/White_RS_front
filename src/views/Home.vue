@@ -34,7 +34,7 @@ import {
 } from '@/api/services/websocket-api'
 
 const authStore = useAuthStore()
-const onlineCount = ref(0)
+const onlineCount = ref(1)
 const isOnline = ref(false)
 const isConnected = ref(false)
 
@@ -57,6 +57,9 @@ let countTimer: ReturnType<typeof setInterval> | null = null
 const refreshOnlineCount = async () => {
   try {
     onlineCount.value = await fetchOnlineCount()
+    if (onlineCount.value == 0) {
+      onlineCount.value = 1
+    }
   } catch (error) {
     console.error('获取在线人数失败:', error)
   }
@@ -95,9 +98,7 @@ onUnmounted(() => {
   padding: 16px;
 }
 
-.status-card {
 
-}
 
 .status-item {
   display: flex;

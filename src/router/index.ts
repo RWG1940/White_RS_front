@@ -27,7 +27,31 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '首页',
         },
-
+        
+      },
+      {
+        path: 'youding-workbench',
+        name: 'youding-workbench',
+        component: () => import('@/views/accessories-work/YoudingWork.vue').catch(() => import('@/views/NotFound.vue')),
+        meta: {
+          title: '优鼎工作台',
+        },
+      },
+      {
+        path: 'factory-workbench',
+        name: 'factory-workbench',
+        component: () => import('@/views/accessories-work/FactoryWork.vue').catch(() => import('@/views/NotFound.vue')),
+        meta: {
+          title: '工厂工作台',
+        },
+      },
+      {
+        path: 'accessories-factory-workbench',
+        name: 'accessories-factory-workbench',
+        component: () => import('@/views/accessories-work/AccessoriesFactoryWork.vue').catch(() => import('@/views/NotFound.vue')),
+        meta: {
+          title: '辅料工厂工作台',
+        },
       },
       {
         path: 'usersManage',
@@ -42,7 +66,7 @@ const routes: RouteRecordRaw[] = [
         name: 'settingsManage',
         component: () => import('@/views/settingsManage.vue').catch(() => import('@/views/NotFound.vue')),
         meta: {
-          title: '用户管理',
+          title: '设置',
         },
       },
 
