@@ -1,5 +1,5 @@
 <template>
-    <div class="work-wrap">
+    <div class="work-wrap-1" v-if="isMobile">
         <div class="search-card">
             <a-collapse v-model:activeKey="activeKey">
                 <a-collapse-panel key="1" header="查找辅料">
@@ -45,13 +45,18 @@
         </a-drawer>
 
     </div>
+    <div class="work-wrap-2" v-else> 
+      <FATable />
+    </div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted,onUnmounted } from 'vue';
 import FiveStars from './components/fiveStars.vue';
 
 
 import type { DrawerProps } from 'ant-design-vue';
+import YDTable from './components/YDTable.vue';
+import FATable from './components/FATable.vue';
 const placement = ref<DrawerProps['placement']>('top');
 const openInfo = ref<boolean>(false);
 const openTable = ref<boolean>(false);
@@ -64,7 +69,21 @@ const showDrawer = () => {
 
 const activeKey = ref(['1']);
 
+// 响应式判断是否为移动端（宽度 <= 768px）
+const isMobile = ref(false)
 
+const updateIsMobile = () => {
+    isMobile.value = window.innerWidth <= 768
+}
+
+onMounted(() => {
+    updateIsMobile()
+    window.addEventListener('resize', updateIsMobile)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateIsMobile)
+})
 </script>
 <style scoped>
 .header {
@@ -90,18 +109,11 @@ const activeKey = ref(['1']);
     overflow: auto;
 }
 
-/* 移动端适配：屏宽较小时将 .work-wrap 宽度设置为原来的一半并居中 */
-@media (width > 768px) {
-    .work-wrap {
-        width: 50%;
-        max-height: calc(100vh - 150px);
-    }
+/* 使最外层工作区域可滚动，当内容超出时显示滚动条 */
+.work-wrap-1 {
+    /* 根据页面布局调整高度，这里使用视口高度减去顶部等间距，保证在多数页面中可滚动 */
+    max-height: calc(100vh - 150px);
+    overflow: auto;
 }
 
-@media (width > 1000px) {
-    .work-wrap {
-        width: 30%;
-        max-height: calc(100vh - 150px);
-    }
-}
 </style>

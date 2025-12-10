@@ -37,9 +37,13 @@ const toggleCollapse = () => {
         <!-- 面包屑 -->
         <Breadcrumb />
 
-        <!-- 页面内容 -->
+        <!-- 页面内容：使用 router-view 插槽配合 transition 实现页面切换动画 -->
         <div class="content-wrapper">
-          <router-view />
+          <router-view v-slot="{ Component, route }">
+            <transition name="m-trans" mode="out-in">
+              <component :is="Component" :key="route.fullPath" />
+            </transition>
+          </router-view>
         </div>
       </a-layout-content>
       <a-layout-footer class="layout-footer"> Powered by 数字技术服务中心 ©2025 </a-layout-footer>
@@ -101,6 +105,23 @@ const toggleCollapse = () => {
   height: calc(100vh - 140px);
   /* overflow-y: auto;
   overflow-x: hidden; */
+  position: relative; /* 为可能的绝对定位保留上下文 */
+}
+
+.m-trans-enter-active,
+.m-trans-leave-active {
+  transition: all 0.2s;
+}
+
+.m-trans-enter-from {
+  opacity: 0;
+  transform: translateX(-10px);
+  filter: blur(10px);
+}
+
+.m-trans-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
 }
 
 .content-wrapper::-webkit-scrollbar-track {
@@ -109,18 +130,18 @@ const toggleCollapse = () => {
 }
 
 .content-wrapper::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #c1c1c12d;
   border-radius: 4px;
   transition: background 0.3s ease;
 }
 
 .content-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #a8a8a847;
 }
 
 /* Firefox 滚动条样式 */
 .content-wrapper {
-  scrollbar-color: #c3cee7 #ffffff;
+  scrollbar-color: #d6d6d6 #ffffff;
 }
 
 .layout-main-collapsed {
@@ -130,7 +151,7 @@ const toggleCollapse = () => {
 /* Footer 样式，减小高度和字体 */
 .layout-footer {
   text-align: center;
-  color: grey;
+  color: rgb(146, 146, 146);
   padding: 6px 0;
   font-size: 12px;
 }

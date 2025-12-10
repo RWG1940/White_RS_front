@@ -4,7 +4,7 @@
       <a-row :gutter="[16, 16]" align="middle">
         <a-col :xs="24" :sm="12">
           <div class="status-item">
-            <span class="label">我的状态</span>
+            <span class="label">我的状态：</span>
             <a-tag :color="isOnline ? 'success' : 'red'">
               {{ isOnline ? '在线' : '离线' }}
             </a-tag>
@@ -12,8 +12,12 @@
         </a-col>
         <a-col :xs="24" :sm="12">
           <div class="status-item">
-            <span class="label">在线人数</span>
-            <span class="count">{{ onlineCount }}</span>
+            <span class="label">在线人数：</span>
+            <span class="count">
+              <a-tag color="grey">
+                {{ onlineCount }}
+              </a-tag>
+            </span>
           </div>
         </a-col>
       </a-row>
@@ -33,11 +37,12 @@ import {
   checkUserOnline,
 } from '@/api/services/websocket-api'
 
+
 const authStore = useAuthStore()
 const onlineCount = ref(1)
 const isOnline = ref(false)
 const isConnected = ref(false)
-
+// 在线状态客户端
 const statusClient = new OnlineStatusClient({
   onConnected: () => {
     isConnected.value = true
@@ -51,9 +56,9 @@ const statusClient = new OnlineStatusClient({
     isConnected.value = false
   },
 })
-
+// 定时刷新在线人数和用户在线状态
 let countTimer: ReturnType<typeof setInterval> | null = null
-
+// 刷新在线人数
 const refreshOnlineCount = async () => {
   try {
     onlineCount.value = await fetchOnlineCount()
@@ -64,7 +69,7 @@ const refreshOnlineCount = async () => {
     console.error('获取在线人数失败:', error)
   }
 }
-
+// 刷新用户在线状态
 const refreshSelfStatus = async () => {
   const userId = authStore.user?.userId ?? authStore.user?.id
   if (!userId) return
@@ -74,7 +79,7 @@ const refreshSelfStatus = async () => {
     console.error('获取个人在线状态失败:', error)
   }
 }
-
+// 初始化
 onMounted(async () => {
   if (!authStore.isLoaded) {
     await authStore.init()
@@ -84,7 +89,7 @@ onMounted(async () => {
   await refreshSelfStatus()
   countTimer = setInterval(refreshOnlineCount, 15_000)
 })
-
+// 销毁
 onUnmounted(() => {
   statusClient.disconnect()
   if (countTimer) {
@@ -97,9 +102,9 @@ onUnmounted(() => {
 .home-page {
   padding: 16px;
 }
-
-
-
+.status-card { 
+  font-family: 黑体;
+}
 .status-item {
   display: flex;
   align-items: center;
@@ -111,10 +116,7 @@ onUnmounted(() => {
   color: #7a7a7a;
 }
 
-.count {
-  font-size: 24px;
-  font-weight: 600;
-}
+
 
 .hint {
   margin-top: 12px;

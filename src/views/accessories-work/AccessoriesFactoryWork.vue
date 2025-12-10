@@ -1,5 +1,5 @@
 <template>
-    <div class="work-wrap">
+    <div v-if="isMobile" class="work-wrap-1">
         <div class="search-card">
             <a-collapse v-model:activeKey="activeKey">
                 <a-collapse-panel key="1" header="查找辅料">
@@ -48,15 +48,20 @@
 
 
         </a-drawer>
-
+ 
+    </div>
+    <div v-else class="work-wrap-2"> 
+      <ASTable />
     </div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import processRadioCard from './components/processRadioCard.vue';
 import AcceptButton from './components/acceptButton.vue';
 import type { DrawerProps } from 'ant-design-vue';
 import FiveStars from './components/fiveStars.vue';
+import YDTable from './components/YDTable.vue';
+import ASTable from './components/ASTable.vue';
 
 const placement = ref<DrawerProps['placement']>('top');
 const openInfo = ref<boolean>(false);
@@ -68,7 +73,35 @@ const showDrawer = () => {
 
 const activeKey = ref(['1']);
 
+// 表单与控件状态
+const value = ref('')
+const options = ref([{ label: '工厂A', value: 1 }, { label: '工厂B', value: 2 }])
 
+const handleChange = (val: any) => {
+    // select 的值通常为字符串或数组，直接写回 value
+    value.value = val
+}
+
+const onSearch = (val: string) => {
+    // 简单占位搜索处理
+    console.log('搜索关键词:', val)
+}
+
+// 响应式判断是否为移动端（宽度 <= 768px）
+const isMobile = ref(false)
+
+const updateIsMobile = () => {
+    isMobile.value = window.innerWidth <= 768
+}
+
+onMounted(() => {
+    updateIsMobile()
+    window.addEventListener('resize', updateIsMobile)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateIsMobile)
+})
 </script>
 <style scoped>
 .header {
@@ -88,24 +121,11 @@ const activeKey = ref(['1']);
 }
 
 /* 使最外层工作区域可滚动，当内容超出时显示滚动条 */
-.work-wrap {
+.work-wrap-1 {
     /* 根据页面布局调整高度，这里使用视口高度减去顶部等间距，保证在多数页面中可滚动 */
     max-height: calc(100vh - 150px);
     overflow: auto;
 }
 
-/* 移动端适配：屏宽较小时将 .work-wrap 宽度设置为原来的一半并居中 */
-@media (width > 768px) {
-    .work-wrap {
-        width: 50%;
-        max-height: calc(100vh - 150px);
-    }
-}
 
-@media (width > 1000px) {
-    .work-wrap {
-        width: 30%;
-        max-height: calc(100vh - 150px);
-    }
-}
 </style>

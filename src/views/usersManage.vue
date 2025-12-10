@@ -74,9 +74,11 @@ import ManagePage from '@/components/ManagePage.vue'
 import { userStore, updateUserWithRoles, createUserWithRoles } from '@/stores/user-store'
 import type { userType, userListType } from '@/types/user-type'
 import type { roleType } from '@/types/role-type'
+import { formatTime } from '@/utils/formatTime'
 import dayjs from 'dayjs'
 import { batchCheckUsersOnline } from '@/api/services/websocket-api'
 import { roleStore } from '@/stores/role-store'
+
 
 const store = userStore
 const PAGE_SIZE = 15
@@ -173,8 +175,9 @@ const columns = computed(() => {
     {
       title: '创建时间',
       dataIndex: 'createdAt',
-      width: '130px',
+      width: '180px',
       sorter: (a: any, b: any) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
+      customRender: ({ text }: { text: any }) => formatTime(text),
       sortDirections: ['descend', 'ascend'] as any,
       filters: [
         { text: '最近 7 天', value: '7d' },
@@ -210,6 +213,8 @@ const columns = computed(() => {
         { text: '最近 30 天', value: '30d' },
         { text: '今年', value: 'year' },
       ],
+      customRender: ({ text }: { text: any }) => formatTime(text),
+
       onFilter: (value: any, record: any) => {
         const target = dayjs(record.updatedAt)
         if (!target.isValid()) return false

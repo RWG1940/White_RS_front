@@ -17,6 +17,9 @@ export interface userType {
   lastLoginIp?: string
   profile?: string
   deletedAt?: string
+  avatarUrl?: string
+  // 可选的角色字段（后端返回时可能携带），支持 roleType 数组或简单的字符串/数字 id 列表
+  roles?: roleType[] | Array<string | number>
 }
 
 export interface userListType {

@@ -1,5 +1,5 @@
 <template>
-    <div class="work-wrap">
+    <div v-if="isMobile" class="work-wrap-1">
         <div class="header">
             <a-button type="primary" style="width: 100%;" @click="showImport">导入辅料清单表</a-button>
         </div>
@@ -45,23 +45,34 @@
             </a-card>
         </div>
 
-        <a-modal v-model:open="openImport" title="导入辅料清单" width="50%" wrap-class-name="full-modal">
-            <template #footer>
 
-            </template>
-        </a-modal>
         <a-drawer title="辅料详情" :size="size" :placement="placement" :open="openInfo" @close="showDrawer">
 
 
         </a-drawer>
+        <!-- 导入弹窗：放在模板外层，桌面和移动端都可见 -->
+        <a-modal v-model:open="openImport" title="导入辅料清单" width="50%" wrap-class-name="full-modal">
+            请上传辅料清单表
+
+            <template #footer>
+
+            </template>
+        </a-modal>
     </div>
+    <div v-else class="work-wrap-2">
+        <YDTable v-model:openImport="openImport" />
+    </div>
+
+
+
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import FiveStars from './components/fiveStars.vue';
 
 
 import type { DrawerProps } from 'ant-design-vue';
+import YDTable from './components/YDTable.vue';
 const placement = ref<DrawerProps['placement']>('top');
 const openInfo = ref<boolean>(false);
 const openTable = ref<boolean>(false);
@@ -81,7 +92,17 @@ const showImport = () => {
 };
 const activeKey = ref(['1']);
 
+// 响应式判断是否为移动端（宽度 <= 768px）
+const isMobile = ref(false)
 
+const updateIsMobile = () => {
+    isMobile.value = window.innerWidth <= 768
+}
+
+onMounted(() => {
+    updateIsMobile()
+    window.addEventListener('resize', updateIsMobile)
+})
 </script>
 <style scoped>
 .header {
@@ -101,24 +122,9 @@ const activeKey = ref(['1']);
 }
 
 /* 使最外层工作区域可滚动，当内容超出时显示滚动条 */
-.work-wrap {
+.work-wrap-1 {
     /* 根据页面布局调整高度，这里使用视口高度减去顶部等间距，保证在多数页面中可滚动 */
     max-height: calc(100vh - 150px);
     overflow: auto;
-}
-
-/* 移动端适配：屏宽较小时将 .work-wrap 宽度设置为原来的一半并居中 */
-@media (width > 768px) {
-    .work-wrap {
-        width: 50%;
-        max-height: calc(100vh - 150px);
-    }
-}
-
-@media (width > 1000px) {
-    .work-wrap {
-        width: 30%;
-        max-height: calc(100vh - 150px);
-    }
 }
 </style>
