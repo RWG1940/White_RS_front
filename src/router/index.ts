@@ -38,6 +38,14 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'gendan-workbench',
+        name: 'gendan-workbench',
+        component: () => import('@/views/accessories-work/GendanWork.vue').catch(() => import('@/views/NotFound.vue')),
+        meta: {
+          title: '跟单工作台',
+        },
+      },
+      {
         path: 'factory-workbench',
         name: 'factory-workbench',
         component: () => import('@/views/accessories-work/FactoryWork.vue').catch(() => import('@/views/NotFound.vue')),

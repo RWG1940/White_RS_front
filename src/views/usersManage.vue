@@ -46,7 +46,7 @@
       <template #cell-roles="{ record, isEditing, editableData, getInternalKey }">
         <div>
           <template v-if="!isEditing">
-            <a-tag v-for="r in record.roles ?? []" :key="r.id" :color="r.id == 1 ? 'orange' : r.id == 3?'pink':r.id == 4?'purple':r.id == 5?'default':'lightgrey'" style="margin-right:6px">
+            <a-tag v-for="r in record.roles ?? []" :key="r.id" :color="r.id == 1 ? 'orange' : r.id == 3?'pink':r.id == 4?'purple':r.id == 5?'default':r.id == 7?'cyan':'lightgrey'" style="margin-right:6px">
               {{ r.name }}
             </a-tag>
           </template>
@@ -69,7 +69,6 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
-import type { TableColumnType } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
 import { userStore, updateUserWithRoles, createUserWithRoles } from '@/stores/user-store'
 import type { userType, userListType } from '@/types/user-type'

@@ -29,6 +29,12 @@ const menuItems = ref([
     title: '优鼎工作台',
   },
   {
+    key: '/gendan-workbench',
+    icon: DesktopOutlined,
+    label: '跟单工作台',
+    title: '跟单工作台',
+  },
+  {
     key: '/factory-workbench',
     icon: DesktopOutlined,
     label: '工厂工作台',
@@ -75,6 +81,7 @@ const filteredMenuItems = computed(() => {
     if (r === '5293') allowedKeys.push('/youding-workbench')
     if (r === '6666') allowedKeys.push('/accessories-factory-workbench')
     if (r === '7777') allowedKeys.push('/factory-workbench')
+    if (r === '5555') allowedKeys.push('/gendan-workbench')
     return menuItems.value.filter((i) => allowedKeys.includes(i.key))
   }
   // 其它情况默认显示全部（可根据需要调整为更严格的权限控制）

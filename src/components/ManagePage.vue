@@ -1,6 +1,7 @@
 <template>
   <!-- 表格管理页面, 带工具栏、搜索框、添加、删除、编辑功能, 带分页功能 -->
   <div class="manage-page-wrapper">
+    <a-spin tip="刷新中" :spinning="spinning" size="large">
     <div v-if="showToolbar" class="header">
       <!-- 工具栏 -->
       <slot name="toolbar" :search-value="searchValue" :trigger-search="onSearch" :add="handleAdd"
@@ -51,9 +52,9 @@
                 <div class="editable-row-operations">
                   <span v-if="isEditing(record)">
                     <a-typography-link @click="save(getRowKeyValue(record))">保存</a-typography-link>
-                    <a-popconfirm title="确认取消?" ok-text="是" cancel-text="否" @confirm="cancel(getRowKeyValue(record))">
-                      <a style="margin-left: 8px">取消</a>
-                    </a-popconfirm>
+
+                    <a style="margin-left: 8px" @click="cancel(getRowKeyValue(record))">取消</a>
+
                     <a-popconfirm title="确认删除?" ok-text="是" cancel-text="否"
                       @confirm="onDeleteRow(getRowKeyValue(record))">
                       <a style="margin-left: 8px">删除</a>
@@ -75,21 +76,24 @@
         </template>
       </a-table>
     </div>
+    </a-spin>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch, onMounted, onUnmounted, type UnwrapRef, defineComponent, h, isVNode } from 'vue'
 import type { TableColumnType, TableProps } from 'ant-design-vue'
-import { PlusOutlined, DeleteOutlined,ReloadOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 
-
+const spinning = ref(false)
 // RecordType 定义为任意键值对对象 
 type RecordType = Record<string, any>
 // 操作列的 dataIndex 常量
 const OPERATION_DATA_INDEX = '__operation__'
+// 为了解决类型实例化过深的问题，明确定义列类型
+type ColumnType = TableColumnType<RecordType>
 // 深拷贝函数
-const cloneDeep = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+const cloneDeep = <T extends Record<string, any> | Record<string, any>[]>(value: T): T => JSON.parse(JSON.stringify(value))
 // 定义组件属性及默认值
 const props = withDefaults(
   defineProps<{
@@ -107,6 +111,7 @@ const props = withDefaults(
     pageSize?: number
     pagination?: false | TableProps<RecordType>['pagination']
     showOperation?: boolean
+    enableColumnDrag?: boolean
   }>(),
   {
     dataSource: () => [],
@@ -122,9 +127,11 @@ const props = withDefaults(
     pageSize: 10,
     pagination: undefined,
     showOperation: true,
+    // 列任意调整位置
+    enableColumnDrag: true,
   },
 )
-// 定义组件事件
+// 组件事件
 const emit = defineEmits<{
   (e: 'update:dataSource', value: RecordType[]): void
   (e: 'search', value: string): void
@@ -135,6 +142,7 @@ const emit = defineEmits<{
   (e: 'save', record: RecordType): void
   (e: 'cancel', key: string | number): void
   (e: 'edit', record: RecordType): void
+  (e: 'columns-reordered', columns: TableColumnType<RecordType>[]): void
 }>()
 // 组件内部状态
 const searchValue = ref('')
@@ -188,24 +196,85 @@ watch(
     )
   },
 )
+
+// 可拖拽列状态（当 enableColumnDrag 为 true 时使用）
+const columnsState = ref<TableColumnType<RecordType>[]>(cloneDeep(props.columns || []) as TableColumnType<RecordType>[])
+
+// 同步 props.columns 到 columnsState
+watch(
+  () => props.columns as any,
+  (v) => {
+    columnsState.value = (v || []).map((col: any) => ({ ...col }))
+
+  },
+  { immediate: true, deep: true },
+)
+
+// 拖拽索引
+const draggingIndex = ref<number | null>(null)
+
+const onHeaderDragStart = (e: DragEvent, index: number) => {
+  draggingIndex.value = index
+  // 必须设置 dataTransfer 以便某些浏览器允许 drag/drop
+  try {
+    e.dataTransfer?.setData('text/plain', String(index))
+    e.dataTransfer!.effectAllowed = 'move'
+  } catch (err) {
+    // ignore
+  }
+}
+
+const onHeaderDragOver = (e: DragEvent) => {
+  e.preventDefault()
+  e.dataTransfer!.dropEffect = 'move'
+}
+
+const onHeaderDrop = (e: DragEvent, toIndex: number) => {
+  e.preventDefault()
+  const from = draggingIndex.value
+  if (from === null || from === toIndex) return
+  const list = columnsState.value.slice()
+  const [moved] = list.splice(from, 1)
+  if (moved !== undefined) {
+    list.splice(toIndex, 0, moved)
+    columnsState.value = list
+    draggingIndex.value = null
+    emit('columns-reordered', cloneDeep(list) as any)
+  }
+}
+
+// 渲染可拖拽标题
+const renderDraggableTitle = (col: TableColumnType<RecordType> | any, index: number) => {
+  const raw = col.title ?? ''
+  const titleText = typeof raw === 'string' || typeof raw === 'number' ? String(raw) : (raw && (raw.children || raw.default) ? raw : String(raw))
+  return h(
+    'div',
+    {
+      draggable: true,
+      onDragstart: (e: DragEvent) => onHeaderDragStart(e, index),
+      onDragover: onHeaderDragOver,
+      onDrop: (e: DragEvent) => onHeaderDrop(e, index),
+      style: { cursor: 'move', display: 'inline-block' },
+    },
+    titleText,
+  )
+}
+
 // 计算合并后的列配置，确保包含操作列（当 showOperation 为 true 时才自动添加）
 const mergedColumns = computed(() => {
-  if (props.showOperation === false) {
-    return props.columns
+  const baseCols: ColumnType[] = props.enableColumnDrag ? columnsState.value : props.columns as any
+  let cols: ColumnType[] = baseCols || []
+  if (props.showOperation !== false) {
+    const hasOperation = cols.some((column) => column.dataIndex === OPERATION_DATA_INDEX)
+    if (!hasOperation) {
+      cols = [...cols, { title: '操作', dataIndex: OPERATION_DATA_INDEX, fixed: 'right', width: '150px' }]
+    }
   }
-  const hasOperation = props.columns.some((column) => column.dataIndex === OPERATION_DATA_INDEX)
-  if (hasOperation) {
-    return props.columns
+  // 如果启用了列拖拽，在返回的列中替换 title 为可拖拽节点
+  if (props.enableColumnDrag) {
+    return cols.map((c, i) => ({ ...c, title: renderDraggableTitle(c, i) }))
   }
-  return [
-    ...props.columns,
-    {
-      title: '操作',
-      dataIndex: OPERATION_DATA_INDEX,
-      fixed: 'right',
-      width: '150px',
-    },
-  ]
+  return cols
 })
 // 计算合并后的行选择配置
 const mergedRowSelection = computed(() => {
@@ -344,6 +413,15 @@ const CellRenderer = defineComponent({
 })
 
 const edit = (key: string | number) => {
+  // 清除所有其他行的编辑状态，确保只能编辑一行
+  const currentEditingKeys = Object.keys(editableData)
+  currentEditingKeys.forEach(editKey => {
+    if (editKey !== String(key)) {
+      delete editableData[editKey]
+      emit('cancel', editKey)
+    }
+  })
+  
   const target = tableData.value.find((item) => getRowKeyValue(item) === key)
   if (!target) return
   editableData[String(key)] = cloneDeep(target)
@@ -385,9 +463,14 @@ const handleAdd = () => {
 
 // 新增：重置搜索，清空搜索框并触发搜索事件
 const resetSearch = () => {
+  spinning.value = true
   searchValue.value = ''
-  onSearch()
+  setTimeout(async () => {
+    onSearch()
+    spinning.value = false
+  }, 500) 
 }
+
 
 const handleBatchDelete = () => {
   if (!selectedRowKeys.value.length) {
