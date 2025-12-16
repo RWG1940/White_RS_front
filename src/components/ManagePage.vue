@@ -2,80 +2,81 @@
   <!-- 表格管理页面, 带工具栏、搜索框、添加、删除、编辑功能, 带分页功能 -->
   <div class="manage-page-wrapper">
     <a-spin tip="刷新中" :spinning="spinning" size="large">
-    <div v-if="showToolbar" class="header">
-      <!-- 工具栏 -->
-      <slot name="toolbar" :search-value="searchValue" :trigger-search="onSearch" :add="handleAdd"
-        :batch-delete="handleBatchDelete">
-        <a-row :gutter="[8, 8]" align="middle" :class="{ 'mobile-toolbar': isMobile }">
-          <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
-            <a-input-search v-model:value="searchValue" :placeholder="searchPlaceholder" enter-button
-              @search="onSearch" />
-          </a-col>
-          <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
-            <a-button type="primary" @click="resetSearch">
-              <ReloadOutlined />
-            </a-button>
-          </a-col>
-          <a-col v-if="showAdd" :span="isMobile ? 12 : undefined">
-            <a-button type="primary" block :class="{ 'mobile-button': isMobile }" @click="handleAdd">
-              <PlusOutlined />
-              <span v-if="isMobile" style="margin-left: 4px">添加</span>
-            </a-button>
-          </a-col>
-          <a-col v-if="showBatchDelete" :span="isMobile ? 12 : undefined">
-            <a-button type="primary" danger block :class="{ 'mobile-button': isMobile }"
-              :disabled="!selectedRowKeys.length" @click="handleBatchDelete">
-              <DeleteOutlined />
-              <span v-if="isMobile" style="margin-left: 4px">删除</span>
-            </a-button>
-          </a-col>
-          <slot name="custom-tool"></slot>
-        </a-row>
-      </slot>
-    </div>
-    <!-- 表格  -->
-    <div class="content">
-      <a-table :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection" bordered
-        :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll">
-        <template #bodyCell="{ column, text, record }">
-          <slot v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
-            :name="`cell-${String(column?.dataIndex ?? '')}`" :column="column" :text="text" :record="record"
-            :is-editing="isEditing(record)" :editable-data="editableData" :get-internal-key="getInternalKey" />
-          <slot v-else name="bodyCell" :column="column" :text="text" :record="record" :is-editing="isEditing(record)">
-            <template v-if="isEditing(record) && isEditableColumn(column)">
-              <a-input v-model:value="editableData[getInternalKey(record)]![column.dataIndex as string]"
-                style="margin: -5px 0" />
-            </template>
-            <template v-else-if="isOperationColumn(column)">
-              <slot name="operation" :record="record" :is-editing="isEditing(record)" :save="save" :cancel="cancel"
-                :edit="edit" :remove="onDeleteRow">
-                <div class="editable-row-operations">
-                  <span v-if="isEditing(record)">
-                    <a-typography-link @click="save(getRowKeyValue(record))">保存</a-typography-link>
+      <div v-if="showToolbar" class="header">
+        <!-- 工具栏 -->
+        <slot name="toolbar" :search-value="searchValue" :trigger-search="onSearch" :add="handleAdd"
+          :batch-delete="handleBatchDelete">
+          <a-row :gutter="[8, 8]" align="middle" :class="{ 'mobile-toolbar': isMobile }">
+            <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
+              <a-input-search v-model:value="searchValue" :placeholder="searchPlaceholder" enter-button
+                @search="onSearch" />
+            </a-col>
+            <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
+              <a-button type="primary" @click="resetSearch">
+                <ReloadOutlined />
+              </a-button>
+            </a-col>
+            <a-col v-if="showAdd" :span="isMobile ? 12 : undefined">
+              <a-button type="primary" block :class="{ 'mobile-button': isMobile }" @click="handleAdd">
+                <PlusOutlined />
+                <span v-if="isMobile" style="margin-left: 4px">添加</span>
+              </a-button>
+            </a-col>
+            <a-col v-if="showBatchDelete" :span="isMobile ? 12 : undefined">
+              <a-button type="primary" danger block :class="{ 'mobile-button': isMobile }"
+                :disabled="!selectedRowKeys.length" @click="handleBatchDelete">
+                <DeleteOutlined />
+                <span v-if="isMobile" style="margin-left: 4px">删除</span>
+              </a-button>
+            </a-col>
+            <slot name="custom-tool"></slot>
+          </a-row>
+        </slot>
+      </div>
+      <!-- 表格  -->
+      <div class="content">
+        <a-table :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection" bordered
+          :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll">
+          <template #bodyCell="{ column, text, record }">
+            <slot v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
+              :name="`cell-${String(column?.dataIndex ?? '')}`" :column="column" :text="text" :record="record"
+              :is-editing="isEditing(record)" :editable-data="editableData" :get-internal-key="getInternalKey" />
+            <slot v-else name="bodyCell" :column="column" :text="text" :record="record" :is-editing="isEditing(record)">
+              <template v-if="isEditing(record) && isEditableColumn(column)">
+                <a-input v-model:value="editableData[getInternalKey(record)]![column.dataIndex as string]"
+                  style="margin: -5px 0" />
+              </template>
+              <template v-else-if="isOperationColumn(column)">
+                <slot name="operation" :record="record" :is-editing="isEditing(record)" :save="save" :cancel="cancel"
+                  :edit="edit" :remove="onDeleteRow">
+                  <div class="editable-row-operations">
+                    <span v-if="isEditing(record)">
+                      <a-typography-link @click="save(getRowKeyValue(record))">保存</a-typography-link>
 
-                    <a style="margin-left: 8px" @click="cancel(getRowKeyValue(record))">取消</a>
+                      <a style="margin-left: 8px" @click="cancel(getRowKeyValue(record))">取消</a>
 
-                    <a-popconfirm title="确认删除?" ok-text="是" cancel-text="否"
-                      @confirm="onDeleteRow(getRowKeyValue(record))">
-                      <a style="margin-left: 8px">删除</a>
-                    </a-popconfirm>
-                  </span>
-                  <span v-else>
-                    <a-button size="small" @click="edit(getRowKeyValue(record))">编辑</a-button>
-                  </span>
-                </div>
-              </slot>
-            </template>
-            <template v-else-if="hasCustomRender(column)">
-              <CellRenderer :column="column" :text="text" :record="record" />
-            </template>
-            <template v-else>
-              {{ text }}
-            </template>
-          </slot>
-        </template>
-      </a-table>
-    </div>
+                      <a-popconfirm title="确认删除?" ok-text="是" cancel-text="否"
+                        @confirm="onDeleteRow(getRowKeyValue(record))">
+                        <a v-show="showDelete" style="margin-left: 8px">删除</a>
+                      </a-popconfirm>
+                    </span>
+                    <span v-else>
+                      <a-button size="small" @click="edit(getRowKeyValue(record))">编辑</a-button>
+                     
+                    </span>
+                  </div>
+                </slot>
+              </template>
+              <template v-else-if="hasCustomRender(column)">
+                <CellRenderer :column="column" :text="text" :record="record" />
+              </template>
+              <template v-else>
+                {{ text }}
+              </template>
+            </slot>
+          </template>
+        </a-table>
+      </div>
     </a-spin>
   </div>
 </template>
@@ -108,6 +109,7 @@ const props = withDefaults(
     searchPlaceholder?: string
     showAdd?: boolean
     showBatchDelete?: boolean
+    showDelete?: boolean
     pageSize?: number
     pagination?: false | TableProps<RecordType>['pagination']
     showOperation?: boolean
@@ -124,6 +126,7 @@ const props = withDefaults(
     searchPlaceholder: '搜索',
     showAdd: true,
     showBatchDelete: true,
+    showDelete: true,
     pageSize: 10,
     pagination: undefined,
     showOperation: true,
@@ -421,7 +424,7 @@ const edit = (key: string | number) => {
       emit('cancel', editKey)
     }
   })
-  
+
   const target = tableData.value.find((item) => getRowKeyValue(item) === key)
   if (!target) return
   editableData[String(key)] = cloneDeep(target)
@@ -468,7 +471,7 @@ const resetSearch = () => {
   setTimeout(async () => {
     onSearch()
     spinning.value = false
-  }, 500) 
+  }, 500)
 }
 
 

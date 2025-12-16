@@ -2,12 +2,10 @@
     <div>
         <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
             :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
-            @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete"
-            @selection-change="handleSelectionChange">
+            @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" :show-add="false" :show-batch-delete="false"
+            :show-delete="false" @selection-change="handleSelectionChange">
             <template #custom-tool>
-                <a-button style="margin-left: 5px;" type="primary" @click="onImportClick">导入</a-button>
                 <a-button style="margin-left: 5px;" type="primary" @click="onExportClick">导出</a-button>
-                <a-button style="margin-left: 5px;" type="primary" @click="onHistoryClick">历史</a-button>
                 <a-select
                     v-model="selectedBatchId"
                     :options="batchOptions"
@@ -20,39 +18,20 @@
                 <template v-if="!isEditing">
                     <a-tag
                         :color="record.status === 0 ? 'lightgrey' : record.status === 1 ? 'orange' : record.status === 2 ? 'pink' : record.status === 3 ? 'green' : ''">
-                        {{ record.status === 0 ? '未下单' : record.status === 1 ? '做货中' : record.status === 2 ? '货好等付款'
-                            : record.status === 3 ? '已出货' : '' }}
+                        {{ record.status === 0 ? '未下单' : record.status === 1 ? '做货中' : record.status === 2 ? '货好等付款' : record.status === 3 ? '已出货' : '' }}
                     </a-tag>
-                </template>
-                <template v-else>
-                    <a-select v-model:value="editableData[getInternalKey(record)]!.status" size="small"
-                        style="width:120px">
-                        <a-select-option :value="0">未下单</a-select-option>
-                        <a-select-option :value="1">做货中</a-select-option>
-                        <a-select-option :value="2">货好等付款</a-select-option>
-                        <a-select-option :value="3">已出货</a-select-option>
-                    </a-select>
                 </template>
             </template>
             <template #cell-priority="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
                     <a-tag
                         :color="record.priority === 0 ? 'green' : record.priority === 1 ? 'gold' : record.priority === 2 ? 'red' : ''">
-                        {{ record.priority === 0 ? '正常做' : record.priority === 1 ? '有点着急' : record.priority === 2 ?
-                            '非常着急安排优先' : '' }}
+                        {{ record.priority === 0 ? '正常做' : record.priority === 1 ? '有点着急' : record.priority === 2 ? '非常着急安排优先' : '' }}
                     </a-tag>
-                </template>
-                <template v-else>
-                    <a-select v-model:value="editableData[getInternalKey(record)]!.priority" size="small"
-                        style="width:120px">
-                        <a-select-option :value="0">正常做</a-select-option>
-                        <a-select-option :value="1">有点着急</a-select-option>
-                        <a-select-option :value="2">非常着急安排优先</a-select-option>
-                    </a-select>
                 </template>
             </template>
             <template #cell-imageUrl="{ record, isEditing, editableData, getInternalKey }">
-                <template v-if="!isEditing">
+            
                     <Transition name="fade" appear>
                         <a-row>
                             <template v-if="record.imageUrl">
@@ -71,34 +50,7 @@
                             </template>
                         </a-row>
                     </Transition>
-                </template>
-                <template v-else>
-                    <Transition name="fade" appear>
-                        <a-row>
-                            <img v-show="record.imageUrl && !editUploadFile" :src="getImageUrl(record.imageUrl)" alt=""
-                                style="width: 60px; height: 60px;border-radius: 5px;" />
-                            <img v-show="editUploadFile" :src="editUploadFileList[0]?.url" alt=""
-                                style="width: 60px; height: 60px;border-radius: 5px;" />
-                            <!-- 当这行已有图片时展示更换文字 -->
-                            <a v-show="record.imageUrl" @click="openEdit = true" class="changeImgA">
-                                {{ editUploadFile ? '待保存' : '更换' }}
-                            </a>
-                            <!-- 当这行没有图片时展示上传文字 -->
-                            <a-button v-show="!record.imageUrl" @click="openUpload = true">
-                                {{ uploadFile ? '重传' : '上传' }}
-                            </a-button>
-                            <!-- 上传后显示小的缩略图 -->
-                            <a-row v-show="uploadFile" style="margin-top: 5px;">
-                                <a-col :span="16" style="font-size: small;color:grey;font-style: italic;">
-                                    已传：
-                                </a-col>
-                                <a-col :span="8">
-                                    <a-image :width="20" :src="uploadFileList[0]?.url" />
-                                </a-col>
-                            </a-row>
-                        </a-row>
-                    </Transition>
-                </template>
+                
             </template>
 
         </ManagePage>
@@ -154,6 +106,8 @@ import { EyeOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { uploadFileWithInfo } from '@/api/services/fileResource-api'
 import { tableImportStore } from '@/stores/tableImport-store'
+import { userStore } from '@/stores/user-store'
+import { useAuthStore } from '@/stores/auth-store'
 
 
 // 图片URL处理，添加时间戳防止缓存
@@ -203,11 +157,6 @@ const columns: TableColumnType<any>[] = [
 
     { title: '数量', dataIndex: 'quantity', width: '100px' },
 
-    { title: '洗标单价', dataIndex: 'washUnitPrice', width: '130px' },
-    { title: '洗标总价', dataIndex: 'washTotalPrice', width: '130px' },
-    { title: '吊牌单价', dataIndex: 'tagUnitPrice', width: '130px' },
-    { title: '吊牌总价', dataIndex: 'tagTotalPrice', width: '130px' },
-
     { title: '洗标优先级', dataIndex: 'washPriority', width: '140px' },
     { title: '洗标状态', dataIndex: 'washStatus', width: '140px' },
 
@@ -218,12 +167,12 @@ const columns: TableColumnType<any>[] = [
         customRender: ({ text }) => formatTime(text)
     },
     {
-        title: '洗标实际出货时间',
+        title: '洗标出货时间',
         dataIndex: 'washShipTime',
         width: '180px',
         customRender: ({ text }) => formatTime(text)
     },
-    { title: '洗标出货数量', dataIndex: 'washShipQuantity', width: '150px' },
+    { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '150px' },
     { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '180px' },
 
     { title: '吊牌优先级', dataIndex: 'tagPriority', width: '140px' },
@@ -236,12 +185,12 @@ const columns: TableColumnType<any>[] = [
         customRender: ({ text }) => formatTime(text)
     },
     {
-        title: '吊牌实际出货时间',
+        title: '吊牌出货时间',
         dataIndex: 'tagShipTime',
         width: '180px',
         customRender: ({ text }) => formatTime(text)
     },
-    { title: '吊牌出货数量', dataIndex: 'tagShipQuantity', width: '160px' },
+    { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '160px' },
     { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '180px' },
 
     { title: '状态', dataIndex: 'status', width: '140px' },
@@ -279,42 +228,8 @@ const columns: TableColumnType<any>[] = [
 const rawRows = ref<AccPurchaseContractType[]>([])
 const dataSource = ref<any[]>([])
 const editableFields = [
-    'imageUrl',
-    'sku',
-    'color',
-    'brand',
-    'nameEn',
-    'materialMain',
-    'materialLining',
-    'washLabelColor',
-    'washLabelType',
     'factory',
-    'address',
-    'follower',
-    'quantity',
-    // 'washUnitPrice',
-    // 'washTotalPrice',
-    // 'tagUnitPrice',
-    // 'tagTotalPrice',
-    'washPriority',
-    // 'washStatus',
-    // 'washConfirmTime',
-    // 'washShipQuantity',
-    // 'washShipTime',
-    // 'washExpressNo',
-    'tagPriority',
-    // 'tagStatus',
-    // 'tagConfirmTime',
-    // 'tagShipTime',
-    // 'tagShipQuantity',
-    // 'tagExpressNo',
-    // 'remark',
-    'status',
-    'priority',
-    // 'createdAt',
-    // 'updatedAt'
-    'quarter',
-    'importId'
+    'address'
 ]
 
 const setTableRows = (rows: AccPurchaseContractType[]) => {
@@ -577,10 +492,10 @@ const handleRemove = (file: any) => {
 const selectedBatchId = ref<number | null>(null)
 
 const filteredDataSource = computed(() => {
-    if (selectedBatchId.value === null) {
+    if (selectedBatchId.value === null && useAuthStore().user === null) {
         return dataSource.value
     }
-    return dataSource.value.filter(row => row.importId === selectedBatchId.value)
+    return dataSource.value.filter(row => row.importId === selectedBatchId.value && row.follower == useAuthStore()!.user!.username)
 })
 
 const batchOptions = computed(() => {

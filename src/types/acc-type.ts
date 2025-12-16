@@ -45,4 +45,6 @@ export interface AccPurchaseContractType {
 
   createdAt?: string             // 创建时间
   updatedAt?: string             // 修改时间
+  
+  quarter?:string                 // 季度
 }

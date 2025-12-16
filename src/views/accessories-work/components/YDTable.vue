@@ -1,13 +1,20 @@
 <template>
     <div>
-        <ManagePage v-model:data-source="dataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
-            :page-size="PAGE_SIZE" search-placeholder="搜索辅料/款式/颜色" @search="handleSearch" @add="handleAdd"
+        <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
+            :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
             @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete"
             @selection-change="handleSelectionChange">
             <template #custom-tool>
                 <a-button style="margin-left: 5px;" type="primary" @click="onImportClick">导入</a-button>
-                <a-button style="margin-left: 5px;" type="primary">导出</a-button>
-                <a-button style="margin-left: 5px;" type="primary">查看历史</a-button>
+                <a-button style="margin-left: 5px;" type="primary" @click="onExportClick">导出</a-button>
+                <a-button style="margin-left: 5px;" type="primary" @click="onHistoryClick">历史</a-button>
+                <a-select
+                    v-model="selectedBatchId"
+                    :options="batchOptions"
+                    style="margin-left: 5px;"
+                    placeholder="选择批次"
+                    @change="handleBatchChange"
+                />
             </template>
             <template #cell-status="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
@@ -97,7 +104,7 @@
         </ManagePage>
         <!-- 上传图片 模态框 -->
         <a-modal v-model:open="openUpload" title="上传图片" ok-text="确认" cancel-text="取消" @ok="handleAddOk"
-            @cancel="handleAddCancel" :confirmLoading="editUploadLoading">
+            @cancel="handleAddCancel" :confirmLoading="uploadLoading">
             <a-form layout="vertical">
                 <a-form-item label="选择图片" required>
                     <a-upload :before-upload="beforeUpload" :max-count="1" :file-list="uploadFileList"
@@ -116,7 +123,7 @@
 
         <!-- 图片修改 模态框 -->
         <a-modal v-model:open="openEdit" title="修改图片" ok-text="确认" cancel-text="取消" @ok="handleEditOk"
-            @cancel="handleEditCancel" :confirmLoading="uploadLoading">
+            @cancel="handleEditCancel" :confirmLoading="editUploadLoading">
             <a-form layout="vertical">
                 <a-form-item label="选择图片" required>
                     <a-upload :before-upload="beforeEditUpload" :max-count="1" :file-list="editUploadFileList"
@@ -145,6 +152,9 @@ import { formatTime } from '@/utils/formatTime'
 import { getBackendUrl } from '@/utils/api'
 import { EyeOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
+import { uploadFileWithInfo } from '@/api/services/fileResource-api'
+import { tableImportStore } from '@/stores/tableImport-store'
+
 
 // 图片URL处理，添加时间戳防止缓存
 const getImageUrl = (imageUrl: string) => {
@@ -167,16 +177,15 @@ const uploadFileName = ref('')
 const editUploadFileName = ref('')
 
 const store = accStore
-const PAGE_SIZE = 10
+const PAGE_SIZE = 100
 store.pageSize = PAGE_SIZE
 
 const columns: TableColumnType<any>[] = [
-    { title: '季度', dataIndex: 'extraJson', width: '150px' },
+    { title: '季度', dataIndex: 'quarter', width: '150px' },
     {
         title: '图片',
         dataIndex: 'imageUrl',
         width: '100px',
-
     },
 
     { title: '货号', dataIndex: 'sku', width: '140px' },
@@ -260,6 +269,8 @@ const columns: TableColumnType<any>[] = [
     },
 
     { title: '备注', dataIndex: 'remark', width: '220px' },
+    { title: '批次id', dataIndex: 'importId', width: '220px' },
+    
 ];
 
 
@@ -300,9 +311,10 @@ const editableFields = [
     // 'remark',
     'status',
     'priority',
-    'extraJson',
     // 'createdAt',
     // 'updatedAt'
+    'quarter',
+    'importId'
 ]
 
 const setTableRows = (rows: AccPurchaseContractType[]) => {
@@ -347,7 +359,7 @@ const handleSearch = async (keyword: string) => {
         await store.fetchPage()
         return
     }
-    await store.search({ column: 'product_name', keyword: trimmed } as any)
+    await store.search({ column: 'sku', keyword: trimmed } as any)
     setTableRows((store.searchResults as AccPurchaseContractType[]) || [])
 }
 
@@ -401,18 +413,27 @@ const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: AccP
     store.onSelectionChange(rows as any)
 }
 
-// 接收父组件的 openImport（双向绑定）并提供触发事件
-const props = defineProps<{ openImport?: boolean }>()
-const emit = defineEmits(['update:openImport'])
-
+// 接收父组件的 openImport、openExport、openInfo、openHistory（双向绑定）并提供触发事件
+const props = defineProps<{ 
+    openImport?: boolean,
+    openExport?: boolean,
+    openInfo?: boolean,
+    openHistory?: boolean
+}>()
+const emit = defineEmits(['update:openImport', 'update:openExport', 'update:openInfo', 'update:openHistory'])
 const onImportClick = () => {
-    // 调试日志
-    console.debug('[YDTable] onImportClick fired')
-    // 通知父组件打开导入弹窗（v-model）
-    emit('update:openImport', true)
-    // 兼容性事件，父组件也可以监听 'open-import'
     emit('update:openImport', true)
 }
+const onExportClick  = () => { 
+    emit('update:openExport', true)
+}
+const onInfoClick = () => {
+    emit('update:openInfo', true)
+}
+const onHistoryClick = () => { 
+    emit('update:openHistory', true)
+}
+
 
 // 文件上传和修改相关方法
 // 文件暂存
@@ -551,6 +572,26 @@ const handleRemove = (file: any) => {
     editUploadFile.value = null
     editUploadFileName.value = ''
     return true   // 必须返回 true，否则不会删
+}
+
+const selectedBatchId = ref<number | null>(null)
+
+const filteredDataSource = computed(() => {
+    if (selectedBatchId.value === null) {
+        return dataSource.value
+    }
+    return dataSource.value.filter(row => row.importId === selectedBatchId.value)
+})
+
+const batchOptions = computed(() => {
+    return tableImportStore.list.map((batch:any) => ({
+        label: `批次：${batch.id}`,
+        value: batch.id
+    }))
+})
+
+const handleBatchChange = (value: number) => {
+    selectedBatchId.value = value
 }
 
 </script>
