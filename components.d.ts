@@ -19,6 +19,7 @@ declare module 'vue' {
     ACol: typeof import('ant-design-vue/es')['Col']
     ACollapse: typeof import('ant-design-vue/es')['Collapse']
     ACollapsePanel: typeof import('ant-design-vue/es')['CollapsePanel']
+    ADatePicker: typeof import('ant-design-vue/es')['DatePicker']
     AddCard: typeof import('./src/components/AddCard.vue')['default']
     AddModal: typeof import('./src/components/AddModal.vue')['default']
     ADivider: typeof import('ant-design-vue/es')['Divider']

@@ -1,20 +1,17 @@
 <template>
     <div>
-        <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
-            :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
+        <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields"
+            row-key="id" :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
             @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete"
             @selection-change="handleSelectionChange">
             <template #custom-tool>
                 <a-button style="margin-left: 5px;" type="primary" @click="onImportClick">导入</a-button>
                 <a-button style="margin-left: 5px;" type="primary" @click="onExportClick">导出</a-button>
                 <a-button style="margin-left: 5px;" type="primary" @click="onHistoryClick">历史</a-button>
-                <a-select
-                    v-model="selectedBatchId"
-                    :options="batchOptions"
-                    style="margin-left: 5px;"
-                    placeholder="选择批次"
-                    @change="handleBatchChange"
-                />
+                <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;" placeholder="选择批次"
+                    @change="handleBatchChange" />
+                <a-button style="margin-left: 8px;" @click="handleEditClick"
+                    :disabled="isEditButtonDisabled">编辑</a-button>
             </template>
             <template #cell-status="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
@@ -51,6 +48,7 @@
                     </a-select>
                 </template>
             </template>
+
             <template #cell-imageUrl="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
                     <Transition name="fade" appear>
@@ -139,11 +137,67 @@
                 </a-form-item>
             </a-form>
         </a-modal>
+
+        <!-- 编辑弹窗 模态框 -->
+        <a-modal v-model:open="openEditModal" title="编辑记录" ok-text="确认" cancel-text="取消" @ok="handleEditSave"
+            @cancel="handleEditCancelBtn" :confirmLoading="editUploadLoading">
+            <!-- 编辑弹窗中动态生成表单项 -->
+            <a-form layout="vertical" style="height: 450px; overflow-y: scroll;">
+                <a-form-item v-for="field in editableFields" :key="field"
+                    :label="columns.find((col: any) => col.dataIndex === field)?.title">
+
+                    <!-- 状态 -->
+                    <a-select v-if="field === 'status'" :value="editForm[field]"
+                        @update:value="(val: any) => editForm[field] = val" style="width: 120px;">
+                        <a-select-option :value="0">未下单</a-select-option>
+                        <a-select-option :value="1">做货中</a-select-option>
+                        <a-select-option :value="2">货好等付款</a-select-option>
+                        <a-select-option :value="3">已出货</a-select-option>
+                    </a-select>
+
+                    <!-- 优先级 -->
+                    <a-select v-else-if="field === 'priority'" :value="editForm[field]"
+                        @update:value="(val: any) => editForm[field] = val" style="width: 120px;">
+                        <a-select-option :value="0">正常做</a-select-option>
+                        <a-select-option :value="1">有点着急</a-select-option>
+                        <a-select-option :value="2">非常着急安排优先</a-select-option>
+                    </a-select>
+
+                    <!-- 图片上传 -->
+                    <div v-else-if="field === 'imageUrl'" style="display: flex; gap: 10px; align-items: center;">
+                        <div style="flex: 1;">
+                            <a-row v-if="editForm.imageUrl && !modalEditUploadFile" style="margin-bottom: 10px;">
+                                <a-image :width="60" :height="60" :src="getImageUrl(editForm.imageUrl)" alt=""
+                                    style="border-radius: 5px;">
+                                    <template #previewMask>
+                                        <EyeOutlined />
+                                    </template>
+                                </a-image>
+                            </a-row>
+                            <a-row v-if="modalEditUploadFile" style="margin-bottom: 10px;">
+                                <a-image :width="60" :height="60" :src="modalEditUploadFileList[0]?.url" alt=""
+                                    style="border-radius: 5px;">
+                                </a-image>
+                                <span style="margin-left: 10px; color: orange;">待保存</span>
+                            </a-row>
+                            <a-upload :before-upload="beforeModalEditUpload" :max-count="1" :file-list="modalEditUploadFileList"
+                                list-type="text" @remove="handleModalEditRemove">
+                                <a-button>选择图片</a-button>
+                            </a-upload>
+                        </div>
+                    </div>
+
+                    <!-- 普通输入 -->
+                    <a-input v-else-if="!field.includes('Time')" :value="editForm[field]"
+                        @update:value="(val: any) => editForm[field] = val" />
+                </a-form-item>
+            </a-form>
+        </a-modal>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, h, computed, nextTick } from 'vue'
+import { ref, watch, onMounted, reactive, computed, nextTick } from 'vue'
 import { message, type TableColumnType } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
 import { accStore, editFormData } from '@/stores/acc-store'
@@ -155,7 +209,7 @@ import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { uploadFileWithInfo } from '@/api/services/fileResource-api'
 import { tableImportStore } from '@/stores/tableImport-store'
 
-
+const editForm = reactive<Record<string, any>>({})
 // 图片URL处理，添加时间戳防止缓存
 const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return ''
@@ -175,12 +229,16 @@ const uploadFileList = ref<any>([])
 const editUploadFileList = ref<any>([])
 const uploadFileName = ref('')
 const editUploadFileName = ref('')
+// 编辑弹窗中的图片上传状态
+const modalEditUploadFile = ref<File | null>(null)
+const modalEditUploadFileList = ref<any>([])
 
 const store = accStore
 const PAGE_SIZE = 100
 store.pageSize = PAGE_SIZE
 
-const columns: TableColumnType<any>[] = [
+const columns = computed(() => {
+    return [
     { title: '季度', dataIndex: 'quarter', width: '150px' },
     {
         title: '图片',
@@ -197,9 +255,25 @@ const columns: TableColumnType<any>[] = [
     { title: '洗标颜色', dataIndex: 'washLabelColor', width: '140px' },
     { title: '洗标种类', dataIndex: 'washLabelType', width: '140px' },
 
-    { title: '工厂', dataIndex: 'factory', width: '160px' },
+    { 
+        title: '工厂', 
+        dataIndex: 'factory', 
+        width: '160px',
+        filters: factoryOptions.value,
+        onFilter: (value: any, record: any) => {
+            return record.factory === value
+        }
+    },
     { title: '地址', dataIndex: 'address', width: '200px' },
-    { title: '跟单', dataIndex: 'follower', width: '140px' },
+    { 
+        title: '跟单', 
+        dataIndex: 'follower', 
+        width: '140px',
+        filters: followerOptions.value,
+        onFilter: (value: any, record: any) => {
+            return record.follower === value
+        }
+    },
 
     { title: '数量', dataIndex: 'quantity', width: '100px' },
 
@@ -215,13 +289,13 @@ const columns: TableColumnType<any>[] = [
         title: '洗标确认时间',
         dataIndex: 'washConfirmTime',
         width: '180px',
-        customRender: ({ text }) => formatTime(text)
+        customRender: ({ text }: any) => formatTime(text)
     },
     {
         title: '洗标实际出货时间',
         dataIndex: 'washShipTime',
         width: '180px',
-        customRender: ({ text }) => formatTime(text)
+        customRender: ({ text }: any) => formatTime(text)
     },
     { title: '洗标出货数量', dataIndex: 'washShipQuantity', width: '150px' },
     { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '180px' },
@@ -233,13 +307,13 @@ const columns: TableColumnType<any>[] = [
         title: '吊牌确认时间',
         dataIndex: 'tagConfirmTime',
         width: '180px',
-        customRender: ({ text }) => formatTime(text)
+        customRender: ({ text }: any) => formatTime(text)
     },
     {
         title: '吊牌实际出货时间',
         dataIndex: 'tagShipTime',
         width: '180px',
-        customRender: ({ text }) => formatTime(text)
+        customRender: ({ text }: any) => formatTime(text)
     },
     { title: '吊牌出货数量', dataIndex: 'tagShipQuantity', width: '160px' },
     { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '180px' },
@@ -253,31 +327,55 @@ const columns: TableColumnType<any>[] = [
         title: '创建时间',
         dataIndex: 'createdAt',
         width: '200px',
-        sorter: (a, b) =>
+        sorter: (a: any, b: any) =>
             (new Date(a.createdAt ?? '').getTime() || 0) -
             (new Date(b.createdAt ?? '').getTime() || 0),
-        customRender: ({ text }) => formatTime(text)
+        customRender: ({ text }: any) => formatTime(text)
     },
     {
         title: '修改时间',
         dataIndex: 'updatedAt',
         width: '200px',
-        sorter: (a, b) =>
+        sorter: (a: any, b: any) =>
             (new Date(a.updatedAt ?? '').getTime() || 0) -
             (new Date(b.updatedAt ?? '').getTime() || 0),
-        customRender: ({ text }) => formatTime(text)
+        customRender: ({ text }: any) => formatTime(text)
     },
 
     { title: '备注', dataIndex: 'remark', width: '220px' },
     { title: '批次id', dataIndex: 'importId', width: '220px' },
-    
-];
+    ]
+}) as unknown as any
 
 
 
 
 const rawRows = ref<AccPurchaseContractType[]>([])
 const dataSource = ref<any[]>([])
+const factoryOptions = computed(() => {
+    const factories = new Set<string>()
+    rawRows.value.forEach(row => {
+        if (row.factory) {
+            factories.add(row.factory)
+        }
+    })
+    return Array.from(factories)
+        .sort()
+        .map(factory => ({ text: factory, value: factory }))
+})
+
+const followerOptions = computed(() => {
+    const followers = new Set<string>()
+    rawRows.value.forEach(row => {
+        if (row.follower) {
+            followers.add(row.follower)
+        }
+    })
+    return Array.from(followers)
+        .sort()
+        .map(follower => ({ text: follower, value: follower }))
+})
+
 const editableFields = [
     'imageUrl',
     'sku',
@@ -409,12 +507,12 @@ const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
     }
 }
 
-const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: AccPurchaseContractType[] }) => {
-    store.onSelectionChange(rows as any)
-}
+// const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: AccPurchaseContractType[] }) => {
+//     store.onSelectionChange(rows as any)
+// }
 
 // 接收父组件的 openImport、openExport、openInfo、openHistory（双向绑定）并提供触发事件
-const props = defineProps<{ 
+const props = defineProps<{
     openImport?: boolean,
     openExport?: boolean,
     openInfo?: boolean,
@@ -424,13 +522,13 @@ const emit = defineEmits(['update:openImport', 'update:openExport', 'update:open
 const onImportClick = () => {
     emit('update:openImport', true)
 }
-const onExportClick  = () => { 
+const onExportClick = () => {
     emit('update:openExport', true)
 }
 const onInfoClick = () => {
     emit('update:openInfo', true)
 }
-const onHistoryClick = () => { 
+const onHistoryClick = () => {
     emit('update:openHistory', true)
 }
 
@@ -584,7 +682,7 @@ const filteredDataSource = computed(() => {
 })
 
 const batchOptions = computed(() => {
-    return tableImportStore.list.map((batch:any) => ({
+    return tableImportStore.list.map((batch: any) => ({
         label: `批次：${batch.id}`,
         value: batch.id
     }))
@@ -593,7 +691,100 @@ const batchOptions = computed(() => {
 const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
 }
+// 添加编辑按钮的逻辑
+///
+const selectedRow = ref();
+const isEditButtonDisabled = computed(() => {
+    return !selectedRow.value || Array.isArray(selectedRow.value) && selectedRow.value.length !== 1;
+});
 
+const openEditModal = ref(false);
+const handleEditClick = () => {
+    if (selectedRow.value) {
+        Object.keys(editForm).forEach(k => delete editForm[k])
+        Object.assign(editForm, selectedRow.value)
+        // 重置图片上传状态
+        modalEditUploadFile.value = null
+        modalEditUploadFileList.value = []
+        openEditModal.value = true
+    }
+}
+
+
+
+const handleEditSave = async () => {
+    try {
+        // 如果编辑弹窗中有新上传的图片
+        if (modalEditUploadFile.value) {
+            const form = new FormData()
+            form.append("file", modalEditUploadFile.value)
+            form.append("acc", new Blob([JSON.stringify(editForm)], { type: "application/json" }))
+            await updateFileWithInfo(form)
+            message.success("修改成功")
+            // 重置上传状态
+            modalEditUploadFile.value = null
+            modalEditUploadFileList.value = []
+        } else {
+            // 没有上传图片，只更新文字信息
+            await store.update(editForm)
+            message.success("修改成功")
+        }
+
+        openEditModal.value = false
+        await store.fetchPage()
+        // 重置表单
+        Object.keys(editForm).forEach(k => delete editForm[k])
+        // 强制重新设置表格数据，确保更新
+        setTimeout(() => {
+            setTableRows(store.pagedList as AccPurchaseContractType[])
+        }, 100)
+    } catch (e) {
+        message.error('修改失败')
+        console.error(e)
+    }
+}
+
+
+
+const handleEditCancelBtn = () => {
+    openEditModal.value = false
+    // 重置图片上传状态
+    modalEditUploadFile.value = null
+    modalEditUploadFileList.value = []
+    // 重置表单
+    Object.keys(editForm).forEach(k => delete editForm[k])
+};
+const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: any[] }) => {
+    selectedRow.value = rows.length === 1 ? rows[0] : null;
+};
+///
+
+// 编辑弹窗中的图片上传方法
+const beforeModalEditUpload = async (file: File) => {
+    const reader = new FileReader()
+
+    reader.onload = e => {
+        modalEditUploadFileList.value = [
+            {
+                uid: String(Date.now()),
+                name: file.name,
+                status: 'done',
+                url: e.target?.result as string,
+                originFileObj: file
+            }
+        ]
+    }
+    reader.readAsDataURL(file)
+
+    modalEditUploadFile.value = file
+    return false
+}
+
+const handleModalEditRemove = () => {
+    modalEditUploadFile.value = null
+    modalEditUploadFileList.value = []
+    return true
+}
 </script>
 
 <style scoped>
