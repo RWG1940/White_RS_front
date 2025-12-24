@@ -19,7 +19,7 @@
         </a>
         <template #overlay>
           <a-menu>
-            <a-menu-item key="profile">
+            <a-menu-item key="profile" @click="handleProfileClick">
               <UserOutlined />
               <span>个人中心</span>
             </a-menu-item>
@@ -33,9 +33,45 @@
 
     </div>
   </div>
+
+  <!-- 个人中心弹窗 -->
+  <a-modal v-model:open="showProfileModal" title="个人中心" ok-text="确定" cancel-text="取消" 
+    @ok="handleProfileSave" :confirmLoading="profileLoading" width="600px">
+    <a-tabs v-model:activeKey="activeTab">
+      <!-- 基本信息标签 -->
+      <a-tab-pane key="info" tab="基本信息">
+        <a-form layout="vertical" :model="profileForm">
+          <a-form-item label="用户名" disbled>
+            <a-input v-model:value="profileForm.username" placeholder="请输入用户名" disabled />
+          </a-form-item>
+          <a-form-item label="邮箱">
+            <a-input v-model:value="profileForm.email" type="email" placeholder="请输入邮箱" />
+          </a-form-item>
+          <a-form-item label="手机号">
+            <a-input v-model:value="profileForm.phone" placeholder="请输入手机号" />
+          </a-form-item>
+        </a-form>
+      </a-tab-pane>
+
+      <!-- 修改密码标签 -->
+      <a-tab-pane key="password" tab="修改密码">
+        <a-form layout="vertical" :model="passwordForm">
+          <a-form-item label="原密码" required>
+            <a-input-password v-model:value="passwordForm.oldPassword" placeholder="请输入原密码" />
+          </a-form-item>
+          <a-form-item label="新密码" required>
+            <a-input-password v-model:value="passwordForm.newPassword" placeholder="请输入新密码" />
+          </a-form-item>
+          <a-form-item label="确认密码" required>
+            <a-input-password v-model:value="passwordForm.confirmPassword" placeholder="请确认新密码" />
+          </a-form-item>
+        </a-form>
+      </a-tab-pane>
+    </a-tabs>
+  </a-modal>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth-store'
 import {
@@ -44,7 +80,7 @@ import {
   LogoutOutlined,
   UserOutlined,
 } from '@ant-design/icons-vue'
-import { Modal } from 'ant-design-vue'
+import { Modal, message } from 'ant-design-vue'
 import OnlineDot from '@/layout/components/onlineDot.vue'
 import { onMounted, onUnmounted, ref } from 'vue'
 import {
@@ -53,6 +89,8 @@ import {
   checkUserOnline,
 } from '@/api/services/websocket-api'
 import { getBackendUrl } from '@/utils/api'
+import { changePassword } from '@/api/services/login-api'
+import { userStore } from '@/stores/user-store'
 
 
 // 定义props和emit
@@ -63,6 +101,22 @@ defineProps<{
 const emit = defineEmits<{
   'toggle-collapse': []
 }>()
+
+// 个人中心弹窗状态
+const showProfileModal = ref(false)
+const activeTab = ref('info')
+const profileLoading = ref(false)
+const profileForm = reactive({
+  username: '',
+  email: '',
+  phone: '',
+})
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+})
+
 // 获取用户信息
 const authStore = useAuthStore()
 // 在线人数
@@ -100,6 +154,73 @@ const handleLogout = () => {
 const toggleCollapse = () => {
   emit('toggle-collapse')
 }
+
+// 打开个人中心弹窗
+const handleProfileClick = () => {
+  if (authStore.user) {
+    profileForm.username = authStore.user.username || ''
+    profileForm.email = authStore.user.email || ''
+    profileForm.phone = authStore.user.phone || ''
+    activeTab.value = 'info'
+    showProfileModal.value = true
+  }
+}
+
+// 保存个人信息或修改密码
+const handleProfileSave = async () => {
+  try {
+    profileLoading.value = true
+    
+    if (activeTab.value === 'info') {
+      // 保存基本信息
+      await userStore.update({
+        id: authStore.user!.id,
+        username: profileForm.username,
+        email: profileForm.email,
+        phone: profileForm.phone,
+      })
+      message.success('个人信息修改成功')
+      // 更新本地用户信息
+      if (authStore.user) {
+        authStore.user.username = profileForm.username
+        authStore.user.email = profileForm.email
+        authStore.user.phone = profileForm.phone
+      }
+    } else if (activeTab.value === 'password') {
+      // 修改密码
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        message.error('新密码与确认密码不一致')
+        return
+      }
+      if (!passwordForm.oldPassword || !passwordForm.newPassword) {
+        message.error('请填写所有密码字段')
+        return
+      }
+      await changePassword({
+        id: authStore.user!.id!,
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword,
+      })
+      message.success('密码修改成功，请重新登录')
+      // 清空表单
+      passwordForm.oldPassword = ''
+      passwordForm.newPassword = ''
+      passwordForm.confirmPassword = ''
+      // 关闭弹窗并退出登录
+      showProfileModal.value = false
+      await authStore.logout()
+      router.push('/login')
+    }
+    
+    showProfileModal.value = false
+  } catch (error: any) {
+    message.error(error.response?.data?.message || '操作失败，请重试')
+  } finally {
+    profileLoading.value = false
+  }
+}
+
 // 在线状态客户端
 const statusClient = new OnlineStatusClient({
   onConnected: () => {

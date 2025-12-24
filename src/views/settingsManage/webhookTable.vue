@@ -1,0 +1,124 @@
+<template>
+    <div>
+        <ManagePage v-model:data-source="dataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
+            :show-operation="true" :show-add="true" :show-batch-delete="true" :page-size="PAGE_SIZE"
+            search-placeholder="搜索webhook" @search="handleSearch" @add="handleAdd" @save="handleSave"
+            @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" @selection-change="handleSelectionChange">
+            <template #cell-status="{ record, isEditing, editableData, getInternalKey }">
+                <template v-if="!isEditing">
+                    <a-tag :color="record.status === 1 ? 'blue' : 'red'">
+                        {{ record.status === 1 ? '正常' : '停用' }}
+                    </a-tag>
+                </template>
+                <template v-else>
+                    <a-select v-model:value="editableData[getInternalKey(record)]!.status" size="small"
+                        style="width:120px">
+                        <a-select-option :value="1">正常</a-select-option>
+                        <a-select-option :value="0">停用</a-select-option>
+                    </a-select>
+                </template>
+            </template>
+        </ManagePage>
+    </div>
+</template>
+<script setup lang="ts">
+import { ref, watch, onMounted } from 'vue'
+import type { TableColumnType } from 'ant-design-vue'
+import ManagePage from '@/components/ManagePage.vue'
+import { webhookStore } from '../../stores/webhook-store'
+import type { WebhookType } from '@/types/webhook-type'
+import { formatTime } from '@/utils/formatTime'
+
+
+// 角色数据存储
+const store = webhookStore
+// 分页大小
+const PAGE_SIZE = 10
+// 分页大小
+store.pageSize = PAGE_SIZE
+// 表格列
+const columns: TableColumnType<WebhookType>[] = [
+    { title: '机器人名称', dataIndex: 'name', width: '180px' },
+    { title: '地址', dataIndex: 'url', width: '120px' },
+    { title: '状态', dataIndex: 'status', width: '80px'},
+    { title: '创建时间', dataIndex: 'createdAt', width: '120px' ,customRender: ({ text }) => formatTime(text) },
+    { title: '更新时间', dataIndex: 'updatedAt', width: '120px',customRender: ({ text }) => formatTime(text) },
+    { title: '备注', dataIndex: 'remark', width: '120px' },
+    { title: '发送次数', dataIndex: 'sendCount', width: '80px' },
+    { title: '最后发送时间', dataIndex: 'lastSendTime', width: '120px', customRender: ({ text }) => formatTime(text) },
+
+
+    
+]
+// 表格原始数据
+const rawRows = ref<WebhookType[]>([])
+// 表格数据
+const dataSource = ref<WebhookType[]>([])
+// 可编辑字段
+const editableFields = ['name', 'url', 'status', 'remark']
+// 设置表格数据
+const setTableRows = (rows: WebhookType[]) => {
+    rawRows.value = (rows || []).map((r) => ({ ...r }))
+    dataSource.value = rawRows.value.map((r) => ({ ...r }))
+}
+// 监听数据
+watch(
+    () => store.pagedList,
+    (list) => {
+        setTableRows((list as WebhookType[]) || [])
+    },
+    { immediate: true, deep: true },
+)
+// 获取数据
+onMounted(async () => {
+    await store.fetchPage()
+})
+// 搜索
+const handleSearch = async (keyword: string) => {
+    const trimmed = keyword.trim()
+    if (!trimmed) {
+        await store.fetchPage()
+        return
+    }
+    await store.search({ column: 'name', keyword: trimmed } as any)
+    setTableRows((store.searchResults as WebhookType[]) || [])
+}
+// 生成随机名称
+const generateName = (): string => {
+    try {
+        return crypto.randomUUID().replace(/-/g, '').slice(0, 6)
+    } catch (e) {
+        return Math.random().toString(36).slice(2, 8)
+    }
+}
+// 添加
+const handleAdd = async () => {
+    const payload: any = { name: `新webhook-${generateName()}`, status: 1, code: generateName() }
+    await store.create(payload)
+    await store.fetchPage()
+}
+// 保存
+const handleSave = async (record: any) => {
+    await store.update(record)
+    await store.fetchPage()
+}
+// 单个删除
+const handleRowDelete = async (id: string | number) => {
+    await store.remove([Number(id)])
+    await store.fetchPage()
+}
+// 批量删除
+const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
+    const ids = keys.map((k) => Number(k))
+    await store.remove(ids)
+    await store.fetchPage()
+}
+// 监听多选
+const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: WebhookType[] }) => {
+    store.onSelectionChange(rows as any)
+}
+
+
+</script>
+
+<style scoped></style>

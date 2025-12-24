@@ -15,3 +15,9 @@ export const userCurrent = async () => {
 export const userLogout = async () => {
   return apiClient.post('/api/auth/logout')
 };
+
+
+// 修改密码
+export const changePassword = async (data: {id:number; oldPassword: string; newPassword: string; confirmPassword: string }) => {
+  return apiClient.post('/api/auth/change-password', data)
+};

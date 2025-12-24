@@ -8,25 +8,47 @@
                 <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;" placeholder="选择批次"
                     @change="handleBatchChange" />
             </template>
-            <template #cell-status="{ record, isEditing, editableData, getInternalKey }">
-           
-                    <a-tag
-                        :color="record.status === 0 ? 'lightgrey' : record.status === 1 ? 'orange' : record.status === 2 ? 'pink' : record.status === 3 ? 'green' : ''">
-                        {{ record.status === 0 ? '未下单' : record.status === 1 ? '做货中' : record.status === 2 ? '货好等付款' :
-                            record.status === 3 ? '已出货' : '' }}
-                    </a-tag>
-             
+            <template #cell-washPriority="{ record }">
+                    <div style="display: flex;justify-content: center;align-items: center;">
+                        <div v-show="record.washPriority == 2"
+                            style="border-radius: 15px;background-color: red;width: 15px;height: 15px;box-shadow: 1px 1px 15px red;">
+                        </div>
+                        <div v-show="record.washPriority == 0"
+                            style="border-radius: 15px;background-color: lightgreen;width: 15px;height: 15px;box-shadow: 1px 1px 15px lightgreen;">
+                        </div>
+                        <div v-show="record.washPriority == 1"
+                            style="border-radius: 15px;background-color: gold;width: 15px;height: 15px;box-shadow: 1px 1px 15px gold;">
+                        </div>
+                    </div>
             </template>
-            <template #cell-priority="{ record, isEditing, editableData, getInternalKey }">
-           
+            <template #cell-washStatus="{ record }">
                     <a-tag
-                        :color="record.priority === 0 ? 'green' : record.priority === 1 ? 'gold' : record.priority === 2 ? 'red' : ''">
-                        {{ record.priority === 0 ? '正常做' : record.priority === 1 ? '有点着急' : record.priority === 2 ?
-                        '非常着急安排优先' : '' }}
+                        :color="record.washStatus == 0 ? 'lightgrey' : record.washStatus == 1 ? 'orange' : record.washStatus == 2 ? 'pink' : record.washStatus == 3 ? 'green' : ''">
+                        {{ record.washStatus == 0 ? '未下单' : record.washStatus == 1 ? '做货中' : record.washStatus == 2 ? '货好等付款'
+                            : record.washStatus == 3 ? '已出货' : '' }}
                     </a-tag>
-              
             </template>
-            <template #cell-imageUrl="{ record, isEditing, editableData, getInternalKey }">
+            <template #cell-tagPriority="{ record }">
+                    <div style="display: flex;justify-content: center;align-items: center;">
+                        <div v-show="record.washPriority == 2"
+                            style="border-radius: 15px;background-color: red;width: 15px;height: 15px;box-shadow: 1px 1px 15px red;">
+                        </div>
+                        <div v-show="record.washPriority == 0"
+                            style="border-radius: 15px;background-color: lightgreen;width: 15px;height: 15px;box-shadow: 1px 1px 15px lightgreen;">
+                        </div>
+                        <div v-show="record.washPriority == 1"
+                            style="border-radius: 15px;background-color: gold;width: 15px;height: 15px;box-shadow: 1px 1px 15px gold;">
+                        </div>
+                    </div>
+            </template>
+            <template #cell-tagStatus="{ record }">
+                    <a-tag
+                        :color="record.tagStatus == 0 ? 'lightgrey' : record.tagStatus == 1 ? 'orange' : record.tagStatus == 2 ? 'pink' : record.tagStatus == 3 ? 'green' : ''">
+                        {{ record.tagStatus == 0 ? '未下单' : record.tagStatus == 1 ? '做货中' : record.tagStatus == 2 ? '货好等付款'
+                            : record.tagStatus == 3 ? '已出货' : '' }}
+                    </a-tag>
+            </template>
+            <template #cell-imageUrl="{ record }">
                 <Transition name="fade" appear>
                     <a-row>
                         <template v-if="record.imageUrl">
@@ -46,7 +68,6 @@
                     </a-row>
                 </Transition>
             </template>
-
             <!-- 自定义操作列 -->
             <template #operation="{ record, isEditing, save, cancel, edit, remove }">
                 <div class="editable-row-operations">
@@ -73,8 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, h, computed, nextTick } from 'vue'
-import { message, type TableColumnType } from 'ant-design-vue'
+import { ref, watch, onMounted, computed, nextTick } from 'vue'
+import { message } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
 import { accStore, editFormData } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
@@ -84,6 +105,7 @@ import { EyeOutlined } from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { tableImportStore } from '@/stores/tableImport-store'
 import { useAuthStore } from '@/stores/auth-store'
+import {  noticeGroup } from '@/api/services/webhookTableImport-api'
 
 
 // 图片URL处理，添加时间戳防止缓存
@@ -94,18 +116,15 @@ const getImageUrl = (imageUrl: string) => {
     return `${baseUrl}${imageUrl}?t=${timestamp}`
 }
 
-
 const uploadFile = ref<File | null>(null)
 const editUploadFile = ref<File | null>(null)
 const uploadFileList = ref<any>([])
 const editUploadFileList = ref<any>([])
 const uploadFileName = ref('')
 const editUploadFileName = ref('')
-
 const store = accStore
 const PAGE_SIZE = 100
 store.pageSize = PAGE_SIZE
-
 const rawRows = ref<AccPurchaseContractType[]>([])
 const dataSource = ref<any[]>([])
 
@@ -123,81 +142,70 @@ const factoryOptions = computed(() => {
 
 const columns = computed(() => {
     return [
-    { title: '季度', dataIndex: 'quarter', width: '150px' },
+    { title: '季度', dataIndex: 'quarter', width: '80px' },
     {
         title: '图片',
         dataIndex: 'imageUrl',
-        width: '100px',
+        width: '75px',
     },
-
-    { title: '货号', dataIndex: 'sku', width: '140px' },
-    { title: '颜色', dataIndex: 'color', width: '120px' },
-    { title: '品牌', dataIndex: 'brand', width: '140px' },
-    { title: '英文品名', dataIndex: 'nameEn', width: '160px' },
-    { title: '大面材料', dataIndex: 'materialMain', width: '160px' },
-    { title: '里衬材质', dataIndex: 'materialLining', width: '160px' },
-    { title: '洗标颜色', dataIndex: 'washLabelColor', width: '140px' },
-    { title: '洗标种类', dataIndex: 'washLabelType', width: '140px' },
-
+    { title: '货号', dataIndex: 'sku', width: '125px' },
+    { title: '颜色', dataIndex: 'color', width: '100px' },
+    { title: '品牌', dataIndex: 'brand', width: '115px' },
+    { title: '英文品名', dataIndex: 'nameEn', width: '120px' },
+    { title: '大面材料', dataIndex: 'materialMain', width: '120px' },
+    { title: '里衬材质', dataIndex: 'materialLining', width: '120px' },
+    { title: '洗标颜色', dataIndex: 'washLabelColor', width: '80px' },
+    { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
     { 
         title: '工厂', 
         dataIndex: 'factory', 
-        width: '160px',
+        width: '110px',
         filters: factoryOptions.value,
         onFilter: (value: any, record: any) => {
             return record.factory === value
         }
     },
-    { title: '地址', dataIndex: 'address', width: '200px' },
-    { title: '跟单', dataIndex: 'follower', width: '140px' },
-
+    { title: '地址', dataIndex: 'address', width: '125px' },
+    { title: '跟单', dataIndex: 'follower', width: '100px' },
     { title: '数量', dataIndex: 'quantity', width: '100px' },
-
-    { title: '洗标优先级', dataIndex: 'washPriority', width: '140px' },
-    { title: '洗标状态', dataIndex: 'washStatus', width: '140px' },
-
+    { title: '洗标优先级', dataIndex: 'washPriority', width: '90px' },
+    { title: '洗标状态', dataIndex: 'washStatus', width: '90px' },
     {
         title: '洗标确认时间',
         dataIndex: 'washConfirmTime',
-        width: '180px',
+        width: '140px',
         customRender: ({ text }: any) => formatTime(text)
     },
     {
         title: '洗标出货时间',
         dataIndex: 'washShipTime',
-        width: '180px',
+        width: '140px',
         customRender: ({ text }: any) => formatTime(text)
     },
-    { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '150px' },
-    { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '180px' },
+    { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
+    { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '120px' },
 
-    { title: '吊牌优先级', dataIndex: 'tagPriority', width: '140px' },
-    { title: '吊牌状态', dataIndex: 'tagStatus', width: '140px' },
+    { title: '吊牌优先级', dataIndex: 'tagPriority', width: '90px' },
+    { title: '吊牌状态', dataIndex: 'tagStatus', width: '90px' },
 
     {
         title: '吊牌确认时间',
         dataIndex: 'tagConfirmTime',
-        width: '180px',
+        width: '140px',
         customRender: ({ text }: any) => formatTime(text)
     },
     {
         title: '吊牌出货时间',
         dataIndex: 'tagShipTime',
-        width: '180px',
+        width: '140px',
         customRender: ({ text }: any) => formatTime(text)
     },
-    { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '160px' },
-    { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '180px' },
-
-    { title: '状态', dataIndex: 'status', width: '140px' },
-
-
-    { title: '优先级', dataIndex: 'priority', width: '140px' },
-
+    { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
+    { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '120px' },
     {
         title: '创建时间',
         dataIndex: 'createdAt',
-        width: '200px',
+        width: '140px',
         sorter: (a: any, b: any) =>
             (new Date(a.createdAt ?? '').getTime() || 0) -
             (new Date(b.createdAt ?? '').getTime() || 0),
@@ -206,15 +214,14 @@ const columns = computed(() => {
     {
         title: '修改时间',
         dataIndex: 'updatedAt',
-        width: '200px',
+        width: '140px',
         sorter: (a: any, b: any) =>
             (new Date(a.updatedAt ?? '').getTime() || 0) -
             (new Date(b.updatedAt ?? '').getTime() || 0),
         customRender: ({ text }: any) => formatTime(text)
     },
-
-    { title: '备注', dataIndex: 'remark', width: '220px' },
-    { title: '批次id', dataIndex: 'importId', width: '220px' },
+    { title: '备注', dataIndex: 'remark', width: '180px' },
+    { title: '批次id', dataIndex: 'importId', width: '120px' },
     ]
 }) as unknown as any
 
@@ -227,17 +234,8 @@ const setTableRows = (rows: AccPurchaseContractType[]) => {
     const newRows = (rows || []).map((r) => ({ ...r }))
     rawRows.value = newRows
     dataSource.value = newRows.map((r) => ({ ...r }))
-
-    // 调试：打印首条记录查看字段名和内容
-    if (rawRows.value.length) {
-        console.debug('[YDTable] setTableRows sample record:', JSON.parse(JSON.stringify(rawRows.value[0])))
-    } else {
-        console.debug('[YDTable] setTableRows: no rows')
-    }
-
     // 强制触发重新渲染 - 多重保障
     dataSource.value = [...dataSource.value]
-
     // 强制更新Vue的响应式系统
     nextTick(() => {
         // 再次触发更新，确保DOM重新渲染
@@ -313,7 +311,7 @@ const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: AccP
 
 // 检查是否可以编辑该行（已出货的行不能编辑工厂和地址）
 const canEditRow = (record: any): boolean => {
-    if (record.status === 3) {
+    if (record.washStatus == 3 || record.tagStatus == 3) {
         return false
     }
     return true
@@ -328,17 +326,11 @@ const props = defineProps<{
 }>()
 const emit = defineEmits(['update:openImport', 'update:openExport', 'update:openInfo', 'update:openHistory'])
 
-
-
-
-
-
-
 // 新的保存方法
 const handleSave = async (record: any) => {
     try {
         // 检查：如果状态为已出货(3)，禁止修改工厂和地址
-        if (record.status === 3) {
+        if (record.washStatus == 3 || record.tagStatus == 3) {
             // 检查是否修改了工厂或地址
             const originalRecord = store.pagedList.find((r:any) => r.id === record.id) as any
             if (originalRecord && (record.factory !== originalRecord.factory || record.address !== originalRecord.address)) {
@@ -346,7 +338,6 @@ const handleSave = async (record: any) => {
                 return
             }
         }
-
         // 新增文件
         if (uploadFile.value) {
        
@@ -358,11 +349,9 @@ const handleSave = async (record: any) => {
             uploadFile.value = null
             uploadFileList.value = []
             uploadFileName.value = ''
-            message.success("上传成功")
         }
         // 编辑替换文件
         if (editUploadFile.value) {
-      
             const form = new FormData()
             form.append("file", editUploadFile.value)
             form.append("acc", new Blob([JSON.stringify(record)], { type: "application/json" }))
@@ -371,47 +360,39 @@ const handleSave = async (record: any) => {
             editUploadFile.value = null
             editUploadFileList.value = []
             editUploadFileName.value = ''
-            message.success("修改成功")
+            await noticeGroup(record.importId,record.sku)
+
         }
         if (!editUploadFile.value && editFormData.value) {
-            message.info("没有上传图片，文字信息仍然保存")
-            await accStore.update(record)
-        }
 
+            await accStore.update(record)
+            await noticeGroup(record.importId,record.sku)
+        }
         // 无论如何都刷新数据
         await store.fetchPage()
-
         // 强制重新设置表格数据，确保更新
         setTimeout(() => {
-            console.debug('[YDTable] handleSave: 强制重新设置数据')
+
             setTableRows(store.pagedList as AccPurchaseContractType[])
         }, 100)
-
     } catch (e) {
         console.error("保存失败", e)
     }
 }
 
-
-
-
-
 const selectedBatchId = ref<number | null>(null)
-
 const filteredDataSource = computed(() => {
     if (selectedBatchId.value === null && useAuthStore().user === null) {
         return dataSource.value
     }
     return dataSource.value.filter(row => row.importId === selectedBatchId.value && row.follower == useAuthStore()!.user!.username)
 })
-
 const batchOptions = computed(() => {
     return tableImportStore.list.map((batch: any) => ({
         label: `批次：${batch.id}`,
         value: batch.id
     }))
 })
-
 const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
 }

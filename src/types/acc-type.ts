@@ -23,14 +23,14 @@ export interface AccPurchaseContractType {
   tagTotalPrice?: number         // 吊牌总价
 
   washPriority?: number          // 洗标优先级
-  washStatus?: string            // 洗标状态
+  washStatus?: number            // 洗标状态
   washConfirmTime?: string       // 洗标确认时间
   washShipQuantity?: number      // 洗标出货数量
   washShipTime?: string          // 洗标实际出货时间
   washExpressNo?: string         // 洗标快递单号
 
   tagPriority?: number           // 吊牌优先级
-  tagStatus?: string             // 吊牌状态
+  tagStatus?: number             // 吊牌状态
   tagConfirmTime?: string        // 吊牌确认时间
   tagShipTime?: string           // 吊牌出货时间
   tagShipQuantity?: number       // 吊牌实际出货数量

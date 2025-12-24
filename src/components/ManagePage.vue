@@ -35,9 +35,9 @@
       </div>
       <!-- 表格  -->
       <div class="content">
-        <a-table :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection" bordered
+        <a-table size="middle" :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection" bordered
           :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll">
-          <template #bodyCell="{ column, text, record }">
+          <template #bodyCell="{ column, text, record }" >
             <slot v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
               :name="`cell-${String(column?.dataIndex ?? '')}`" :column="column" :text="text" :record="record"
               :is-editing="isEditing(record)" :editable-data="editableData" :get-internal-key="getInternalKey" />
@@ -61,8 +61,12 @@
                       </a-popconfirm>
                     </span>
                     <span v-else>
-                      <a-button size="small" @click="edit(getRowKeyValue(record))">编辑</a-button>
-                     
+                      <div style="display: flex;align-items: center;justify-content: center;">
+                      <a-button size="small" @click="edit(getRowKeyValue(record))">
+                        <EditOutlined />
+                        编辑
+                      </a-button>
+                     </div>
                     </span>
                   </div>
                 </slot>
@@ -84,7 +88,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch, onMounted, onUnmounted, type UnwrapRef, defineComponent, h, isVNode } from 'vue'
 import type { TableColumnType, TableProps } from 'ant-design-vue'
-import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DeleteOutlined, ReloadOutlined,EditOutlined } from '@ant-design/icons-vue'
 
 const spinning = ref(false)
 // RecordType 定义为任意键值对对象 
@@ -156,6 +160,8 @@ const selectedRowKeys = ref<(string | number)[]>([])
 const selectedRows = ref<RecordType[]>([])
 const windowSize = ref({ width: 0, height: 0 })
 const isMobile = ref(false)
+const currentPage = ref(1)
+const currentPageSize = ref(props.pageSize)
 
 // 检测是否为移动端
 const checkMobile = () => {
@@ -187,6 +193,14 @@ watch(
     tableData.value = cloneDeep(value)
   },
   { immediate: true, deep: true },
+)
+
+// 监听 pageSize prop 变化
+watch(
+  () => props.pageSize,
+  (value) => {
+    currentPageSize.value = value
+  },
 )
 // 监听 tableData 变化，更新已选择的行
 watch(
@@ -270,7 +284,7 @@ const mergedColumns = computed(() => {
   if (props.showOperation !== false) {
     const hasOperation = cols.some((column) => column.dataIndex === OPERATION_DATA_INDEX)
     if (!hasOperation) {
-      cols = [...cols, { title: '操作', dataIndex: OPERATION_DATA_INDEX, fixed: 'right', width: '150px' }]
+      cols = [...cols, { title: '操作', dataIndex: OPERATION_DATA_INDEX, fixed: 'right', width: '120px' }]
     }
   }
   // 如果启用了列拖拽，在返回的列中替换 title 为可拖拽节点
@@ -306,8 +320,21 @@ const paginationConfig = computed(() => {
     return props.pagination
   }
   return {
-    pageSize: props.pageSize,
-    showSizeChanger: false,
+    current: currentPage.value,
+    pageSize: currentPageSize.value,
+    total: tableData.value.length,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total: number) => `共 ${total} 条`,
+    pageSizeOptions: ['10', '20', '50', '100'],
+    onChange: (page: number, pageSize: number) => {
+      currentPage.value = page
+      currentPageSize.value = pageSize
+    },
+    onShowSizeChange: (current: number, pageSize: number) => {
+      currentPageSize.value = pageSize
+      currentPage.value = 1
+    },
   }
 })
 
