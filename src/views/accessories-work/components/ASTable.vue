@@ -6,12 +6,16 @@
             :show-batch-delete="false" @selection-change="handleSelectionChange" :show-delete="false">
 
             <template #custom-tool>
+                <a-button style="margin-left: 5px;" type="primary" @click="onImportClick">导入</a-button>
+                <a-button style="margin-left: 5px;" type="primary" @click="onExportClick">导出</a-button>
                 <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;" placeholder="选择批次"
                     @change="handleBatchChange" />
                 <a-button style="margin-left: 8px;" @click="handleEditClick" :disabled="isEditButtonDisabled">编辑
                 </a-button>
             </template>
-
+            <template #cell-__index__="{ index }">
+                <span>{{ (index ?? 0) + 1 }}</span>
+            </template>
             <template #cell-washPriority="{ record }">
                 <div style="display: flex;justify-content: center;align-items: center;">
                     <div v-show="record.tagPriority == 2"
@@ -109,22 +113,57 @@
             <a-form layout="vertical" style="height: 450px; overflow-y: scroll;">
                 <a-form-item v-for="field in editableFields" :key="field"
                     :label="columns.find((col: any) => col.dataIndex === field)?.title">
-                    <!-- 普通输入 -->
-                    <a-input v-if="field !== 'status' && !field.includes('Time')" :value="editForm[field]"
-                        @update:value="(val: any) => editForm[field] = val" />
-                    <!-- 下拉选择 -->
-                    <a-select v-else-if="field === 'status'" :value="editForm[field]"
-                        @update:value="(val: any) => editForm[field] = val">
-                        <a-select-option :value="0">未下单</a-select-option>
-                        <a-select-option :value="1">做货中</a-select-option>
-                        <a-select-option :value="2">货好等付款</a-select-option>
-                        <a-select-option :value="3">已出货</a-select-option>
-                    </a-select>
+                    <!-- 洗标状态下拉选择 -->
+                    <template v-if="field === 'washStatus'">
+                        <a-select
+                            :value="editForm[field]"
+                            @update:value="(val: any) => editForm[field] = val"
+                            placeholder="选择洗标状态"
+                            allow-clear
+                            style="width: 100%;"
+                        >
+                            <a-select-option :value="0">未下单</a-select-option>
+                            <a-select-option :value="1">做货中</a-select-option>
+                            <a-select-option :value="2">货好等付款</a-select-option>
+                            <a-select-option :value="3">已出货</a-select-option>
+                        </a-select>
+                        <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                            若填写快递单号，状态将自动设为已出货
+                        </div>
+                    </template>
+                    <!-- 吊牌状态下拉选择 -->
+                    <template v-else-if="field === 'tagStatus'">
+                        <a-select
+                            :value="editForm[field]"
+                            @update:value="(val: any) => editForm[field] = val"
+                            placeholder="选择吊牌状态"
+                            allow-clear
+                            style="width: 100%;"
+                        >
+                            <a-select-option :value="0">未下单</a-select-option>
+                            <a-select-option :value="1">做货中</a-select-option>
+                            <a-select-option :value="2">货好等付款</a-select-option>
+                            <a-select-option :value="3">已出货</a-select-option>
+                        </a-select>
+                        <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                            若填写快递单号，状态将自动设为已出货
+                        </div>
+                    </template>
                     <!-- 日期时间选择器 -->
                     <a-date-picker v-else-if="field.includes('Time')" show-time style="width: 100%;"
                         placeholder="Select Time" :value="editForm[field] ? dayjs(editForm[field]) : null"
                         @change="(val: any) => editForm[field] = val ? val.toISOString() : null"
                         @ok="(val: any) => editForm[field] = val ? val.toISOString() : null" />
+                    <!-- 备注文本域 -->
+                    <a-textarea v-else-if="field === 'remark'"
+                        :value="editForm[field]"
+                        @update:value="(val: any) => editForm[field] = val"
+                        placeholder="请输入备注信息"
+                        :rows="3"
+                    />
+                    <!-- 普通输入 -->
+                    <a-input v-else :value="editForm[field]"
+                        @update:value="(val: any) => editForm[field] = val" />
                 </a-form-item>
             </a-form>
         </a-modal>
@@ -141,7 +180,7 @@ import { formatTime } from '@/utils/formatTime'
 import { updateFileWithInfo } from '@/api/services/acc-api'
 import { tableImportStore } from '@/stores/tableImport-store'
 import dayjs from 'dayjs'
-import {  noticeGroup } from '@/api/services/webhookTableImport-api'
+import { noticeGroup } from '@/api/services/webhookTableImport-api'
 
 
 const editForm = reactive<Record<string, any>>({})
@@ -182,36 +221,43 @@ const followerOptions = computed(() => {
 
 const columns = computed(() => {
     return [
-
+        {
+            title: '序号',
+            dataIndex: '__index__',
+            width: '60px',
+            fixed: true
+        },
         { title: '货号', dataIndex: 'sku', width: '125px' },
-        { title: '颜色', dataIndex: 'color', width: '100px' },
-        { title: '品牌', dataIndex: 'brand', width: '115px' },
-        { title: '洗标颜色', dataIndex: 'washLabelColor', width: '80px' },
+        { title: '颜色', dataIndex: 'color', width: '80px' },
+        { title: '品牌', dataIndex: 'brand', width: '100px' },
+        { title: '洗标颜色', dataIndex: 'washLabelColor', width: '75px' },
         { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
         {
             title: '工厂',
             dataIndex: 'factory',
-            width: '110px',
+            width: '95px',
             filters: factoryOptions.value,
             onFilter: (value: any, record: any) => {
                 return record.factory === value
             }
         },
-        { title: '地址', dataIndex: 'address', width: '125px' },
+        { title: '地址', dataIndex: 'address', width: '110px' },
         {
             title: '跟单',
             dataIndex: 'follower',
-            width: '100px',
+            width: '80px',
             filters: followerOptions.value,
             onFilter: (value: any, record: any) => {
                 return record.follower === value
             }
         },
-        { title: '数量', dataIndex: 'quantity', width: '100px' },
-        { title: '洗标单价', dataIndex: 'washUnitPrice', width: '130px' },
-        { title: '洗标总价', dataIndex: 'washTotalPrice', width: '130px' },
-        { title: '吊牌单价', dataIndex: 'tagUnitPrice', width: '130px' },
-        { title: '吊牌总价', dataIndex: 'tagTotalPrice', width: '130px' },
+        { title: '数量', dataIndex: 'quantity', width: '75px' },
+        { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
+        { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
+        { title: '洗标单价', dataIndex: 'washUnitPrice', width: '75px' },
+        { title: '洗标总价', dataIndex: 'washTotalPrice', width: '75px' },
+        { title: '吊牌单价', dataIndex: 'tagUnitPrice', width: '75px' },
+        { title: '吊牌总价', dataIndex: 'tagTotalPrice', width: '75px' },
         { title: '洗标优先级', dataIndex: 'washPriority', width: '90px' },
         { title: '洗标状态', dataIndex: 'washStatus', width: '90px' },
         {
@@ -226,8 +272,8 @@ const columns = computed(() => {
             width: '140px',
             customRender: ({ text }: any) => formatTime(text)
         },
-        { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
-        { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '120px' },
+
+        { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '110px' },
 
         { title: '吊牌优先级', dataIndex: 'tagPriority', width: '90px' },
         { title: '吊牌状态', dataIndex: 'tagStatus', width: '90px' },
@@ -243,11 +289,11 @@ const columns = computed(() => {
             width: '140px',
             customRender: ({ text }: any) => formatTime(text)
         },
-        { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
-        { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '120px' },
-        { title: '英文品名', dataIndex: 'nameEn', width: '160px' },
-        { title: '大面材料', dataIndex: 'materialMain', width: '160px' },
-        { title: '里衬材质', dataIndex: 'materialLining', width: '160px' },
+
+        { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '110px' },
+        { title: '英文品名', dataIndex: 'nameEn', width: '105px' },
+        { title: '大面材料', dataIndex: 'materialMain', width: '120px' },
+        { title: '里衬材质', dataIndex: 'materialLining', width: '95px' },
         {
             title: '创建时间',
             dataIndex: 'createdAt',
@@ -267,7 +313,7 @@ const columns = computed(() => {
             customRender: ({ text }: any) => formatTime(text)
         },
         { title: '备注', dataIndex: 'remark', width: '180px' },
-        { title: '批次id', dataIndex: 'importId', width: '120px' },
+        { title: '批次id', dataIndex: 'importId', width: '75px' },
     ]
 })
 
@@ -275,7 +321,7 @@ const columns = computed(() => {
 const editableFields = [
     'washUnitPrice',
     'tagUnitPrice',
-    'tagTotalPrice',
+    
     'washStatus',
     'washShipQuantity',
     'washShipTime',
@@ -377,7 +423,20 @@ const handleEditClick = () => {
 }
 const handleEditSave = async () => {
     try {
-        await store.update(editForm).then(() => {
+        const updatedItem: any = { ...editForm }
+        
+        // 如果填了洗标快递单号，则状态自动设置为已出货
+        if (updatedItem.washExpressNo && updatedItem.washExpressNo.trim()) {
+            updatedItem.washStatus = 3
+        }
+        
+        // 如果填了吊牌快递单号，则状态自动设置为已出货
+        if (updatedItem.tagExpressNo && updatedItem.tagExpressNo.trim()) {
+            updatedItem.tagStatus = 3
+        }
+        
+        await store.update(updatedItem).then(() => {
+            message.success('修改成功')
             openEditModal.value = false
             store.fetchPage()
             // 重置表单
@@ -403,6 +462,12 @@ const props = defineProps<{
     openHistory?: boolean
 }>()
 const emit = defineEmits(['update:openImport', 'update:openExport', 'update:openInfo', 'update:openHistory'])
+const onImportClick = () => {
+    emit('update:openImport', true)
+}
+const onExportClick = () => {
+    emit('update:openExport', true)
+}
 // 保存方法
 const handleSave = async (record: any) => {
     try {
@@ -416,11 +481,11 @@ const handleSave = async (record: any) => {
             editUploadFile.value = null
             editUploadFileList.value = []
             editUploadFileName.value = ''
-            await noticeGroup(record.importId,record.sku)
+            await noticeGroup(record.importId, record.sku)
         }
         if (!editUploadFile.value && editFormData.value) {
             await accStore.update(record)
-            await noticeGroup(record.importId,record.sku)
+            await noticeGroup(record.importId, record.sku)
         }
         // 无论如何都刷新数据
         await store.fetchPage()

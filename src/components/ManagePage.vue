@@ -11,18 +11,18 @@
               <a-input-search v-model:value="searchValue" :placeholder="searchPlaceholder" enter-button
                 @search="onSearch" />
             </a-col>
-            <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
-              <a-button type="primary" @click="resetSearch">
-                <ReloadOutlined />
+            <a-col v-if="showSearch" :span="isMobile ? 8 : undefined">
+              <a-button type="primary" block :class="{ 'mobile-button': isMobile }" @click="resetSearch">
+                <ReloadOutlined />刷新
               </a-button>
             </a-col>
-            <a-col v-if="showAdd" :span="isMobile ? 12 : undefined">
+            <a-col v-if="showAdd" :span="isMobile ? 8 : undefined">
               <a-button type="primary" block :class="{ 'mobile-button': isMobile }" @click="handleAdd">
                 <PlusOutlined />
                 <span v-if="isMobile" style="margin-left: 4px">添加</span>
               </a-button>
             </a-col>
-            <a-col v-if="showBatchDelete" :span="isMobile ? 12 : undefined">
+            <a-col v-if="showBatchDelete" :span="isMobile ? 8 : undefined">
               <a-button type="primary" danger block :class="{ 'mobile-button': isMobile }"
                 :disabled="!selectedRowKeys.length" @click="handleBatchDelete">
                 <DeleteOutlined />
@@ -35,13 +35,13 @@
       </div>
       <!-- 表格  -->
       <div class="content">
-        <a-table size="middle" :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection" bordered
-          :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll">
-          <template #bodyCell="{ column, text, record }" >
+        <a-table size="middle" :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection"
+          bordered :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll">
+          <template #bodyCell="{ column, text, record, index }">
             <slot v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
-              :name="`cell-${String(column?.dataIndex ?? '')}`" :column="column" :text="text" :record="record"
+              :name="`cell-${String(column?.dataIndex ?? '')}`" :column="column" :text="text" :record="record" :index="index"
               :is-editing="isEditing(record)" :editable-data="editableData" :get-internal-key="getInternalKey" />
-            <slot v-else name="bodyCell" :column="column" :text="text" :record="record" :is-editing="isEditing(record)">
+            <slot v-else name="bodyCell" :column="column" :text="text" :record="record" :index="index" :is-editing="isEditing(record)">
               <template v-if="isEditing(record) && isEditableColumn(column)">
                 <a-input v-model:value="editableData[getInternalKey(record)]![column.dataIndex as string]"
                   style="margin: -5px 0" />
@@ -62,11 +62,11 @@
                     </span>
                     <span v-else>
                       <div style="display: flex;align-items: center;justify-content: center;">
-                      <a-button size="small" @click="edit(getRowKeyValue(record))">
-                        <EditOutlined />
-                        编辑
-                      </a-button>
-                     </div>
+                        <a-button size="small" @click="edit(getRowKeyValue(record))">
+                          <EditOutlined />
+                          编辑
+                        </a-button>
+                      </div>
                     </span>
                   </div>
                 </slot>
@@ -88,7 +88,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch, onMounted, onUnmounted, type UnwrapRef, defineComponent, h, isVNode } from 'vue'
 import type { TableColumnType, TableProps } from 'ant-design-vue'
-import { PlusOutlined, DeleteOutlined, ReloadOutlined,EditOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DeleteOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons-vue'
 
 const spinning = ref(false)
 // RecordType 定义为任意键值对对象 
@@ -547,8 +547,6 @@ const handleBatchDelete = () => {
     padding: 0;
   }
 
-  .mobile-toolbar :deep(.ant-col) {
-    margin-bottom: 8px;
-  }
+
 }
 </style>

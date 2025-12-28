@@ -1,61 +1,12 @@
 <template>
     <div>
-        <!--移动端-->
-        <div v-if="isMobile" class="work-wrap-1">
-            <div class="header">
-                <a-button type="primary" style="width: 100%;" @click="showImport">导入辅料清单表</a-button>
-            </div>
-            <div class="search-card">
-                <a-collapse v-model:activeKey="activeKey">
-                    <a-collapse-panel key="1" header="查找辅料">
-                        <a-row>
-                            <a-select v-model:value="value" mode="tags" style="width: 100%" placeholder="选择工厂"
-                                :options="options" @change="handleChange"></a-select>
-                        </a-row>
-                        <a-row style="margin-top: 10px;">
-                            <a-input-search v-model:value="value" placeholder="输入单号或合同号" enter-button
-                                @search="onSearch" />
-                        </a-row>
-                    </a-collapse-panel>
-                </a-collapse>
-            </div>
-            <div class="process-card">
-                <a-card title="辅料名">
-                    <template #extra>
-                        <a-button type="primary" @click="showDrawer">详情</a-button>
-                    </template>
-                    <a-row style="display:flex;align-items: center;justify-content: left;">
-                        <a-col> 优先级：</a-col>
-                        <a-col>
-                            <FiveStars />
-                        </a-col>
-                    </a-row>
-                    <a-row style="display:flex;align-items: center;justify-content: left;">
-                        <a-col> 生产进度：</a-col>
-                        <a-col style="color: red;">辅料工厂确认合同</a-col>
-                    </a-row>
-                    <a-row style="display:flex;align-items: center;justify-content: left;">
-                        <a-col> 备注：</a-col>
-                        <a-col>12345</a-col>
-                    </a-row>
-                    <div style="display: flex;align-items: center;justify-content: center;margin-top: 10px;">
-                        <a-progress type="circle" :stroke-color="{
-                            '0%': '#108ee9',
-                            '100%': '#87d068',
-                        }" :percent="20" />
-                    </div>
-
-                </a-card>
-            </div>
-        </div>
 
         <!-- pc 端 -->
-        <div v-else class="work-wrap-2">
+        <div  class="work-wrap-2">
             <YDTable v-model:openImport="openImport" v-model:open-export="openExport" v-model:open-info="openInfo"
                 v-model:openHistory="openHistory" />
         </div>
 
-        <!-- 移动端和pc端公用的弹窗 -->
         <!-- 导入弹窗：放在模板外层，桌面和移动端都可见 -->
         <a-modal v-model:open="openImport" title="导入Excel" ok-text="导入" cancel-text="取消" @ok="handleExcelImportOk"
             @cancel="handleExcelImportCancel" :confirmLoading="excelImportLoading">
@@ -99,12 +50,12 @@
                         style="width: 200px"></a-select>
                 </a-row>
             </a-form-item>
-            <p style="color: #999;margin-bottom: 10px;font-size: smaller;">以下为非必填字段，通过下方的设置你可以获取按照某字段排序后的表格</p>
+            <!-- <p style="color: #999;margin-bottom: 10px;font-size: smaller;">以下为非必填字段，通过下方的设置你可以获取按照某字段排序后的表格</p>
             <a-form-item label="选择排序字段">
                 <a-row>
                     <a-select v-model:value="sortBy" :options="sortFields" placeholder="请选择排序字段" style="width: 200px" />
                 </a-row>
-            </a-form-item>
+            </a-form-item> -->
             <a-form-item label="选择排序方式">
                 <a-row>
                     <a-radio-group v-model:value="sortOrder">
@@ -146,9 +97,8 @@
     </div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref,onMounted } from 'vue';
 import { message } from 'ant-design-vue';
-import FiveStars from './components/fiveStars.vue';
 import type { DrawerProps } from 'ant-design-vue';
 import YDTable from './components/YDTable.vue';
 import { importExcel, exportExcel } from '@/api/services/acc-api';
@@ -180,24 +130,8 @@ const showDrawer = () => {
     openInfo.value = !openInfo.value;
 };
 
-const showImport = () => {
-    openImport.value = !openImport.value;
-};
-const showExport = () => {
-    openExport.value = !openExport.value;
-};
-const showHistory = () => {
-    openHistory.value = !openHistory.value;
-};
 
-const activeKey = ref(['1']);
 
-// 响应式判断是否为移动端（宽度 <= 768px）
-const isMobile = ref(false)
-
-const updateIsMobile = () => {
-    isMobile.value = window.innerWidth <= 768
-}
 
 // Excel 上传相关方法
 const beforeExcelUpload = async (file: File) => {
@@ -342,22 +276,10 @@ const sortFields = [
     { label: '数量', value: 'quantity' }
 ]
 
-// 批次删除
-const handleDeleteBatch = async (batchId: number) => {
-    try {
-        await tableImportStore.remove([batchId]);
-        message.success(`批次 ${batchId} 删除成功`);
-        await tableImportStore.fetchAll(); // 刷新批次列表
-    } catch (error) {
-        message.error(`删除批次 ${batchId} 失败`);
-    }
-};
+
 
 onMounted(() => {
-    // 监听窗口大小变化
-    updateIsMobile();
-    // 添加窗口大小变化监听器
-    window.addEventListener('resize', updateIsMobile);
+
     // 加载可用的表格批次
     tableImportStore.fetchAll().then(() => {
         options.value = tableImportStore.list.map((item: any) => ({
@@ -385,10 +307,5 @@ onMounted(() => {
     width: 100%;
 }
 
-/* 使最外层工作区域可滚动，当内容超出时显示滚动条 */
-.work-wrap-1 {
-    /* 根据页面布局调整高度，这里使用视口高度减去顶部等间距，保证在多数页面中可滚动 */
-    max-height: calc(100vh - 150px);
-    overflow: auto;
-}
+
 </style>

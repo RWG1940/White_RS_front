@@ -29,12 +29,10 @@ type IntervalTimer = ReturnType<typeof setInterval> | null
 type TimeoutTimer = ReturnType<typeof setTimeout> | null
 
 const buildWsBase = () => {
-  const backend = appConfig.backendUrl.replace(/\/$/, '')
-  if (backend.startsWith('https')) {
-    return backend.replace(/^https/, 'wss')
-  }
-  return backend.replace(/^http/, 'ws')
+  const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
+  return `${protocol}://${location.host}`
 }
+
 
 const buildWsUrl = (token?: string, customUrl?: string) => {
   const base = customUrl ?? `${buildWsBase()}${WS_ENDPOINT}`

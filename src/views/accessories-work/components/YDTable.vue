@@ -14,6 +14,10 @@
                     :disabled="isEditButtonDisabled">编辑</a-button>
             </template>
 
+            <template #cell-__index__="{ index }">
+                <span>{{ (index ?? 0) + 1 }}</span>
+            </template>
+
             <template #cell-washPriority="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
                     <div style="display: flex;justify-content: center;align-items: center;">
@@ -285,9 +289,16 @@ const store = accStore
 const PAGE_SIZE = 20
 store.pageSize = PAGE_SIZE
 
+
 const columns = computed(() => {
     return [
-        { title: '季度', dataIndex: 'quarter', width: '80px',fixed: true },
+        {
+            title: '序号',
+            dataIndex: '__index__',
+            width: '60px',
+            fixed: true
+        },
+        { title: '季度', dataIndex: 'quarter', width: '65px', fixed: true },
         {
             title: '图片',
             dataIndex: 'imageUrl',
@@ -295,38 +306,40 @@ const columns = computed(() => {
             fixed: true
         },
 
-        { title: '货号', dataIndex: 'sku', width: '125px',fixed: true },
-        { title: '颜色', dataIndex: 'color', width: '100px' },
-        { title: '品牌', dataIndex: 'brand', width: '115px' },
-        { title: '英文品名', dataIndex: 'nameEn', width: '120px' },
+        { title: '货号', dataIndex: 'sku', width: '125px', fixed: true },
+        { title: '颜色', dataIndex: 'color', width: '80px' },
+        { title: '品牌', dataIndex: 'brand', width: '100px' },
+        { title: '英文品名', dataIndex: 'nameEn', width: '105px' },
         { title: '大面材料', dataIndex: 'materialMain', width: '120px' },
-        { title: '里衬材质', dataIndex: 'materialLining', width: '120px' },
-        { title: '洗标颜色', dataIndex: 'washLabelColor', width: '80px' },
+        { title: '里衬材质', dataIndex: 'materialLining', width: '95px' },
+        { title: '洗标颜色', dataIndex: 'washLabelColor', width: '75px' },
         { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
         {
             title: '工厂',
             dataIndex: 'factory',
-            width: '110px',
+            width: '95px',
             filters: factoryOptions.value,
             onFilter: (value: any, record: any) => {
                 return record.factory === value
             }
         },
-        { title: '地址', dataIndex: 'address', width: '125px' },
+        { title: '地址', dataIndex: 'address', width: '110px' },
         {
             title: '跟单',
             dataIndex: 'follower',
-            width: '100px',
+            width: '80px',
             filters: followerOptions.value,
             onFilter: (value: any, record: any) => {
                 return record.follower === value
             }
         },
-        { title: '数量', dataIndex: 'quantity', width: '100px' },
-        { title: '洗标单价', dataIndex: 'washUnitPrice', width: '130px' },
-        { title: '洗标总价', dataIndex: 'washTotalPrice', width: '130px' },
-        { title: '吊牌单价', dataIndex: 'tagUnitPrice', width: '130px' },
-        { title: '吊牌总价', dataIndex: 'tagTotalPrice', width: '130px' },
+        { title: '数量', dataIndex: 'quantity', width: '75px' },
+        { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
+        { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
+        { title: '洗标单价', dataIndex: 'washUnitPrice', width: '75px' },
+        { title: '洗标总价', dataIndex: 'washTotalPrice', width: '75px' },
+        { title: '吊牌单价', dataIndex: 'tagUnitPrice', width: '75px' },
+        { title: '吊牌总价', dataIndex: 'tagTotalPrice', width: '75px' },
         { title: '洗标优先级', dataIndex: 'washPriority', width: '90px' },
         { title: '洗标状态', dataIndex: 'washStatus', width: '90px' },
         {
@@ -341,8 +354,7 @@ const columns = computed(() => {
             width: '140px',
             customRender: ({ text }: any) => formatTime(text)
         },
-        { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
-        { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '120px' },
+        { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '110px' },
         { title: '吊牌优先级', dataIndex: 'tagPriority', width: '90px' },
         { title: '吊牌状态', dataIndex: 'tagStatus', width: '90px' },
         {
@@ -357,8 +369,7 @@ const columns = computed(() => {
             width: '140px',
             customRender: ({ text }: any) => formatTime(text)
         },
-        { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
-        { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '120px' },
+        { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '110px' },
         {
             title: '创建时间',
             dataIndex: 'createdAt',
@@ -378,7 +389,7 @@ const columns = computed(() => {
             customRender: ({ text }: any) => formatTime(text)
         },
         { title: '备注', dataIndex: 'remark', width: '180px' },
-        { title: '批次id', dataIndex: 'importId', width: '120px' },
+        { title: '批次id', dataIndex: 'importId', width: '75px' },
     ]
 }) as unknown as any
 
@@ -613,12 +624,12 @@ const handleSave = async (record: any) => {
             editUploadFile.value = null
             editUploadFileList.value = []
             editUploadFileName.value = ''
-            await noticeGroup(record.importId,record.sku)
+            await noticeGroup(record.importId, record.sku)
         }
         if (!editUploadFile.value && editFormData.value) {
 
             await accStore.update(record)
-            await noticeGroup(record.importId,record.sku)
+            await noticeGroup(record.importId, record.sku)
         }
 
         // 无论如何都刷新数据

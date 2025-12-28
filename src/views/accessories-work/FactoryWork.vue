@@ -2,51 +2,7 @@
     <div>
         <!--移动端-->
         <div v-if="isMobile" class="work-wrap-1">
-            <div class="header">
-                <a-button type="primary" style="width: 100%;" @click="showImport">导入辅料清单表</a-button>
-            </div>
-            <div class="search-card">
-                <a-collapse v-model:activeKey="activeKey">
-                    <a-collapse-panel key="1" header="查找辅料">
-                        <a-row>
-                            <a-select v-model:value="value" mode="tags" style="width: 100%" placeholder="选择工厂"
-                                :options="options" @change="handleChange"></a-select>
-                        </a-row>
-                        <a-row style="margin-top: 10px;">
-                            <a-input-search v-model:value="value" placeholder="输入单号或合同号" enter-button
-                                @search="onSearch" />
-                        </a-row>
-                    </a-collapse-panel>
-                </a-collapse>
-            </div>
-            <div class="process-card">
-                <a-card title="辅料名">
-                    <template #extra>
-                        <a-button type="primary" @click="showDrawer">详情</a-button>
-                    </template>
-                    <a-row style="display:flex;align-items: center;justify-content: left;">
-                        <a-col> 优先级：</a-col>
-                        <a-col>
-                            <FiveStars />
-                        </a-col>
-                    </a-row>
-                    <a-row style="display:flex;align-items: center;justify-content: left;">
-                        <a-col> 生产进度：</a-col>
-                        <a-col style="color: red;">辅料工厂确认合同</a-col>
-                    </a-row>
-                    <a-row style="display:flex;align-items: center;justify-content: left;">
-                        <a-col> 备注：</a-col>
-                        <a-col>12345</a-col>
-                    </a-row>
-                    <div style="display: flex;align-items: center;justify-content: center;margin-top: 10px;">
-                        <a-progress type="circle" :stroke-color="{
-                            '0%': '#108ee9',
-                            '100%': '#87d068',
-                        }" :percent="20" />
-                    </div>
-
-                </a-card>
-            </div>
+            <FAMobileTable />
         </div>
 
         <!-- pc 端 -->
@@ -145,15 +101,15 @@
     </div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
-import FiveStars from './components/fiveStars.vue';
 import type { DrawerProps } from 'ant-design-vue';
 import FATable from './components/FATable.vue';
 import { importExcel, exportExcel } from '@/api/services/acc-api';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { accStore } from '@/stores/acc-store';
 import { tableImportStore } from '@/stores/tableImport-store';
+import FAMobileTable from './components/FAMobileTable.vue';
 
 
 const placement = ref<DrawerProps['placement']>('top');
@@ -179,17 +135,6 @@ const showDrawer = () => {
     openInfo.value = !openInfo.value;
 };
 
-const showImport = () => {
-    openImport.value = !openImport.value;
-};
-const showExport = () => {
-    openExport.value = !openExport.value;
-};
-const showHistory = () => {
-    openHistory.value = !openHistory.value;
-};
-
-const activeKey = ref(['1']);
 
 // 响应式判断是否为移动端（宽度 <= 768px）
 const isMobile = ref(false)
@@ -341,16 +286,6 @@ const sortFields = [
     { label: '数量', value: 'quantity' }
 ]
 
-// 批次删除
-const handleDeleteBatch = async (batchId: number) => {
-    try {
-        await tableImportStore.remove([batchId]);
-        message.success(`批次 ${batchId} 删除成功`);
-        await tableImportStore.fetchAll(); // 刷新批次列表
-    } catch (error) {
-        message.error(`删除批次 ${batchId} 失败`);
-    }
-};
 
 onMounted(() => {
     // 监听窗口大小变化

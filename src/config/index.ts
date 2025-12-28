@@ -21,7 +21,8 @@ const defaultConfig: AppConfig = {
   siteTitle: '优鼎多功能系统',
   browserTitle: '优鼎多功能系统',
   frontendPort: 8888,
-  backendUrl: 'http://192.168.24.77:8080',
+  //backendUrl: '/api',
+  backendUrl: ' http://localhost:8080',
   enableDebug: true, // 生产环境建议设置为 false
 }
 

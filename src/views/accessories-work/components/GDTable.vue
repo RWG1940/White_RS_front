@@ -8,45 +8,49 @@
                 <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;" placeholder="选择批次"
                     @change="handleBatchChange" />
             </template>
+            <template #cell-__index__="{ index }">
+                <span>{{ (index ?? 0) + 1 }}</span>
+            </template>
             <template #cell-washPriority="{ record }">
-                    <div style="display: flex;justify-content: center;align-items: center;">
-                        <div v-show="record.washPriority == 2"
-                            style="border-radius: 15px;background-color: red;width: 15px;height: 15px;box-shadow: 1px 1px 15px red;">
-                        </div>
-                        <div v-show="record.washPriority == 0"
-                            style="border-radius: 15px;background-color: lightgreen;width: 15px;height: 15px;box-shadow: 1px 1px 15px lightgreen;">
-                        </div>
-                        <div v-show="record.washPriority == 1"
-                            style="border-radius: 15px;background-color: gold;width: 15px;height: 15px;box-shadow: 1px 1px 15px gold;">
-                        </div>
+                <div style="display: flex;justify-content: center;align-items: center;">
+                    <div v-show="record.washPriority == 2"
+                        style="border-radius: 15px;background-color: red;width: 15px;height: 15px;box-shadow: 1px 1px 15px red;">
                     </div>
+                    <div v-show="record.washPriority == 0"
+                        style="border-radius: 15px;background-color: lightgreen;width: 15px;height: 15px;box-shadow: 1px 1px 15px lightgreen;">
+                    </div>
+                    <div v-show="record.washPriority == 1"
+                        style="border-radius: 15px;background-color: gold;width: 15px;height: 15px;box-shadow: 1px 1px 15px gold;">
+                    </div>
+                </div>
             </template>
             <template #cell-washStatus="{ record }">
-                    <a-tag
-                        :color="record.washStatus == 0 ? 'lightgrey' : record.washStatus == 1 ? 'orange' : record.washStatus == 2 ? 'pink' : record.washStatus == 3 ? 'green' : ''">
-                        {{ record.washStatus == 0 ? '未下单' : record.washStatus == 1 ? '做货中' : record.washStatus == 2 ? '货好等付款'
-                            : record.washStatus == 3 ? '已出货' : '' }}
-                    </a-tag>
+                <a-tag
+                    :color="record.washStatus == 0 ? 'lightgrey' : record.washStatus == 1 ? 'orange' : record.washStatus == 2 ? 'pink' : record.washStatus == 3 ? 'green' : ''">
+                    {{ record.washStatus == 0 ? '未下单' : record.washStatus == 1 ? '做货中' : record.washStatus == 2 ?
+                        '货好等付款'
+                        : record.washStatus == 3 ? '已出货' : '' }}
+                </a-tag>
             </template>
             <template #cell-tagPriority="{ record }">
-                    <div style="display: flex;justify-content: center;align-items: center;">
-                        <div v-show="record.washPriority == 2"
-                            style="border-radius: 15px;background-color: red;width: 15px;height: 15px;box-shadow: 1px 1px 15px red;">
-                        </div>
-                        <div v-show="record.washPriority == 0"
-                            style="border-radius: 15px;background-color: lightgreen;width: 15px;height: 15px;box-shadow: 1px 1px 15px lightgreen;">
-                        </div>
-                        <div v-show="record.washPriority == 1"
-                            style="border-radius: 15px;background-color: gold;width: 15px;height: 15px;box-shadow: 1px 1px 15px gold;">
-                        </div>
+                <div style="display: flex;justify-content: center;align-items: center;">
+                    <div v-show="record.washPriority == 2"
+                        style="border-radius: 15px;background-color: red;width: 15px;height: 15px;box-shadow: 1px 1px 15px red;">
                     </div>
+                    <div v-show="record.washPriority == 0"
+                        style="border-radius: 15px;background-color: lightgreen;width: 15px;height: 15px;box-shadow: 1px 1px 15px lightgreen;">
+                    </div>
+                    <div v-show="record.washPriority == 1"
+                        style="border-radius: 15px;background-color: gold;width: 15px;height: 15px;box-shadow: 1px 1px 15px gold;">
+                    </div>
+                </div>
             </template>
             <template #cell-tagStatus="{ record }">
-                    <a-tag
-                        :color="record.tagStatus == 0 ? 'lightgrey' : record.tagStatus == 1 ? 'orange' : record.tagStatus == 2 ? 'pink' : record.tagStatus == 3 ? 'green' : ''">
-                        {{ record.tagStatus == 0 ? '未下单' : record.tagStatus == 1 ? '做货中' : record.tagStatus == 2 ? '货好等付款'
-                            : record.tagStatus == 3 ? '已出货' : '' }}
-                    </a-tag>
+                <a-tag
+                    :color="record.tagStatus == 0 ? 'lightgrey' : record.tagStatus == 1 ? 'orange' : record.tagStatus == 2 ? 'pink' : record.tagStatus == 3 ? 'green' : ''">
+                    {{ record.tagStatus == 0 ? '未下单' : record.tagStatus == 1 ? '做货中' : record.tagStatus == 2 ? '货好等付款'
+                        : record.tagStatus == 3 ? '已出货' : '' }}
+                </a-tag>
             </template>
             <template #cell-imageUrl="{ record }">
                 <Transition name="fade" appear>
@@ -74,14 +78,12 @@
                     <span v-if="isEditing">
                         <a-typography-link @click="save(record.id)">保存</a-typography-link>
                         <a style="margin-left: 8px" @click="cancel(record.id)">取消</a>
-                        <a-popconfirm title="确认删除?" ok-text="是" cancel-text="否"
-                            @confirm="remove(record.id)">
+                        <a-popconfirm title="确认删除?" ok-text="是" cancel-text="否" @confirm="remove(record.id)">
                             <a style="margin-left: 8px">删除</a>
                         </a-popconfirm>
                     </span>
                     <span v-else>
-                        <a-button size="small" 
-                            :disabled="record.status === 3"
+                        <a-button size="small" :disabled="record.status === 3"
                             :title="record.status === 3 ? '已出货的记录不能修改' : ''"
                             @click="canEditRow(record) ? edit(record.id) : message.warning('已出货的记录不能修改')">
                             编辑
@@ -105,7 +107,7 @@ import { EyeOutlined } from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { tableImportStore } from '@/stores/tableImport-store'
 import { useAuthStore } from '@/stores/auth-store'
-import {  noticeGroup } from '@/api/services/webhookTableImport-api'
+import { noticeGroup } from '@/api/services/webhookTableImport-api'
 
 
 // 图片URL处理，添加时间戳防止缓存
@@ -142,86 +144,94 @@ const factoryOptions = computed(() => {
 
 const columns = computed(() => {
     return [
-    { title: '季度', dataIndex: 'quarter', width: '80px' },
-    {
-        title: '图片',
-        dataIndex: 'imageUrl',
-        width: '75px',
-    },
-    { title: '货号', dataIndex: 'sku', width: '125px' },
-    { title: '颜色', dataIndex: 'color', width: '100px' },
-    { title: '品牌', dataIndex: 'brand', width: '115px' },
-    { title: '英文品名', dataIndex: 'nameEn', width: '120px' },
-    { title: '大面材料', dataIndex: 'materialMain', width: '120px' },
-    { title: '里衬材质', dataIndex: 'materialLining', width: '120px' },
-    { title: '洗标颜色', dataIndex: 'washLabelColor', width: '80px' },
-    { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
-    { 
-        title: '工厂', 
-        dataIndex: 'factory', 
-        width: '110px',
-        filters: factoryOptions.value,
-        onFilter: (value: any, record: any) => {
-            return record.factory === value
-        }
-    },
-    { title: '地址', dataIndex: 'address', width: '125px' },
-    { title: '跟单', dataIndex: 'follower', width: '100px' },
-    { title: '数量', dataIndex: 'quantity', width: '100px' },
-    { title: '洗标优先级', dataIndex: 'washPriority', width: '90px' },
-    { title: '洗标状态', dataIndex: 'washStatus', width: '90px' },
-    {
-        title: '洗标确认时间',
-        dataIndex: 'washConfirmTime',
-        width: '140px',
-        customRender: ({ text }: any) => formatTime(text)
-    },
-    {
-        title: '洗标出货时间',
-        dataIndex: 'washShipTime',
-        width: '140px',
-        customRender: ({ text }: any) => formatTime(text)
-    },
-    { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
-    { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '120px' },
+        {
+            title: '序号',
+            dataIndex: '__index__',
+            width: '60px',
+            fixed: true
+        },
+        { title: '季度', dataIndex: 'quarter', width: '65px' },
+        {
+            title: '图片',
+            dataIndex: 'imageUrl',
+            width: '75px',
+        },
+        { title: '货号', dataIndex: 'sku', width: '125px' },
+        { title: '颜色', dataIndex: 'color', width: '80px' },
+        { title: '品牌', dataIndex: 'brand', width: '100px' },
+        { title: '英文品名', dataIndex: 'nameEn', width: '105px' },
+        { title: '大面材料', dataIndex: 'materialMain', width: '120px' },
+        { title: '里衬材质', dataIndex: 'materialLining', width: '95px' },
+        { title: '洗标颜色', dataIndex: 'washLabelColor', width: '75px' },
+        { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
+        {
+            title: '工厂',
+            dataIndex: 'factory',
+            width: '95px',
+            filters: factoryOptions.value,
+            onFilter: (value: any, record: any) => {
+                return record.factory === value
+            }
+        },
+        { title: '地址', dataIndex: 'address', width: '110px' },
+        { title: '跟单', dataIndex: 'follower', width: '80px' },
+        { title: '数量', dataIndex: 'quantity', width: '75px' },
+        { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
+        { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
+        { title: '洗标优先级', dataIndex: 'washPriority', width: '90px' },
+        { title: '洗标状态', dataIndex: 'washStatus', width: '90px' },
+        {
+            title: '洗标确认时间',
+            dataIndex: 'washConfirmTime',
+            width: '140px',
+            customRender: ({ text }: any) => formatTime(text)
+        },
+        {
+            title: '洗标出货时间',
+            dataIndex: 'washShipTime',
+            width: '140px',
+            customRender: ({ text }: any) => formatTime(text)
+        },
 
-    { title: '吊牌优先级', dataIndex: 'tagPriority', width: '90px' },
-    { title: '吊牌状态', dataIndex: 'tagStatus', width: '90px' },
+        { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '110px' },
 
-    {
-        title: '吊牌确认时间',
-        dataIndex: 'tagConfirmTime',
-        width: '140px',
-        customRender: ({ text }: any) => formatTime(text)
-    },
-    {
-        title: '吊牌出货时间',
-        dataIndex: 'tagShipTime',
-        width: '140px',
-        customRender: ({ text }: any) => formatTime(text)
-    },
-    { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
-    { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '120px' },
-    {
-        title: '创建时间',
-        dataIndex: 'createdAt',
-        width: '140px',
-        sorter: (a: any, b: any) =>
-            (new Date(a.createdAt ?? '').getTime() || 0) -
-            (new Date(b.createdAt ?? '').getTime() || 0),
-        customRender: ({ text }: any) => formatTime(text)
-    },
-    {
-        title: '修改时间',
-        dataIndex: 'updatedAt',
-        width: '140px',
-        sorter: (a: any, b: any) =>
-            (new Date(a.updatedAt ?? '').getTime() || 0) -
-            (new Date(b.updatedAt ?? '').getTime() || 0),
-        customRender: ({ text }: any) => formatTime(text)
-    },
-    { title: '备注', dataIndex: 'remark', width: '180px' },
-    { title: '批次id', dataIndex: 'importId', width: '120px' },
+        { title: '吊牌优先级', dataIndex: 'tagPriority', width: '90px' },
+        { title: '吊牌状态', dataIndex: 'tagStatus', width: '90px' },
+
+        {
+            title: '吊牌确认时间',
+            dataIndex: 'tagConfirmTime',
+            width: '140px',
+            customRender: ({ text }: any) => formatTime(text)
+        },
+        {
+            title: '吊牌出货时间',
+            dataIndex: 'tagShipTime',
+            width: '140px',
+            customRender: ({ text }: any) => formatTime(text)
+        },
+
+        { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '110px' },
+        {
+            title: '创建时间',
+            dataIndex: 'createdAt',
+            width: '140px',
+            sorter: (a: any, b: any) =>
+                (new Date(a.createdAt ?? '').getTime() || 0) -
+                (new Date(b.createdAt ?? '').getTime() || 0),
+            customRender: ({ text }: any) => formatTime(text)
+        },
+        {
+            title: '修改时间',
+            dataIndex: 'updatedAt',
+            width: '140px',
+            sorter: (a: any, b: any) =>
+                (new Date(a.updatedAt ?? '').getTime() || 0) -
+                (new Date(b.updatedAt ?? '').getTime() || 0),
+            customRender: ({ text }: any) => formatTime(text)
+        },
+        { title: '备注', dataIndex: 'remark', width: '180px' },
+        { title: '批次id', dataIndex: 'importId', width: '75px' },
     ]
 }) as unknown as any
 
@@ -332,7 +342,7 @@ const handleSave = async (record: any) => {
         // 检查：如果状态为已出货(3)，禁止修改工厂和地址
         if (record.washStatus == 3 || record.tagStatus == 3) {
             // 检查是否修改了工厂或地址
-            const originalRecord = store.pagedList.find((r:any) => r.id === record.id) as any
+            const originalRecord = store.pagedList.find((r: any) => r.id === record.id) as any
             if (originalRecord && (record.factory !== originalRecord.factory || record.address !== originalRecord.address)) {
                 message.error('已出货的记录不能修改工厂和地址')
                 return
@@ -340,7 +350,7 @@ const handleSave = async (record: any) => {
         }
         // 新增文件
         if (uploadFile.value) {
-       
+
             const form = new FormData()
             form.append("file", uploadFile.value)
             form.append("acc", new Blob([JSON.stringify(record)], { type: "application/json" }))
@@ -360,13 +370,13 @@ const handleSave = async (record: any) => {
             editUploadFile.value = null
             editUploadFileList.value = []
             editUploadFileName.value = ''
-            await noticeGroup(record.importId,record.sku)
+            await noticeGroup(record.importId, record.sku)
 
         }
         if (!editUploadFile.value && editFormData.value) {
 
             await accStore.update(record)
-            await noticeGroup(record.importId,record.sku)
+            await noticeGroup(record.importId, record.sku)
         }
         // 无论如何都刷新数据
         await store.fetchPage()

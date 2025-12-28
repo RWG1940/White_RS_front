@@ -8,6 +8,9 @@
                 <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;" placeholder="选择批次"
                     @change="handleBatchChange" />
             </template>
+            <template #cell-__index__="{ index }">
+                <span>{{ (index ?? 0) + 1 }}</span>
+            </template>
             <template #cell-washStatus="{ record }">
                 <a-tag
                     :color="record.washStatus == 0 ? 'lightgrey' : record.washStatus == 1 ? 'orange' : record.washStatus == 2 ? 'pink' : record.washStatus == 3 ? 'green' : ''">
@@ -56,12 +59,12 @@
                     </span>
                     <span v-else>
                         <div style="display: flex; align-items: center;justify-content: center;">
-                        <a-button size="small" :disabled="record.status === 3"
-                            :title="record.status === 3 ? '已出货的记录不能修改' : ''"
-                            @click="canEditRow(record) ? edit(record.id) : message.warning('已出货的记录不能修改')">
-                            <EditOutlined />编辑
-                        </a-button>
-                           </div>
+                            <a-button size="small" :disabled="record.status === 3"
+                                :title="record.status === 3 ? '已出货的记录不能修改' : ''"
+                                @click="canEditRow(record) ? edit(record.id) : message.warning('已出货的记录不能修改')">
+                                <EditOutlined />编辑
+                            </a-button>
+                        </div>
                     </span>
                 </div>
             </template>
@@ -82,7 +85,7 @@ import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { tableImportStore } from '@/stores/tableImport-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { EditOutlined } from '@ant-design/icons-vue'
-import {  noticeGroup } from '@/api/services/webhookTableImport-api'
+import { noticeGroup } from '@/api/services/webhookTableImport-api'
 
 
 // 图片URL处理，添加时间戳防止缓存
@@ -105,41 +108,40 @@ const PAGE_SIZE = 100
 store.pageSize = PAGE_SIZE
 const columns: TableColumnType<any>[] = [
     {
+        title: '序号',
+        dataIndex: '__index__',
+        width: '60px',
+        fixed: true
+    },
+    {
         title: '图片',
         dataIndex: 'imageUrl',
         width: '75px',
     },
 
     { title: '货号', dataIndex: 'sku', width: '125px' },
-    { title: '颜色', dataIndex: 'color', width: '100px' },
-    { title: '品牌', dataIndex: 'brand', width: '115px' },
-    { title: '洗标颜色', dataIndex: 'washLabelColor', width: '80px' },
+    { title: '颜色', dataIndex: 'color', width: '80px' },
+    { title: '品牌', dataIndex: 'brand', width: '100px' },
+    { title: '洗标颜色', dataIndex: 'washLabelColor', width: '75px' },
     { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
-    { title: '工厂', dataIndex: 'factory', width: '110px' },
-    { title: '地址', dataIndex: 'address', width: '125px' },
-    { title: '跟单', dataIndex: 'follower', width: '100px' },
-    { title: '数量', dataIndex: 'quantity', width: '100px' },
-    { title: '洗标单价', dataIndex: 'washUnitPrice', width: '130px' },
-    { title: '洗标总价', dataIndex: 'washTotalPrice', width: '130px' },
-    { title: '吊牌单价', dataIndex: 'tagUnitPrice', width: '130px' },
-    { title: '吊牌总价', dataIndex: 'tagTotalPrice', width: '130px' },
-    { title: '洗标状态', dataIndex: 'washStatus', width: '90px' },
-    {
-        title: '洗标出货时间',
-        dataIndex: 'washShipTime',
-        width: '140px',
-        customRender: ({ text }) => formatTime(text)
-    },
-    { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '120px' },
-    { title: '吊牌状态', dataIndex: 'tagStatus', width: '90px' },
-    {
-        title: '吊牌出货时间',
-        dataIndex: 'tagShipTime',
-        width: '140px',
-        customRender: ({ text }) => formatTime(text)
-    },
+    { title: '工厂', dataIndex: 'factory', width: '95px' },
+    { title: '地址', dataIndex: 'address', width: '110px' },
+    { title: '跟单', dataIndex: 'follower', width: '80px' },
+    { title: '数量', dataIndex: 'quantity', width: '75px' },
     { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
-    { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '120px' },
+    { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
+
+    { title: '洗标单价', dataIndex: 'washUnitPrice', width: '75px' },
+    { title: '洗标总价', dataIndex: 'washTotalPrice', width: '75px' },
+    { title: '吊牌单价', dataIndex: 'tagUnitPrice', width: '75px' },
+    { title: '吊牌总价', dataIndex: 'tagTotalPrice', width: '75px' },
+    { title: '洗标状态', dataIndex: 'washStatus', width: '90px' },
+
+    { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '110px' },
+    { title: '吊牌状态', dataIndex: 'tagStatus', width: '90px' },
+
+
+    { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '110px' },
     {
         title: '创建时间',
         dataIndex: 'createdAt',
@@ -159,7 +161,7 @@ const columns: TableColumnType<any>[] = [
         customRender: ({ text }) => formatTime(text)
     },
     { title: '备注', dataIndex: 'remark', width: '180px' },
-    { title: '批次id', dataIndex: 'importId', width: '120px' },
+    { title: '批次id', dataIndex: 'importId', width: '75px' },
 ];
 const rawRows = ref<AccPurchaseContractType[]>([])
 const dataSource = ref<any[]>([])
@@ -295,11 +297,11 @@ const handleSave = async (record: any) => {
             editUploadFile.value = null
             editUploadFileList.value = []
             editUploadFileName.value = ''
-            await noticeGroup(record.importId,record.sku)
+            await noticeGroup(record.importId, record.sku)
         }
         if (!editUploadFile.value && editFormData.value) {
             await accStore.update(record)
-            await noticeGroup(record.importId,record.sku)
+            await noticeGroup(record.importId, record.sku)
         }
         // 无论如何都刷新数据
         await store.fetchPage()

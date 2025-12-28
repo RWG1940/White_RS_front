@@ -22,11 +22,11 @@ const loading = ref(false)
 const rules: Record<string, Rule[]> = {
   username: [
     { required: true, message: '请输入账号', trigger: 'blur' },
-    { min: 3, max: 20, message: '账号长度应在 3-20 个字符之间', trigger: 'blur' },
+    { min: 2, max: 20, message: '账号长度应在 2-20 个字符之间', trigger: 'blur' },
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 3, max: 20, message: '密码长度应在 4-20 个字符之间', trigger: 'blur' },
+    { min: 2, max: 20, message: '密码长度应在 2-20 个字符之间', trigger: 'blur' },
   ],
 }
 
