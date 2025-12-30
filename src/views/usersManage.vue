@@ -121,12 +121,12 @@ const columns = computed(() => {
     {
       title: '用户名',
       dataIndex: 'username',
-      width: '140px',
+      width: '100px',
     },
     {
       title: '角色',
       dataIndex: 'roles',
-      width: '210px',
+      width: '150px',
       // 根据 allRoles 生成筛选选项
       filters: roleFilters,
       onFilter: (value: any, record: any) => {
@@ -138,17 +138,17 @@ const columns = computed(() => {
     {
       title: '邮箱',
       dataIndex: 'email',
-      width: '180px',
+      width: '160px',
     },
     {
       title: '手机号',
       dataIndex: 'phone',
-      width: '140px',
+      width: '120px',
     },
     {
       title: '状态',
       dataIndex: 'status',
-      width: '125px',
+      width: '80px',
       filters: [
         { text: '启用', value: 1 },
         { text: '禁用', value: 0 },
@@ -161,7 +161,7 @@ const columns = computed(() => {
     {
       title: '在线状态',
       dataIndex: 'onlineStatus',
-      width: '110px',
+      width: '90px',
       filters: [
         { text: '在线', value: 'online' },
         { text: '离线', value: 'offline' },
@@ -174,7 +174,7 @@ const columns = computed(() => {
     {
       title: '创建时间',
       dataIndex: 'createdAt',
-      width: '180px',
+      width: '120px',
       sorter: (a: any, b: any) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
       customRender: ({ text }: { text: any }) => formatTime(text),
       sortDirections: ['descend', 'ascend'] as any,
@@ -204,7 +204,7 @@ const columns = computed(() => {
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
-      width: '130px',
+      width: '120px',
       sorter: (a: any, b: any) => dayjs(a.updatedAt).valueOf() - dayjs(b.updatedAt).valueOf(),
       sortDirections: ['descend', 'ascend'] as any,
       filters: [

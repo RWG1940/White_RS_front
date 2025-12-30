@@ -38,6 +38,7 @@ const PAGE_SIZE = 10
 store.pageSize = PAGE_SIZE
 // 表格列
 const columns: TableColumnType<WebhookType>[] = [
+    { title: 'ID', dataIndex: 'id', width: '80px' },
     { title: '机器人名称', dataIndex: 'name', width: '180px' },
     { title: '地址', dataIndex: 'url', width: '120px' },
     { title: '状态', dataIndex: 'status', width: '80px'},

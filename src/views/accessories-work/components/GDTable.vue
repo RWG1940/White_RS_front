@@ -392,8 +392,8 @@ const handleSave = async (record: any) => {
 
 const selectedBatchId = ref<number | null>(null)
 const filteredDataSource = computed(() => {
-    if (selectedBatchId.value === null && useAuthStore().user === null) {
-        return dataSource.value
+    if (selectedBatchId.value == null) {
+        return dataSource.value.filter(row => row.follower == useAuthStore()!.user!.username)
     }
     return dataSource.value.filter(row => row.importId === selectedBatchId.value && row.follower == useAuthStore()!.user!.username)
 })

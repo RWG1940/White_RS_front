@@ -36,11 +36,12 @@
       <!-- 表格  -->
       <div class="content">
         <a-table size="middle" :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection"
-          bordered :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll">
+          bordered :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll"
+          :custom-row="handleRowClick">
           <template #bodyCell="{ column, text, record, index }">
             <slot v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
               :name="`cell-${String(column?.dataIndex ?? '')}`" :column="column" :text="text" :record="record" :index="index"
-              :is-editing="isEditing(record)" :editable-data="editableData" :get-internal-key="getInternalKey" />
+              :is-editing="isEditing(record)" :editable-data="editableData" :get-internal-key="getInternalKey"  />
             <slot v-else name="bodyCell" :column="column" :text="text" :record="record" :index="index" :is-editing="isEditing(record)">
               <template v-if="isEditing(record) && isEditableColumn(column)">
                 <a-input v-model:value="editableData[getInternalKey(record)]![column.dataIndex as string]"
@@ -118,6 +119,7 @@ const props = withDefaults(
     pagination?: false | TableProps<RecordType>['pagination']
     showOperation?: boolean
     enableColumnDrag?: boolean
+    clickToEdit?: boolean
   }>(),
   {
     dataSource: () => [],
@@ -136,6 +138,8 @@ const props = withDefaults(
     showOperation: true,
     // 列任意调整位置
     enableColumnDrag: true,
+    // 点击行切换编辑模式
+    clickToEdit: true,
   },
 )
 // 组件事件
@@ -150,6 +154,7 @@ const emit = defineEmits<{
   (e: 'cancel', key: string | number): void
   (e: 'edit', record: RecordType): void
   (e: 'columns-reordered', columns: TableColumnType<RecordType>[]): void
+  (e: 'row-click', record: RecordType, event: Event): void
 }>()
 // 组件内部状态
 const searchValue = ref('')
@@ -502,6 +507,26 @@ const resetSearch = () => {
 }
 
 
+// 处理行双击事件
+const handleRowClick = (record: RecordType, index: number) => {
+  return {
+    onDblclick: (event: Event) => {
+      emit('row-click', record, event)
+      
+      if (props.clickToEdit) {
+        const key = getRowKeyValue(record)
+        // 如果当前行已经是编辑状态，则双击非操作区域时不退出编辑
+        if (isEditing(record)) {
+          return
+        }
+        // 切换到编辑状态
+        edit(key)
+      }
+    },
+    class: isEditing(record) ? 'editing-row' : '',
+  }
+}
+
 const handleBatchDelete = () => {
   if (!selectedRowKeys.value.length) {
     return
@@ -548,5 +573,21 @@ const handleBatchDelete = () => {
   }
 
 
+}
+
+/* 编辑行的样式 */
+:deep(.editing-row) {
+  background-color: #f0f7ff !important;
+  border: 2px solid #1890ff !important;
+}
+
+:deep(.editing-row:hover) {
+  background-color: #e6f7ff !important;
+}
+
+/* 编辑状态下的输入框样式 */
+:deep(.editing-row .ant-input) {
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 </style>

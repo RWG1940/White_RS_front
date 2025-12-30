@@ -3,9 +3,12 @@ import { ref, computed } from 'vue'
 import Header from './Header.vue'
 import Sidebar from './Sidebar.vue'
 import Breadcrumb from './Breadcrumb.vue'
+import { appConfig } from '@/config'
 
 const collapsed = ref(true)
-
+const bottomText = computed(() => {
+  return appConfig.bottomText
+})
 const toggleCollapse = () => {
   collapsed.value = !collapsed.value
 }
@@ -46,7 +49,7 @@ const toggleCollapse = () => {
           </router-view>
         </div>
       </a-layout-content>
-      <a-layout-footer class="layout-footer"> Powered by 数字技术服务中心 ©2025 </a-layout-footer>
+      <a-layout-footer class="layout-footer"> {{ bottomText }}</a-layout-footer>
     </a-layout>
   </a-layout>
 </template>

@@ -1,5 +1,5 @@
 import apiClient from '../index'
-import { appConfig } from '@/config'
+
 
 const WS_ENDPOINT = '/ws/online'
 const HEARTBEAT_MESSAGE = 'ping'
@@ -29,8 +29,19 @@ type IntervalTimer = ReturnType<typeof setInterval> | null
 type TimeoutTimer = ReturnType<typeof setTimeout> | null
 
 const buildWsBase = () => {
-  const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
-  return `${protocol}://${location.host}`
+  // 开发环境下使用配置的后端地址，生产环境下使用当前域名
+  const isDev = import.meta.env.DEV
+  if (isDev) {
+    // 开发环境：使用配置的后端地址
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
+    const url = new URL(backendUrl)
+    const protocol = url.protocol === 'https:' ? 'wss' : 'ws'
+    return `${protocol}://${url.host}`
+  } else {
+    // 生产环境：使用当前域名
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
+    return `${protocol}://${location.host}`
+  }
 }
 
 

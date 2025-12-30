@@ -14,6 +14,7 @@ export interface AppConfig {
   backendUrl: string
   // 是否启用调试输出
   enableDebug: boolean
+  bottomText: string
 }
 
 // 默认配置
@@ -21,9 +22,12 @@ const defaultConfig: AppConfig = {
   siteTitle: '优鼎多功能系统',
   browserTitle: '优鼎多功能系统',
   frontendPort: 8888,
+  //生产
   //backendUrl: '/api',
-  backendUrl: ' http://localhost:8080',
-  enableDebug: true, // 生产环境建议设置为 false
+  //开发
+  backendUrl: 'http://localhost:8080',
+  enableDebug: true,
+  bottomText: 'Copyright © 2025 优鼎 All Rights Reserved.',
 }
 
 // 从环境变量或本地存储中读取配置（可选）

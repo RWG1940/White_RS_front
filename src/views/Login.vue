@@ -74,10 +74,7 @@ const handleLogin = async () => {
           }
         })
       }, 500)
-    } else {
-      // 登录失败（但不会抛出异常，因为错误已在拦截器中处理）
-      // 这里不需要额外处理，拦截器已经显示了错误消息
-    }
+    } 
   } catch (error) {
     // 错误已在拦截器中处理
     console.error('登录错误:', error)
@@ -130,7 +127,8 @@ const handleLogin = async () => {
 <style scoped>
 .login-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #8bdbb6ff 100%);
+  background-image: url('../../public/images/login-bg.jpg');
+  background-size: cover;
   padding: 20px;
   box-sizing: border-box;
 }
@@ -146,6 +144,7 @@ const handleLogin = async () => {
   margin: 0 auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 15px;
+  backdrop-filter: blur(10px);
 }
 
 .login-title {

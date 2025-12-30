@@ -14,7 +14,7 @@
           <div class="status-item">
             <span class="label">在线人数：</span>
             <span class="count">
-              <a-tag color="grey">
+              <a-tag color="blue">
                 {{ onlineCount }}
               </a-tag>
             </span>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { HomeOutlined, UserOutlined, SettingOutlined,DesktopOutlined  } from '@ant-design/icons-vue'
 import { appConfig } from '@/config'
+import { menuConfig, filterMenuByRole } from '@/config/menu'
 import { useAuthStore } from '@/stores/auth-store'
 
 defineProps<{
@@ -14,78 +14,12 @@ const route = useRoute()
 
 const authStore = useAuthStore()
 
-// 菜单配置
-const menuItems = ref([
-  {
-    key: '/',
-    icon: HomeOutlined,
-    label: '首页',
-    title: '首页',
-  },
-  {
-    key: '/youding-workbench',
-    icon: DesktopOutlined,
-    label: '优鼎工作台',
-    title: '优鼎工作台',
-  },
-  {
-    key: '/gendan-workbench',
-    icon: DesktopOutlined,
-    label: '跟单工作台',
-    title: '跟单工作台',
-  },
-  {
-    key: '/factory-workbench',
-    icon: DesktopOutlined,
-    label: '工厂工作台',
-    title: '工厂工作台',
-  },
-  {
-    key: '/accessories-factory-workbench',
-    icon: DesktopOutlined,
-    label: '辅料工厂工作台',
-    title: '辅料工厂工作台',
-  },
-  {
-    key: '/usersManage',
-    icon: UserOutlined,
-    label: '用户管理',
-    title: '用户管理',
-  },
-  {
-    key: '/settingsManage',
-    icon: SettingOutlined,
-    label: '系统设置',
-    title: '系统设置',
-  },
-
-])
-
 // 将后端返回的角色统一成字符串数组，方便比较
 const roleValues = computed(() => (authStore.user?.roles || []).map((r: any) => String(r)))
 
-// 根据角色过滤菜单：
-// 仅含 5293 -> 只显示 优鼎工作台
-// 仅含 6666 -> 只显示 辅料工厂工作台
-// 仅含 7777 -> 只显示 工厂工作台
-// 包含 3294 -> 全部显示
+// 根据角色过滤菜单
 const filteredMenuItems = computed(() => {
-  const roles = roleValues.value
-  if (!roles || roles.length === 0) return menuItems.value
-  // 只要包含 3294 就显示全部
-  if (roles.includes('3294')) return menuItems.value
-  // 只有单一角色时按要求过滤，但始终保留首页 '/'
-  if (roles.length === 1) {
-    const r = roles[0]
-    const allowedKeys = ['/']
-    if (r === '5293') allowedKeys.push('/youding-workbench')
-    if (r === '6666') allowedKeys.push('/accessories-factory-workbench')
-    if (r === '7777') allowedKeys.push('/factory-workbench')
-    if (r === '5555') allowedKeys.push('/gendan-workbench')
-    return menuItems.value.filter((i) => allowedKeys.includes(i.key))
-  }
-  // 其它情况默认显示全部（可根据需要调整为更严格的权限控制）
-  return menuItems.value
+  return filterMenuByRole(menuConfig, roleValues.value)
 })
 
 const selectedKeys = computed(() => [route.path])
@@ -117,7 +51,7 @@ const handleMenuClick = ({ key }: { key: string }) => {
       :openKeys="openKeys"
       mode="inline"
       theme="dark"
-      :inline-collapsed="collapsed"
+
       @click="handleMenuClick"
     >
       <a-menu-item v-for="item in filteredMenuItems" :key="item.key">
