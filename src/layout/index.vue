@@ -113,19 +113,21 @@ const toggleCollapse = () => {
 
 .m-trans-enter-active,
 .m-trans-leave-active {
-  transition: all 0.2s;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .m-trans-enter-from {
   opacity: 0;
-  transform: translateX(-10px);
-  filter: blur(10px);
+  transform: translateX(-10px) scale(0.98);
 }
 
 .m-trans-leave-to {
   opacity: 0;
-  transform: translateX(10px);
+  transform: translateX(10px) scale(0.98);
 }
+
 
 .content-wrapper::-webkit-scrollbar-track {
   background: #f1f1f1;

@@ -1,17 +1,16 @@
 <template>
-    <div>
+    <div class="yd-table-container">
         <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields"
             row-key="id" :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
             @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete"
             @selection-change="handleSelectionChange">
             <template #custom-tool>
-                <a-button style="margin-left: 5px;" type="primary" @click="onImportClick">导入</a-button>
-                <a-button style="margin-left: 5px;" type="primary" @click="onExportClick">导出</a-button>
-                <a-button style="margin-left: 5px;" type="primary" @click="onHistoryClick">历史</a-button>
-                <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;" placeholder="选择批次"
+                <a-button class="custom-tool-btn" type="primary" @click="onImportClick">导入</a-button>
+                <a-button class="custom-tool-btn" type="primary" @click="onExportClick">导出</a-button>
+                <a-button class="custom-tool-btn" type="primary" @click="onHistoryClick">历史</a-button>
+                <a-select v-model="selectedBatchId" :options="batchOptions" class="batch-select" placeholder="选择批次"
                     @change="handleBatchChange" />
-                <a-button style="margin-left: 8px;" @click="handleEditClick"
-                    :disabled="isEditButtonDisabled">编辑</a-button>
+                <a-button class="edit-btn" @click="handleEditClick" :disabled="isEditButtonDisabled">编辑</a-button>
             </template>
 
             <template #cell-__index__="{ index }">
@@ -20,21 +19,15 @@
 
             <template #cell-washPriority="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
-                    <div style="display: flex;justify-content: center;align-items: center;">
-                        <div v-show="record.washPriority == 2"
-                            style="border-radius: 15px;background-color: red;width: 15px;height: 15px;box-shadow: 1px 1px 15px red;">
-                        </div>
-                        <div v-show="record.washPriority == 0"
-                            style="border-radius: 15px;background-color: lightgreen;width: 15px;height: 15px;box-shadow: 1px 1px 15px lightgreen;">
-                        </div>
-                        <div v-show="record.washPriority == 1"
-                            style="border-radius: 15px;background-color: gold;width: 15px;height: 15px;box-shadow: 1px 1px 15px gold;">
-                        </div>
+                    <div class="priority-container">
+                        <div v-show="record.washPriority == 2" class="priority-dot urgent"></div>
+                        <div v-show="record.washPriority == 0" class="priority-dot normal"></div>
+                        <div v-show="record.washPriority == 1" class="priority-dot medium"></div>
                     </div>
                 </template>
                 <template v-else>
                     <a-select v-model:value="editableData[getInternalKey(record)]!.washPriority" size="small"
-                        style="width:120px">
+                        class="priority-select">
                         <a-select-option :value="0">正常做</a-select-option>
                         <a-select-option :value="1">有点着急</a-select-option>
                         <a-select-option :value="2">非常着急安排优先</a-select-option>
@@ -53,21 +46,15 @@
 
             <template #cell-tagPriority="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
-                    <div style="display: flex;justify-content: center;align-items: center;">
-                        <div v-show="record.tagPriority == 2"
-                            style="border-radius: 15px;background-color: red;width: 15px;height: 15px;box-shadow: 1px 1px 15px red;">
-                        </div>
-                        <div v-show="record.tagPriority == 0"
-                            style="border-radius: 15px;background-color: lightgreen;width: 15px;height: 15px;box-shadow: 1px 1px 15px lightgreen;">
-                        </div>
-                        <div v-show="record.tagPriority == 1"
-                            style="border-radius: 15px;background-color: gold;width: 15px;height: 15px;box-shadow: 1px 1px 15px gold;">
-                        </div>
+                    <div class="priority-container">
+                        <div v-show="record.tagPriority == 2" class="priority-dot urgent"></div>
+                        <div v-show="record.tagPriority == 0" class="priority-dot normal"></div>
+                        <div v-show="record.tagPriority == 1" class="priority-dot medium"></div>
                     </div>
                 </template>
                 <template v-else>
                     <a-select v-model:value="editableData[getInternalKey(record)]!.tagPriority" size="small"
-                        style="width:120px">
+                        class="priority-select">
                         <a-select-option :value="0">正常做</a-select-option>
                         <a-select-option :value="1">有点着急</a-select-option>
                         <a-select-option :value="2">非常着急安排优先</a-select-option>
@@ -85,32 +72,31 @@
 
             <template #cell-imageUrl="{ record, isEditing }">
                 <template v-if="!isEditing">
-                    <Transition name="fade" appear>
+                    <Transition name="fade">
                         <a-row>
                             <template v-if="record.imageUrl">
-                                <a-image :width="60" :height="60" :src="getImageUrl(record.imageUrl)" alt=""
-                                    style="border-radius: 5px;">
+                                <a-image :width="60" :height="60" :src="getImageUrl(record.imageUrl, record.updatedAt)" alt=""
+                                    class="image-preview">
                                     <template #previewMask>
                                         <EyeOutlined />
                                     </template>
                                 </a-image>
                             </template>
                             <template v-else>
-                                <div
-                                    style="width: 60px; height: 60px; border-radius: 5px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; border: 1px dashed #d9d9d9;">
-                                    <span style="color: #999; font-size: 12px;">暂无图片</span>
+                                <div class="no-image-placeholder">
+                                    <span class="no-image-text">暂无图片</span>
                                 </div>
                             </template>
                         </a-row>
                     </Transition>
                 </template>
                 <template v-else>
-                    <Transition name="fade" appear>
+                    <Transition name="fade">
                         <a-row>
-                            <img v-show="record.imageUrl && !editUploadFile" :src="getImageUrl(record.imageUrl)" alt=""
-                                style="width: 60px; height: 60px;border-radius: 5px;" />
+                            <img v-show="record.imageUrl && !editUploadFile" :src="getImageUrl(record.imageUrl, record.updatedAt)" alt=""
+                                class="editable-image" />
                             <img v-show="editUploadFile" :src="editUploadFileList[0]?.url" alt=""
-                                style="width: 60px; height: 60px;border-radius: 5px;" />
+                                class="editable-image" />
                             <!-- 当这行已有图片时展示更换文字 -->
                             <a v-show="record.imageUrl" @click="openEdit = true" class="changeImgA">
                                 {{ editUploadFile ? '待保存' : '更换' }}
@@ -120,8 +106,8 @@
                                 {{ uploadFile ? '重传' : '上传' }}
                             </a-button>
                             <!-- 上传后显示小的缩略图 -->
-                            <a-row v-show="uploadFile" style="margin-top: 5px;">
-                                <a-col :span="16" style="font-size: small;color:grey;font-style: italic;">
+                            <a-row v-show="uploadFile" class="upload-preview-row">
+                                <a-col :span="16" class="upload-preview-text">
                                     已传：
                                 </a-col>
                                 <a-col :span="8">
@@ -176,13 +162,13 @@
         <a-modal v-model:open="openEditModal" title="编辑记录" ok-text="确认" cancel-text="取消" @ok="handleEditSave"
             @cancel="handleEditCancelBtn" :confirmLoading="editUploadLoading">
             <!-- 编辑弹窗中动态生成表单项 -->
-            <a-form layout="vertical" style="height: 450px; overflow-y: scroll;">
+            <a-form layout="vertical" class="edit-modal-form">
                 <a-form-item v-for="field in editableFields" :key="field"
                     :label="columns.find((col: any) => col.dataIndex === field)?.title">
 
                     <!-- 洗标状态 -->
                     <a-select v-if="field === 'washStatus'" :value="editForm[field]"
-                        @update:value="(val: any) => editForm[field] = val" style="width: 120px;">
+                        @update:value="(val: any) => editForm[field] = val" class="status-select">
                         <a-select-option :value="0">未下单</a-select-option>
                         <a-select-option :value="1">做货中</a-select-option>
                         <a-select-option :value="2">货好等付款</a-select-option>
@@ -191,7 +177,7 @@
 
                     <!-- 吊牌状态 -->
                     <a-select v-else-if="field === 'tagStatus'" :value="editForm[field]"
-                        @update:value="(val: any) => editForm[field] = val" style="width: 120px;">
+                        @update:value="(val: any) => editForm[field] = val" class="status-select">
                         <a-select-option :value="0">未下单</a-select-option>
                         <a-select-option :value="1">做货中</a-select-option>
                         <a-select-option :value="2">货好等付款</a-select-option>
@@ -200,7 +186,7 @@
 
                     <!-- 洗标优先级 -->
                     <a-select v-else-if="field === 'washPriority'" :value="editForm[field]"
-                        @update:value="(val: any) => editForm[field] = val" style="width: 120px;">
+                        @update:value="(val: any) => editForm[field] = val" class="status-select">
                         <a-select-option :value="0">正常做</a-select-option>
                         <a-select-option :value="1">有点着急</a-select-option>
                         <a-select-option :value="2">非常着急安排优先</a-select-option>
@@ -208,28 +194,28 @@
 
                     <!-- 吊牌优先级 -->
                     <a-select v-else-if="field === 'tagPriority'" :value="editForm[field]"
-                        @update:value="(val: any) => editForm[field] = val" style="width: 120px;">
+                        @update:value="(val: any) => editForm[field] = val" class="status-select">
                         <a-select-option :value="0">正常做</a-select-option>
                         <a-select-option :value="1">有点着急</a-select-option>
                         <a-select-option :value="2">非常着急安排优先</a-select-option>
                     </a-select>
 
                     <!-- 图片上传 -->
-                    <div v-else-if="field === 'imageUrl'" style="display: flex; gap: 10px; align-items: center;">
-                        <div style="flex: 1;">
-                            <a-row v-if="editForm.imageUrl && !modalEditUploadFile" style="margin-bottom: 10px;">
-                                <a-image :width="60" :height="60" :src="getImageUrl(editForm.imageUrl)" alt=""
-                                    style="border-radius: 5px;">
+                    <div v-else-if="field === 'imageUrl'" class="modal-image-upload">
+                        <div class="modal-image-container">
+                            <a-row v-if="editForm.imageUrl && !modalEditUploadFile" class="modal-image-row">
+                                <a-image :width="60" :height="60" :src="getImageUrl(editForm.imageUrl, editForm.updatedAt)" alt=""
+                                    class="modal-image-preview">
                                     <template #previewMask>
                                         <EyeOutlined />
                                     </template>
                                 </a-image>
                             </a-row>
-                            <a-row v-if="modalEditUploadFile" style="margin-bottom: 10px;">
+                            <a-row v-if="modalEditUploadFile" class="modal-image-row">
                                 <a-image :width="60" :height="60" :src="modalEditUploadFileList[0]?.url" alt=""
-                                    style="border-radius: 5px;">
+                                    class="modal-image-preview">
                                 </a-image>
-                                <span style="margin-left: 10px; color: orange;">待保存</span>
+                                <span class="pending-save-text">待保存</span>
                             </a-row>
                             <a-upload :before-upload="beforeModalEditUpload" :max-count="1"
                                 :file-list="modalEditUploadFileList" list-type="text" @remove="handleModalEditRemove">
@@ -262,12 +248,15 @@ import { tableImportStore } from '@/stores/tableImport-store'
 import { noticeGroup } from '@/api/services/webhookTableImport-api'
 
 const editForm = reactive<Record<string, any>>({})
-// 图片URL处理，添加时间戳防止缓存
-const getImageUrl = (imageUrl: string) => {
+// 图片 URL 处理：只在后端数据变化时改变 URL，避免每次渲染都生成新地址导致整列图片频繁重渲染
+const getImageUrl = (imageUrl: string, updatedAt?: string | number) => {
     if (!imageUrl) return ''
     const baseUrl = getBackendUrl()
-    const timestamp = Date.now()
-    return `${baseUrl}${imageUrl}?t=${timestamp}`
+    if (!updatedAt) {
+        return `${baseUrl}${imageUrl}`
+    }
+    const ts = new Date(updatedAt).getTime() || 0
+    return `${baseUrl}${imageUrl}?t=${ts}`
 }
 
 // 文件上传和修改状态
@@ -286,7 +275,7 @@ const modalEditUploadFile = ref<File | null>(null)
 const modalEditUploadFileList = ref<any>([])
 
 const store = accStore
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 store.pageSize = PAGE_SIZE
 
 
@@ -459,16 +448,10 @@ const editableFields = [
 ]
 
 const setTableRows = (rows: AccPurchaseContractType[]) => {
-    const newRows = (rows || []).map((r) => ({ ...r }))
-    rawRows.value = newRows
-    dataSource.value = newRows.map((r) => ({ ...r }))
-    // 强制触发重新渲染 - 多重保障
-    dataSource.value = [...dataSource.value]
-    // 强制更新Vue的响应式系统
-    nextTick(() => {
-        // 再次触发更新，确保DOM重新渲染
-        dataSource.value = [...dataSource.value]
-    })
+    // 只做必要的浅拷贝，避免多次强制刷新带来的性能开销
+    const safeRows = rows ? rows.slice() : []
+    rawRows.value = safeRows
+    dataSource.value = safeRows.slice()
 }
 
 watch(
@@ -476,7 +459,11 @@ watch(
     (list) => {
         setTableRows((list as AccPurchaseContractType[]) || [])
     },
-    { immediate: true, deep: true },
+    {
+        immediate: true,
+        // 只在引用变化时更新，避免深度监听造成的大量重渲染
+        deep: false,
+    },
 )
 
 onMounted(async () => {
@@ -632,14 +619,8 @@ const handleSave = async (record: any) => {
             await noticeGroup(record.importId, record.sku)
         }
 
-        // 无论如何都刷新数据
+        // 无论如何都刷新数据，watch(store.pagedList) 会自动调用 setTableRows
         await store.fetchPage()
-
-        // 强制重新设置表格数据，确保更新
-        setTimeout(() => {
-            console.debug('[YDTable] handleSave: 强制重新设置数据')
-            setTableRows(store.pagedList as AccPurchaseContractType[])
-        }, 100)
 
     } catch (e) {
         console.error("保存失败", e)
@@ -806,7 +787,128 @@ const handleModalEditRemove = () => {
 </script>
 
 <style scoped>
-/* 根据需要添加样式 */
+.yd-table-container {
+    width: 100%;
+}
+
+/* 工具按钮样式 */
+.custom-tool-btn {
+    margin-left: 5px;
+}
+
+.batch-select {
+    margin-left: 5px;
+    width: 150px;
+}
+
+.edit-btn {
+    margin-left: 8px;
+}
+
+/* 优先级指示器样式 */
+.priority-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.priority-dot {
+    border-radius: 15px;
+    width: 15px;
+    height: 15px;
+    box-shadow: 1px 1px 15px;
+}
+
+.priority-dot.urgent {
+    background-color: red;
+    box-shadow: 1px 1px 15px red;
+}
+
+.priority-dot.normal {
+    background-color: lightgreen;
+    box-shadow: 1px 1px 15px lightgreen;
+}
+
+.priority-dot.medium {
+    background-color: gold;
+    box-shadow: 1px 1px 15px gold;
+}
+
+.priority-select {
+    width: 120px;
+}
+
+/* 图片相关样式 */
+.image-preview {
+    border-radius: 5px;
+}
+
+.no-image-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 5px;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #d9d9d9;
+}
+
+.no-image-text {
+    color: #999;
+    font-size: 12px;
+}
+
+.editable-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 5px;
+}
+
+.upload-preview-row {
+    margin-top: 5px;
+}
+
+.upload-preview-text {
+    font-size: small;
+    color: grey;
+    font-style: italic;
+}
+
+/* 编辑弹窗样式 */
+.edit-modal-form {
+    height: 450px;
+    overflow-y: scroll;
+}
+
+.status-select {
+    width: 120px;
+}
+
+.modal-image-upload {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.modal-image-container {
+    flex: 1;
+}
+
+.modal-image-row {
+    margin-bottom: 10px;
+}
+
+.modal-image-preview {
+    border-radius: 5px;
+}
+
+.pending-save-text {
+    margin-left: 10px;
+    color: orange;
+}
+
+/* 更换图片链接样式 */
 .changeImgA {
     margin-top: -40px;
     margin-left: 15px;
@@ -819,6 +921,7 @@ const handleModalEditRemove = () => {
     text-shadow: 1px 1px 10px rgb(255, 255, 255);
 }
 
+/* 过渡动画 */
 .fade-enter-active,
 .fade-leave-active {
     transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;

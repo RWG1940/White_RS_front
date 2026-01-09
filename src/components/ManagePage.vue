@@ -6,7 +6,7 @@
         <!-- 工具栏 -->
         <slot name="toolbar" :search-value="searchValue" :trigger-search="onSearch" :add="handleAdd"
           :batch-delete="handleBatchDelete">
-          <a-row :gutter="[8, 8]" align="middle" :class="{ 'mobile-toolbar': isMobile }">
+          <a-row :gutter="[5, 5]" align="middle" :class="{ 'mobile-toolbar': isMobile }">
             <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
               <a-input-search v-model:value="searchValue" :placeholder="searchPlaceholder" enter-button
                 @search="onSearch" />
@@ -181,23 +181,36 @@ const updateWindowSize = () => {
   }
   checkMobile()
 }
+
+// resize 防抖定时器 id
+const resizeTimer = ref<number | null>(null)
+
+// 带防抖的 resize 处理函数
+const handleResize = () => {
+  if (resizeTimer.value !== null) {
+    window.clearTimeout(resizeTimer.value)
+  }
+  resizeTimer.value = window.setTimeout(() => {
+    updateWindowSize()
+  }, 200)
+}
 // 组件挂载和卸载时添加和移除事件监听
 onMounted(() => {
   updateWindowSize()
   checkMobile()
-  window.addEventListener('resize', updateWindowSize)
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', updateWindowSize)
+  window.removeEventListener('resize', handleResize)
 })
 // 监听 dataSource 属性变化，更新表格数据
 watch(
   () => props.dataSource,
   (value) => {
-    tableData.value = cloneDeep(value)
+    tableData.value = value
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 )
 
 // 监听 pageSize prop 变化
@@ -229,7 +242,7 @@ watch(
     columnsState.value = (v || []).map((col: any) => ({ ...col }))
 
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 )
 
 // 拖拽索引

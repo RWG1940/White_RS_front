@@ -5,7 +5,7 @@
             @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" :show-add="false"
             :show-batch-delete="false" :show-delete="false" @selection-change="handleSelectionChange">
             <template #custom-tool>
-                <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;" placeholder="选择批次"
+                <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;width:150px" placeholder="选择批次"
                     @change="handleBatchChange" />
             </template>
             <template #cell-__index__="{ index }">
@@ -53,10 +53,10 @@
                 </a-tag>
             </template>
             <template #cell-imageUrl="{ record }">
-                <Transition name="fade" appear>
+                <Transition name="fade">
                     <a-row>
                         <template v-if="record.imageUrl">
-                            <a-image :width="60" :height="60" :src="getImageUrl(record.imageUrl)" alt=""
+                            <a-image :width="60" :height="60" :src="getImageUrl(record.imageUrl, record.updatedAt)" alt=""
                                 style="border-radius: 5px;">
                                 <template #previewMask>
                                     <EyeOutlined />
@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, nextTick } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
 import { accStore, editFormData } from '@/stores/acc-store'
@@ -110,12 +110,15 @@ import { useAuthStore } from '@/stores/auth-store'
 import { noticeGroup } from '@/api/services/webhookTableImport-api'
 
 
-// 图片URL处理，添加时间戳防止缓存
-const getImageUrl = (imageUrl: string) => {
+// 图片URL处理，基于更新时间戳防止缓存
+const getImageUrl = (imageUrl: string, updatedAt?: string | number) => {
     if (!imageUrl) return ''
     const baseUrl = getBackendUrl()
-    const timestamp = Date.now()
-    return `${baseUrl}${imageUrl}?t=${timestamp}`
+    if (updatedAt) {
+        const timestamp = new Date(updatedAt).getTime()
+        return `${baseUrl}${imageUrl}?t=${timestamp}`
+    }
+    return `${baseUrl}${imageUrl}`
 }
 
 const uploadFile = ref<File | null>(null)
@@ -125,7 +128,7 @@ const editUploadFileList = ref<any>([])
 const uploadFileName = ref('')
 const editUploadFileName = ref('')
 const store = accStore
-const PAGE_SIZE = 100
+const PAGE_SIZE = 10
 store.pageSize = PAGE_SIZE
 const rawRows = ref<AccPurchaseContractType[]>([])
 const dataSource = ref<any[]>([])
@@ -241,17 +244,9 @@ const editableFields = [
 ]
 
 const setTableRows = (rows: AccPurchaseContractType[]) => {
-    const newRows = (rows || []).map((r) => ({ ...r }))
-    rawRows.value = newRows
-    dataSource.value = newRows.map((r) => ({ ...r }))
-    // 强制触发重新渲染 - 多重保障
-    dataSource.value = [...dataSource.value]
-    // 强制更新Vue的响应式系统
-    nextTick(() => {
-        // 再次触发更新，确保DOM重新渲染
-        dataSource.value = [...dataSource.value]
-        console.debug('[YDTable] nextTick: 强制更新dataSource完成')
-    })
+    const safeRows = rows ? rows.slice() : []
+    rawRows.value = safeRows
+    dataSource.value = safeRows.slice()
 }
 
 watch(
@@ -259,12 +254,11 @@ watch(
     (list) => {
         setTableRows((list as AccPurchaseContractType[]) || [])
     },
-    { immediate: true, deep: true },
+    { immediate: true },
 )
 
 onMounted(async () => {
     await store.fetchPage()
-    console.debug('[YDTable] store.pagedList sample:', JSON.parse(JSON.stringify(store.pagedList?.[0] ?? null)))
 })
 
 const handleSearch = async (keyword: string) => {
@@ -380,11 +374,6 @@ const handleSave = async (record: any) => {
         }
         // 无论如何都刷新数据
         await store.fetchPage()
-        // 强制重新设置表格数据，确保更新
-        setTimeout(() => {
-
-            setTableRows(store.pagedList as AccPurchaseContractType[])
-        }, 100)
     } catch (e) {
         console.error("保存失败", e)
     }

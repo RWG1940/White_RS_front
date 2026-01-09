@@ -2,7 +2,7 @@
     <div>
 
         <!-- pc 端 -->
-        <div  class="work-wrap-2">
+        <div class="work-wrap-2">
             <YDTable v-model:openImport="openImport" v-model:open-export="openExport" v-model:open-info="openInfo"
                 v-model:openHistory="openHistory" />
         </div>
@@ -10,6 +10,8 @@
         <!-- 导入弹窗：放在模板外层，桌面和移动端都可见 -->
         <a-modal v-model:open="openImport" title="导入Excel" ok-text="导入" cancel-text="取消" @ok="handleExcelImportOk"
             @cancel="handleExcelImportCancel" :confirmLoading="excelImportLoading">
+            <a-alert message="使用说明" description="上传Excel表格和批次号，系统将存储该批次的导入数据。" type="info" show-icon
+                style="margin-bottom: 16px" />
             <a-form layout="vertical">
                 <a-form-item label="选择Excel文件" required>
                     <a-upload :before-upload="beforeExcelUpload" :max-count="1" :file-list="uploadExcelList"
@@ -24,12 +26,6 @@
                     </div>
                 </a-form-item>
                 <a-form-item label="设置导入id" required>
-                    <div style="color: #999;font-size: smaller;margin-bottom: 10px;">
-                        <p>这决定了你导入表格的批次，具体应用在：</p>
-                        <p>1、后续表格导入更新现有数据</p>
-                        <p>2、导出数据的范围</p>
-                    </div>
-
                     <a-input v-model:value="importId" placeholder="请填写导入id" style="width: 200px"></a-input>
                 </a-form-item>
             </a-form>
@@ -44,6 +40,8 @@
         <a-modal v-model:open="openExport" title="导出辅料清单" width="50%" wrap-class-name="full-modal" ok-text="导出"
             cancel-text="取消" @ok="handleExcelExportOk" @cancel="handleExcelExportCancel"
             :confirmLoading="excelImportLoading">
+            <a-alert message="使用说明" description="上传批次号，系统将导出该批次的数据。" type="info" show-icon
+                style="margin-bottom: 16px" />
             <a-form-item label="选择导出批次id" required>
                 <a-row>
                     <a-select v-model:value="exportIds" :options="options" mode="multiple" placeholder="请填写导出批次id"
@@ -71,11 +69,8 @@
         <a-modal v-model:open="openHistory" title="历史批次管理" width="50%" wrap-class-name="full-modal">
             <template #default>
                 <div>
-                    <div style="color: #999;font-size: smaller;margin-bottom: 10px;">
-                        <p>这是用于管理表格导入批次的面板，其具体说明如下：</p>
-                        <p>1、导入的表格中的每条数据都会有个导入id，通过该id可以在页面中迅速筛选出同一批次的数据</p>
-                        <p>2、该面板中的项目删除操作不会影响你表格的数据，但是你导出表格就会受到影响</p>
-                    </div>
+                    <a-alert message="使用说明" description="用于管理批次号，删除批次号不会影响导入的表格数据。" type="info" show-icon
+                        style="margin-bottom: 16px" />
                     <a-tag v-for="batch in tableImportStore.list as any" :key="batch.id" color="blue" :closable="true"
                         @close="tableImportStore.remove([batch.id])"
                         style="margin-bottom: 8px; display: inline-flex; align-items: center;">
@@ -97,7 +92,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { ref,onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
 import type { DrawerProps } from 'ant-design-vue';
 import YDTable from './components/YDTable.vue';
@@ -306,6 +301,4 @@ onMounted(() => {
 .process-card {
     width: 100%;
 }
-
-
 </style>
