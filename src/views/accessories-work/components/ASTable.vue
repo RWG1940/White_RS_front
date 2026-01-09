@@ -1,9 +1,9 @@
 <template>
     <div>
-        <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields"
-            row-key="id" :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
+        <ManagePage v-model:data-source="dataSource" v-model:total="store.total" v-model:currentPage="store.currentPage" v-model:pageSize="store.pageSize" :columns="columns" :editable-fields="editableFields"
+            row-key="id" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
             @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" :show-add="false"
-            :show-batch-delete="false" @selection-change="handleSelectionChange" :show-delete="false">
+            :show-batch-delete="false" @selection-change="handleSelectionChange" :show-delete="false" @update:currentPage="pageChange" @update:pageSize="pageSizeChange">
 
             <template #custom-tool>
                 <a-button style="margin-left: 5px;" type="primary" @click="onImportClick">导入</a-button>
@@ -12,6 +12,8 @@
                     @change="handleBatchChange" />
                 <a-button style="margin-left: 8px;" @click="handleEditClick" :disabled="isEditButtonDisabled">编辑
                 </a-button>
+                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(2) }}</div>
+                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}</div>
             </template>
             <template #cell-__index__="{ index }">
                 <span>{{ (index ?? 0) + 1 }}</span>
@@ -174,7 +176,7 @@
 import { ref, watch, onMounted, reactive, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData } from '@/stores/acc-store'
+import { accStore, editFormData,fetchPageByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { updateFileWithInfo } from '@/api/services/acc-api'
@@ -189,8 +191,7 @@ const editUploadFile = ref<File | null>(null)
 const editUploadFileList = ref<any>([])
 const editUploadFileName = ref('')
 const store = accStore
-const PAGE_SIZE = 10
-store.pageSize = PAGE_SIZE
+
 
 const rawRows = ref<AccPurchaseContractType[]>([])
 const dataSource = ref<AccPurchaseContractType[]>([])
@@ -402,8 +403,25 @@ const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
 // 添加编辑按钮的逻辑
 ///
 const selectedRow = ref();
+const selectedRows = ref<any[]>([]);
 const isEditButtonDisabled = computed(() => {
     return !selectedRow.value || Array.isArray(selectedRow.value) && selectedRow.value.length !== 1;
+});
+
+// 计算选中行的洗标总金额
+const selectedWashTotalAmount = computed(() => {
+    return selectedRows.value.reduce((sum, row) => {
+        const amount = Number(row.washTotalPrice) || 0;
+        return sum + amount;
+    }, 0);
+});
+
+// 计算选中行的吊牌总金额
+const selectedTagTotalAmount = computed(() => {
+    return selectedRows.value.reduce((sum, row) => {
+        const amount = Number(row.tagTotalPrice) || 0;
+        return sum + amount;
+    }, 0);
 });
 const openEditModal = ref(false);
 const handleEditClick = () => {
@@ -443,6 +461,7 @@ const handleEditCancelBtn = () => {
     openEditModal.value = false;
 };
 const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: any[] }) => {
+    selectedRows.value = rows;
     selectedRow.value = rows.length === 1 ? rows[0] : null;
 };
 ///
@@ -488,13 +507,7 @@ const handleSave = async (record: any) => {
 
 // 批次选择框
 const selectedBatchId = ref<number | null>(null)
-// 批次过滤后的数据源
-const filteredDataSource = computed(() => {
-    if (selectedBatchId.value === null) {
-        return dataSource.value
-    }
-    return dataSource.value.filter(row => row.importId === selectedBatchId.value)
-})
+
 // 批次选择框的数据源
 const batchOptions = computed(() => {
     return tableImportStore.list.map((batch: any) => ({
@@ -502,11 +515,18 @@ const batchOptions = computed(() => {
         value: batch.id
     }))
 })
-// 批次选择框的监听事件
 const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
+    fetchPageByImportId(selectedBatchId.value,0,0)
 }
-
+const pageChange = (val:number) => { 
+    store.currentPage = val
+    fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
+}
+const pageSizeChange = (val:number) => { 
+    store.pageSize = val
+        fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
+}
 </script>
 
 <style scoped>
@@ -549,5 +569,12 @@ const handleBatchChange = (value: number) => {
 
 .fade-move {
     transition: transform 3s ease-in-out;
+}
+
+.selected-total {
+    margin-left: 10px;
+    background-color: rgb(201, 255, 223);
+    padding: 6px;
+    border-radius: 5px;
 }
 </style>

@@ -1,9 +1,11 @@
 <template>
     <div>
         <ManagePage v-model:data-source="dataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
-            :show-operation="true" :show-add="true" :show-batch-delete="true" :page-size="PAGE_SIZE"
-            search-placeholder="搜索批次" @search="handleSearch" @add="handleAdd" @save="handleSave"
-            @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" @selection-change="handleSelectionChange">
+            :show-operation="true" :show-add="true" :show-batch-delete="true" v-model:total="store.total"
+            v-model:currentPage="store.currentPage" v-model:pageSize="store.pageSize" search-placeholder="搜索批次"
+            @search="handleSearch" @add="handleAdd" @save="handleSave" @row-delete="handleRowDelete"
+            @batch-delete="handleBatchDelete" @selection-change="handleSelectionChange" @update:currentPage="pageChange"
+            @update:pageSize="pageSizeChange">
             <template #cell-status="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
                     <a-tag :color="record.status === 1 ? 'blue' : 'red'">
@@ -111,7 +113,14 @@ const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: Webh
     store.onSelectionChange(rows as any)
 }
 
-
+const pageChange = (val: number) => {
+    store.currentPage = val
+    store.fetchPage()
+}
+const pageSizeChange = (val: number) => {
+    store.pageSize = val
+    store.fetchPage()
+}
 </script>
 
 <style scoped></style>

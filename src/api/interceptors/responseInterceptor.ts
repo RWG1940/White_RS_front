@@ -1,6 +1,6 @@
 import { message } from 'ant-design-vue';
 import { useRouter } from "vue-router";
-import { appConfig } from '@/config';
+import { appConfig } from '@/config/index';
 
 // 响应拦截器
 export const responseInterceptor = async (response: any) => {
@@ -34,6 +34,9 @@ export const responseInterceptor = async (response: any) => {
       message.error(messageText);
       return Promise.reject(messageText);
     }
+  }
+  if (appConfig.enableDebug) {
+    console.log('响应数据:', response.data);
   }
 
   return response;

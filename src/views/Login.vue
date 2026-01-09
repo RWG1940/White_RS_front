@@ -74,10 +74,16 @@ const handleLogin = async () => {
           }
         })
       }, 500)
-    } 
+    } else {
+      // 登录失败提示
+      message.error({
+        content: '登录失败',
+        duration: 2,
+      })
+      loading.value = false
+    }
   } catch (error) {
-    // 错误已在拦截器中处理
-    console.error('登录错误:', error)
+    
   } finally {
     loading.value = false
   }

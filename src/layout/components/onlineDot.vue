@@ -88,6 +88,11 @@ const titleText = computed(() => {
   50%      { opacity: 0.8; transform: scale(0.95); }
 }
 
+/* 离线状态也需要相对定位来保持位置一致 */
+.online-dot.offline {
+  position: relative;
+}
+
 /* 在线并允许 pulse 时同时播放两个动画（环形 + 点微动） */
 .online-dot.online:not(.no-pulse) {
   animation: pulse-opacity 1.2s ease-in-out infinite;

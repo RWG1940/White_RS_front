@@ -2,67 +2,76 @@
     <div class="fa-mobile-table">
         <!-- 批次选择 -->
         <div class="batch-section">
-            <a-select
-                v-model:value="selectedBatchId"
-                :options="batchOptions"
-                placeholder="选择批次"
-                allow-clear
-                @change="handleBatchChange"
-                style="width: 100%;"
-            />
+            <a-select v-model:value="selectedBatchId" :options="batchOptions" placeholder="选择批次" allow-clear
+                @change="handleBatchChange" style="width: 100%; margin-bottom: 5px" />
         </div>
 
         <!-- 搜索框 -->
-        <div class="search-section">
-            <a-input-search
-                v-model:value="searchValue"
-                placeholder="搜索SKU"
-                enter-button
-                @search="handleSearch"
-            />
-        </div>
+            <div class="search-section">
+                <a-row :gutter="[8, 8]">
+                    <a-col :span="19">
+                        <a-input-search v-model:value="searchValue" placeholder="搜索SKU" enter-button
+                            @search="handleSearch" style="margin-bottom: 5px" />
+                    </a-col>
+                    <a-col :span="5">
+                        <a-button type="primary" @click="handleSearchReset"><ReloadOutlined /></a-button>
+                    </a-col>
+                </a-row>
+
+            </div>
 
         <!-- 列表 -->
         <div class="list-section">
-            <a-empty v-if="filteredList.length === 0" description="暂无数据" />
-            <div
-                v-for="item in filteredList"
-                :key="item.id"
-                class="list-item"
-                @click="selectedItem = item"
-            >
-                <div class="item-header">
-                    <div class="sku">{{ item.sku }}</div>
-                    <div class="status-badges">
-                        <a-tag
-                            :color="item.washStatus == 0 ? 'lightgrey' : item.washStatus == 1 ? 'orange' : item.washStatus == 2 ? 'pink' : item.washStatus == 3 ? 'green' : ''"
-                        >
-                            洗{{ item.washStatus == 0 ? '未下单' : item.washStatus == 1 ? '做货中' : item.washStatus == 2 ? '待付款' : item.washStatus == 3 ? '已出货' : '' }}
-                        </a-tag>
-                        <a-tag
-                            :color="item.tagStatus == 0 ? 'lightgrey' : item.tagStatus == 1 ? 'orange' : item.tagStatus == 2 ? 'pink' : item.tagStatus == 3 ? 'green' : ''"
-                        >
-                            吊{{ item.tagStatus == 0 ? '未下单' : item.tagStatus == 1 ? '做货中' : item.tagStatus == 2 ? '待付款' : item.tagStatus == 3 ? '已出货' : '' }}
-                        </a-tag>
-                    </div>
-                </div>
-                <div class="item-info">
-                    <span class="info-item">颜色: {{ item.color }}</span>
-                    <span class="info-item">品牌: {{ item.brand }}</span>
-                    <span class="info-item">数量: {{ item.quantity }}</span>
-                </div>
+            
+            <a-empty v-if="pagedList.length === 0" description="暂无数据" />
+            <div v-for="item in pagedList" :key="item.id" class="list-item" @click="selectedItem = item">
+                <a-row :gutter="[8, 8]">
+                    <!-- SKU 单独一行 -->
+                    <a-col :span="24">
+                        <div class="sku">{{ item.sku }}</div>
+                    </a-col>
+
+                    <!-- 状态标签 -->
+                    <a-col :span="24">
+                        <div class="status-info">
+                            <a-tag
+                                :color="item.washStatus == 0 ? 'lightgrey' : item.washStatus == 1 ? 'orange' : item.washStatus == 2 ? 'pink' : item.washStatus == 3 ? 'green' : ''">
+                                洗{{ item.washStatus == 0 ? '未下单' : item.washStatus == 1 ? '做货中' : item.washStatus == 2 ?
+                                    '待付款' : item.washStatus == 3 ? '已出货' : '' }}
+                            </a-tag>
+                            <a-tag
+                                :color="item.tagStatus == 0 ? 'lightgrey' : item.tagStatus == 1 ? 'orange' : item.tagStatus == 2 ? 'pink' : item.tagStatus == 3 ? 'green' : ''">
+                                吊{{ item.tagStatus == 0 ? '未下单' : item.tagStatus == 1 ? '做货中' : item.tagStatus == 2 ?
+                                    '待付款' : item.tagStatus == 3 ? '已出货' : '' }}
+                            </a-tag>
+                        </div>
+                    </a-col>
+
+                    <!-- 颜色、品牌、数量 -->
+                    <a-col :span="24">
+                        <div class="info-item">颜色: {{ item.color }}</div>
+                    </a-col>
+                    <a-col :span="24">
+                        <div class="info-item">品牌: {{ item.brand }}</div>
+                    </a-col>
+                    <a-col :span="24">
+                        <div class="info-item">数量: {{ item.quantity }}</div>
+                    </a-col>
+                </a-row>
             </div>
         </div>
 
+        <!-- 分页器 -->
+        <div class="pagination-section" v-if="pagedList.length > 0">
+            <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="store.total"
+                :showSizeChanger="true" :pageSizeOptions="['10', '20', '50', '100']" :showQuickJumper="true"
+                :showTotal="() => `共 ${store.total} 条`" @change="handlePageChange" @showSizeChange="handleSizeChange"
+                size="small" style="text-align: center; margin-top: 10px;" />
+        </div>
+
         <!-- 详情弹窗 -->
-        <a-modal
-            title="详细信息"
-            :open="!!selectedItem"
-            @cancel="selectedItem = null"
-            width="90%"
-            :footer="null"
-            :body-style="{ maxHeight: '70vh', overflowY: 'auto' }"
-        >
+        <a-modal title="详细信息" :open="!!selectedItem" @cancel="selectedItem = null" width="90%" :footer="null"
+            :body-style="{ maxHeight: '70vh', overflowY: 'auto' }">
             <template v-if="selectedItem">
                 <div class="detail-section">
                     <!-- 图片 -->
@@ -70,15 +79,12 @@
                         <div class="detail-label">图片</div>
                         <div class="detail-content">
                             <template v-if="selectedItem.imageUrl">
-                                <a-image
-                                    :width="100"
-                                    :height="100"
-                                    :src="getImageUrl(selectedItem.imageUrl)"
-                                    style="border-radius: 5px"
-                                />
+                                <a-image :width="100" :height="100" :src="getImageUrl(selectedItem.imageUrl)"
+                                    style="border-radius: 5px" />
                             </template>
                             <template v-else>
-                                <div style="width: 100px; height: 100px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; border-radius: 5px; border: 1px dashed #d9d9d9;">
+                                <div
+                                    style="width: 100px; height: 100px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; border-radius: 5px; border: 1px dashed #d9d9d9;">
                                     <span style="color: #999; font-size: 12px;">暂无图片</span>
                                 </div>
                             </template>
@@ -126,9 +132,10 @@
                         <div class="detail-label">洗标状态</div>
                         <div class="detail-content">
                             <a-tag
-                                :color="selectedItem.washStatus == 0 ? 'lightgrey' : selectedItem.washStatus == 1 ? 'orange' : selectedItem.washStatus == 2 ? 'pink' : selectedItem.washStatus == 3 ? 'green' : ''"
-                            >
-                                {{ selectedItem.washStatus == 0 ? '未下单' : selectedItem.washStatus == 1 ? '做货中' : selectedItem.washStatus == 2 ? '货好等付款' : selectedItem.washStatus == 3 ? '已出货' : '' }}
+                                :color="selectedItem.washStatus == 0 ? 'lightgrey' : selectedItem.washStatus == 1 ? 'orange' : selectedItem.washStatus == 2 ? 'pink' : selectedItem.washStatus == 3 ? 'green' : ''">
+                                {{ selectedItem.washStatus == 0 ? '未下单' : selectedItem.washStatus == 1 ? '做货中' :
+                                    selectedItem.washStatus ==
+                                        2 ? '货好等付款' : selectedItem.washStatus == 3 ? '已出货' : '' }}
                             </a-tag>
                         </div>
                     </div>
@@ -155,9 +162,10 @@
                         <div class="detail-label">吊牌状态</div>
                         <div class="detail-content">
                             <a-tag
-                                :color="selectedItem.tagStatus == 0 ? 'lightgrey' : selectedItem.tagStatus == 1 ? 'orange' : selectedItem.tagStatus == 2 ? 'pink' : selectedItem.tagStatus == 3 ? 'green' : ''"
-                            >
-                                {{ selectedItem.tagStatus == 0 ? '未下单' : selectedItem.tagStatus == 1 ? '做货中' : selectedItem.tagStatus == 2 ? '货好等付款' : selectedItem.tagStatus == 3 ? '已出货' : '' }}
+                                :color="selectedItem.tagStatus == 0 ? 'lightgrey' : selectedItem.tagStatus == 1 ? 'orange' : selectedItem.tagStatus == 2 ? 'pink' : selectedItem.tagStatus == 3 ? 'green' : ''">
+                                {{ selectedItem.tagStatus == 0 ? '未下单' : selectedItem.tagStatus == 1 ? '做货中' :
+                                    selectedItem.tagStatus == 2 ?
+                                        '货好等付款' : selectedItem.tagStatus == 3 ? '已出货' : '' }}
                             </a-tag>
                         </div>
                     </div>
@@ -200,12 +208,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { accStore } from '@/stores/acc-store'
+import { accStore, fetchPageByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { getBackendUrl } from '@/utils/api'
 import { useAuthStore } from '@/stores/auth-store'
 import { tableImportStore } from '@/stores/tableImport-store'
+import { ReloadOutlined } from '@ant-design/icons-vue'
 
 // 图片URL处理，添加时间戳防止缓存
 const getImageUrl = (imageUrl: string) => {
@@ -220,8 +229,28 @@ const searchValue = ref('')
 const selectedItem = ref<AccPurchaseContractType | null>(null)
 const selectedBatchId = ref<number | undefined>(undefined)
 
-// 获取原始数据源
+const currentPage = computed({
+    get: () => store.currentPage,
+    set: (val) => {
+        store.currentPage = val
+    },
+})
+
+const pageSize = computed({
+    get: () => store.pageSize,
+    set: (val) => {
+        store.pageSize = val
+    },
+})
+
+
+// 获取原始数据源 - 与YDTable逻辑一致
 const dataSource = computed(() => {
+    // 如果有搜索关键词，使用搜索结果，否则使用分页列表
+    const keyword = searchValue.value.trim()
+    if (keyword && store.searchResults) {
+        return store.searchResults as AccPurchaseContractType[]
+    }
     if (!store.pagedList) return []
     return store.pagedList as AccPurchaseContractType[]
 })
@@ -233,25 +262,25 @@ const filteredDataSourceByBatch = computed(() => {
     }
     return dataSource.value.filter(
         row =>
-            (selectedBatchId.value === undefined || row.importId === selectedBatchId.value) &&
-            row.factory == useAuthStore()?.user?.username
+            (selectedBatchId.value === undefined || row.importId === selectedBatchId.value)
     )
 })
 
-// 根据搜索关键词过滤列表
-const filteredList = computed(() => {
-    const keyword = searchValue.value.trim().toLowerCase()
+const pagedList = computed(() => {
+    return filteredDataSourceByBatch.value
+})
+
+
+const handleSearch = async () => {
+    const keyword = searchValue.value.trim()
     if (!keyword) {
-        return filteredDataSourceByBatch.value
+        await store.fetchPage()
+        return
     }
-    return filteredDataSourceByBatch.value.filter(item =>
-        (item.sku ?? '').toLowerCase().includes(keyword)
-    )
-})
-
-const handleSearch = () => {
-    // 搜索时自动进行过滤，computed会自动响应
+    await store.search({ column: 'sku', keyword: keyword } as any)
+    currentPage.value = 1 // 搜索时重置到第一页
 }
+
 
 const batchOptions = computed(() => {
     return tableImportStore.list.map((batch: any) => ({
@@ -260,37 +289,55 @@ const batchOptions = computed(() => {
     }))
 })
 
-const handleBatchChange = (value: number | undefined) => {
+/**
+ * 批次切换、页码切换、页大小切换时触发
+ */
+const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
+    store.currentPage = 1
+    store.pageSize = 10
+    fetchPageByImportId(selectedBatchId.value, 0, 0)
+}
+const handlePageChange = (val: number) => {
+    store.currentPage = val
+    fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+}
+const handleSizeChange = (val: number) => {
+    store.pageSize = val
+    fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
 }
 
-// 监听props变化或初始化
-watch(
-    () => store.pagedList,
-    () => {
-        // 数据变化时重新渲染列表
-    },
-    { deep: true }
-)
+/*
+* 搜索重置
+ */
+const handleSearchReset = () => {
+    searchValue.value = ''
+    handleSearch()
+}
+
+
+
 </script>
 
 <style scoped>
 .fa-mobile-table {
-    padding: 16px;
+    padding: 5px;
 }
 
 .batch-section {
-    margin-bottom: 12px;
+    margin-bottom: 5px;
 }
 
 .search-section {
-    margin-bottom: 16px;
+    margin-bottom: 5px;
 }
 
 .list-section {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-height: calc(100vh - 320px);
+    overflow: auto;
 }
 
 .list-item {
@@ -304,39 +351,23 @@ watch(
 
 .list-item:active {
     background: #fafafa;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(36, 36, 36, 0.1);
 }
 
 .sku {
-    font-weight: 500;
+    font-weight: bold;
     font-size: 16px;
     color: #333;
-    flex: 1;
 }
 
-.status-badges {
+.status-info {
     display: flex;
-    gap: 4px;
-    flex-shrink: 0;
-}
-
-.item-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 12px;
-    color: #666;
+    gap: 8px;
 }
 
 .info-item {
-    flex: 0 1 calc(50% - 6px);
+    font-size: 12px;
+    color: #666;
 }
 
 .detail-section {
@@ -366,5 +397,38 @@ watch(
 
 :deep(.ant-divider) {
     margin: 16px 0 12px 0;
+}
+
+.pagination-section {
+    background: rgba(255, 255, 255, 0.305);
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: -5px;
+    border: 1px solid #f0f0f0;
+    backdrop-filter: blur(10px);
+}
+
+:deep(.ant-pagination) {
+    font-size: 12px;
+}
+
+:deep(.ant-pagination-item) {
+    min-width: 28px;
+    height: 28px;
+    line-height: 26px;
+}
+
+:deep(.ant-pagination-prev),
+:deep(.ant-pagination-next) {
+    min-width: 28px;
+    height: 28px;
+    line-height: 26px;
+}
+
+:deep(.ant-pagination-jump-prev),
+:deep(.ant-pagination-jump-next) {
+    min-width: 28px;
+    height: 28px;
+    line-height: 26px;
 }
 </style>

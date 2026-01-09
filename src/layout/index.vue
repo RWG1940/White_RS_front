@@ -17,14 +17,8 @@ const toggleCollapse = () => {
 <template>
   <a-layout class="layout-container">
     <!-- 侧边栏 -->
-    <a-layout-sider
-      v-model:collapsed="collapsed"
-      :trigger="null"
-      collapsible
-      :width="150"
-      :collapsed-width="60"
-      :class="['layout-sider', { 'layout-sider-collapsed': collapsed }]"
-    >
+    <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible :width="150" :collapsed-width="60"
+      :class="['layout-sider', { 'layout-sider-collapsed': collapsed }]">
       <Sidebar :collapsed="collapsed" />
     </a-layout-sider>
 
@@ -37,7 +31,6 @@ const toggleCollapse = () => {
 
       <!-- 内容区 -->
       <a-layout-content class="layout-content">
-        <!-- 面包屑 -->
         <Breadcrumb />
 
         <!-- 页面内容：使用 router-view 插槽配合 transition 实现页面切换动画 -->
@@ -96,36 +89,37 @@ const toggleCollapse = () => {
 
 .layout-content {
   margin: 64px 0 0 0;
-  padding: 10px;
+  padding:9px;
   background: #f0f2f5;
 }
 
 .content-wrapper {
   background: #fff;
-  padding: 1%;
+  padding: 0.5%;
   border-radius: 10px;
   /* 减小 footer 后调整内容区高度 */
-  height: calc(100vh - 140px);
+  height: calc(100vh - 126px);
   /* overflow-y: auto;
   overflow-x: hidden; */
-  position: relative; /* 为可能的绝对定位保留上下文 */
+  position: relative;
+  /* 为可能的绝对定位保留上下文 */
 }
 
 .m-trans-enter-active,
 .m-trans-leave-active {
   transition:
-    opacity 0.3s ease,
-    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity 0.4s ease,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .m-trans-enter-from {
   opacity: 0;
-  transform: translateX(-10px) scale(0.98);
+  transform: translateX(-10px) scale(0.94);
 }
 
 .m-trans-leave-to {
   opacity: 0;
-  transform: translateX(10px) scale(0.98);
+  transform: translateX(10px) scale(0.94);
 }
 
 
@@ -157,8 +151,8 @@ const toggleCollapse = () => {
 .layout-footer {
   text-align: center;
   color: rgb(146, 146, 146);
-  padding: 6px 0;
-  font-size: 12px;
+  padding: 3px 0;
+  font-size: 11px;
 }
 
 /* 移动端适配 */

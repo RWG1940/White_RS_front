@@ -1,9 +1,10 @@
 <template>
     <div>
-        <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields"
-            row-key="id" :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
+        <ManagePage v-model:data-source="dataSource" :columns="columns" :editable-fields="editableFields"
+            row-key="id" v-model:total="store.total" v-model:currentPage="store.currentPage"
+            v-model:pageSize="store.pageSize" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
             @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" :show-add="false"
-            :show-batch-delete="false" :show-delete="false" @selection-change="handleSelectionChange">
+            :show-batch-delete="false" :show-delete="false" @selection-change="handleSelectionChange" @update:currentPage="pageChange" @update:pageSize="pageSizeChange">
             <template #custom-tool>
                 <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;width:150px" placeholder="选择批次"
                     @change="handleBatchChange" />
@@ -99,7 +100,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData } from '@/stores/acc-store'
+import { accStore, editFormData,fetchPageByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { getBackendUrl } from '@/utils/api'
@@ -380,12 +381,7 @@ const handleSave = async (record: any) => {
 }
 
 const selectedBatchId = ref<number | null>(null)
-const filteredDataSource = computed(() => {
-    if (selectedBatchId.value == null) {
-        return dataSource.value.filter(row => row.follower == useAuthStore()!.user!.username)
-    }
-    return dataSource.value.filter(row => row.importId === selectedBatchId.value && row.follower == useAuthStore()!.user!.username)
-})
+
 const batchOptions = computed(() => {
     return tableImportStore.list.map((batch: any) => ({
         label: `批次：${batch.id}`,
@@ -394,8 +390,16 @@ const batchOptions = computed(() => {
 })
 const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
+    fetchPageByImportId(selectedBatchId.value,0,0)
 }
-
+const pageChange = (val:number) => { 
+    store.currentPage = val
+    fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
+}
+const pageSizeChange = (val:number) => { 
+    store.pageSize = val
+        fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
+}
 </script>
 
 <style scoped>

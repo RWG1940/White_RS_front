@@ -17,6 +17,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/white-rs-share/:shareUrl',
+    name: 'Share',
+    component: () => import('@/views/file-drive/filesSharePage.vue').catch(() => import('@/views/NotFound.vue')),
+    meta: {
+      title: '分享的文件',
+      requiresAuth: false, // 不需要登录
+    },
+  },
+  {
     path: '/',
     component: () => import('@/layout/index.vue'),
     meta: {
@@ -44,7 +53,8 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   NProgress.start() // 开始进度条
   const authStore = useAuthStore()
-
+  // 检查token是否有效
+  
   // 如果未初始化，先初始化（从本地存储恢复 token）
   if (!authStore.isLoaded && authStore.token) {
     await authStore.init()

@@ -1,12 +1,18 @@
 <template>
     <div>
-        <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields"
-            row-key="id" :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
+        <ManagePage v-model:data-source="dataSource" :columns="columns" :editable-fields="editableFields"
+            row-key="id" v-model:total="store.total" v-model:currentPage="store.currentPage"
+            v-model:pageSize="store.pageSize" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
             @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" :show-add="false"
-            :show-batch-delete="false" :show-delete="false" @selection-change="handleSelectionChange">
+            :show-batch-delete="false" :show-delete="false" @selection-change="handleSelectionChange"
+            @update:currentPage="pageChange" @update:pageSize="pageSizeChange">
             <template #custom-tool>
-                <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;width:150px" placeholder="选择批次"
-                    @change="handleBatchChange" />
+                <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;width:150px"
+                    placeholder="选择批次" @change="handleBatchChange" />
+                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(2)
+                    }}</div>
+                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}
+                </div>
             </template>
             <template #cell-__index__="{ index }">
                 <span>{{ (index ?? 0) + 1 }}</span>
@@ -31,8 +37,8 @@
                 <Transition name="fade">
                     <a-row>
                         <template v-if="record.imageUrl">
-                            <a-image :width="60" :height="60" :src="getImageUrl(record.imageUrl, record.updatedAt)" alt=""
-                                style="border-radius: 5px;">
+                            <a-image :width="60" :height="60" :src="getImageUrl(record.imageUrl, record.updatedAt)"
+                                alt="" style="border-radius: 5px;">
                                 <template #previewMask>
                                     <EyeOutlined />
                                 </template>
@@ -76,7 +82,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { message, type TableColumnType } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData } from '@/stores/acc-store'
+import { accStore, editFormData,fetchPageByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { getBackendUrl } from '@/utils/api'
@@ -237,7 +243,26 @@ const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
     }
 }
 
+const selectedRows = ref<AccPurchaseContractType[]>([])
+
+// 计算选中行的洗标总金额
+const selectedWashTotalAmount = computed(() => {
+    return selectedRows.value.reduce((sum, row) => {
+        const amount = Number(row.washTotalPrice) || 0;
+        return sum + amount;
+    }, 0);
+});
+
+// 计算选中行的吊牌总金额
+const selectedTagTotalAmount = computed(() => {
+    return selectedRows.value.reduce((sum, row) => {
+        const amount = Number(row.tagTotalPrice) || 0;
+        return sum + amount;
+    }, 0);
+});
+
 const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: AccPurchaseContractType[] }) => {
+    selectedRows.value = rows;
     store.onSelectionChange(rows as any)
 }
 
@@ -309,12 +334,7 @@ const handleSave = async (record: any) => {
 
 const selectedBatchId = ref<number | null>(null)
 
-const filteredDataSource = computed(() => {
-    if (selectedBatchId.value == null) {
-        return dataSource.value.filter(row => row.factory == useAuthStore()!.user!.username)
-    }
-    return dataSource.value.filter(row => row.importId === selectedBatchId.value && row.factory == useAuthStore()!.user!.username)
-})
+
 
 const batchOptions = computed(() => {
     return tableImportStore.list.map((batch: any) => ({
@@ -325,8 +345,16 @@ const batchOptions = computed(() => {
 
 const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
+    fetchPageByImportId(selectedBatchId.value,0,0)
 }
-
+const pageChange = (val:number) => { 
+    store.currentPage = val
+    fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
+}
+const pageSizeChange = (val:number) => { 
+    store.pageSize = val
+        fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
+}
 </script>
 
 <style scoped>
@@ -370,5 +398,12 @@ const handleBatchChange = (value: number) => {
 
 .fade-move {
     transition: transform 3s ease-in-out;
+}
+
+.selected-total {
+    margin-left: 10px;
+    background-color: rgb(201, 255, 223);
+    padding: 6px;
+    border-radius: 5px;
 }
 </style>

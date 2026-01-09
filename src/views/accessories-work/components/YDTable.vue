@@ -1,9 +1,15 @@
 <template>
     <div class="yd-table-container">
-        <ManagePage v-model:data-source="filteredDataSource" :columns="columns" :editable-fields="editableFields"
-            row-key="id" :page-size="PAGE_SIZE" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
-            @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete"
-            @selection-change="handleSelectionChange">
+
+        <a-tabs v-model:activeKey="currentCustomer" type="card" @change="handleCustomerChange">
+            <a-tab-pane v-for="customer in guestInfoStore.list as GuestType[]" :key="customer!.id!"
+                :tab="customer!.name!"></a-tab-pane>
+        </a-tabs>
+        <ManagePage v-model:data-source="dataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
+            v-model:total="store.total" v-model:currentPage="store.currentPage" v-model:pageSize="store.pageSize"
+            search-placeholder="搜索sku（全客户）" @search="handleSearch" @add="handleAdd" @save="handleSave"
+            @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" @update:currentPage="pageChange"
+            @update:pageSize="pageSizeChange" @selection-change="handleSelectionChange">
             <template #custom-tool>
                 <a-button class="custom-tool-btn" type="primary" @click="onImportClick">导入</a-button>
                 <a-button class="custom-tool-btn" type="primary" @click="onExportClick">导出</a-button>
@@ -11,6 +17,13 @@
                 <a-select v-model="selectedBatchId" :options="batchOptions" class="batch-select" placeholder="选择批次"
                     @change="handleBatchChange" />
                 <a-button class="edit-btn" @click="handleEditClick" :disabled="isEditButtonDisabled">编辑</a-button>
+                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(2)
+                    }}</div>
+                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}
+                </div>
+                <div class="customer" @click="guestTableVisible = true"><span style="color: white;">
+                        <CrownOutlined />&ensp;客户管理&ensp;
+                    </span></div>
             </template>
 
             <template #cell-__index__="{ index }">
@@ -75,8 +88,8 @@
                     <Transition name="fade">
                         <a-row>
                             <template v-if="record.imageUrl">
-                                <a-image :width="60" :height="60" :src="getImageUrl(record.imageUrl, record.updatedAt)" alt=""
-                                    class="image-preview">
+                                <a-image :width="60" :height="60" :src="getImageUrl(record.imageUrl, record.updatedAt)"
+                                    alt="" class="image-preview">
                                     <template #previewMask>
                                         <EyeOutlined />
                                     </template>
@@ -93,8 +106,8 @@
                 <template v-else>
                     <Transition name="fade">
                         <a-row>
-                            <img v-show="record.imageUrl && !editUploadFile" :src="getImageUrl(record.imageUrl, record.updatedAt)" alt=""
-                                class="editable-image" />
+                            <img v-show="record.imageUrl && !editUploadFile"
+                                :src="getImageUrl(record.imageUrl, record.updatedAt)" alt="" class="editable-image" />
                             <img v-show="editUploadFile" :src="editUploadFileList[0]?.url" alt=""
                                 class="editable-image" />
                             <!-- 当这行已有图片时展示更换文字 -->
@@ -204,7 +217,8 @@
                     <div v-else-if="field === 'imageUrl'" class="modal-image-upload">
                         <div class="modal-image-container">
                             <a-row v-if="editForm.imageUrl && !modalEditUploadFile" class="modal-image-row">
-                                <a-image :width="60" :height="60" :src="getImageUrl(editForm.imageUrl, editForm.updatedAt)" alt=""
+                                <a-image :width="60" :height="60"
+                                    :src="getImageUrl(editForm.imageUrl, editForm.updatedAt)" alt=""
                                     class="modal-image-preview">
                                     <template #previewMask>
                                         <EyeOutlined />
@@ -230,6 +244,8 @@
                 </a-form-item>
             </a-form>
         </a-modal>
+        <!-- 客户弹窗 -->
+        <YDGuestModal v-model:visible="guestTableVisible" />
     </div>
 </template>
 
@@ -237,15 +253,18 @@
 import { ref, watch, onMounted, reactive, computed, nextTick } from 'vue'
 import { message, type TableColumnType } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData } from '@/stores/acc-store'
+import { accStore, editFormData, fetchPageByImportId, fetchPageByGuestId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { getBackendUrl } from '@/utils/api'
-import { EyeOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { EyeOutlined, PlusOutlined, CrownOutlined } from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
-import { uploadFileWithInfo } from '@/api/services/fileResource-api'
+import { guestTableImportStore } from '@/stores/guestTableImport-store'
 import { tableImportStore } from '@/stores/tableImport-store'
+import { guestStore } from '@/stores/guest-store'
 import { noticeGroup } from '@/api/services/webhookTableImport-api'
+import YDGuestModal from './YDGuestModal.vue'
+import type { GuestType } from '@/types/guest-type'
 
 const editForm = reactive<Record<string, any>>({})
 // 图片 URL 处理：只在后端数据变化时改变 URL，避免每次渲染都生成新地址导致整列图片频繁重渲染
@@ -275,8 +294,42 @@ const modalEditUploadFile = ref<File | null>(null)
 const modalEditUploadFileList = ref<any>([])
 
 const store = accStore
+const guestTableStore = guestTableImportStore
+const guestInfoStore = guestStore
 const PAGE_SIZE = 10
 store.pageSize = PAGE_SIZE
+
+const guestTableVisible = ref(false)
+// 客户相关状态
+const currentCustomer = ref<number>()
+const currentGuestId = ref<number | null>(null)
+
+// 处理客户切换
+const handleCustomerChange = async (customerKey: number) => {
+    currentCustomer.value = customerKey
+    // 根据客人名称获取客人ID
+    const selectedGuest = (guestInfoStore.list as GuestType[]).find((guest: GuestType) => guest.id! === customerKey)
+    if (selectedGuest && selectedGuest.id) {
+        currentGuestId.value = selectedGuest.id
+
+        // 使用exact方法根据客户ID获取批次数据
+        try {
+            await guestTableStore.exact({ column: 'guest_id', keyword: selectedGuest!.id.toString() }).then(() => {
+                // 清空选中的批次，重新加载数据
+                selectedBatchId.value = null
+                if (guestTableStore.searchResults.length <= 0) {
+                    store.pagedList = []
+                    store.total = 0
+                } else {
+                    fetchPageByGuestId(selectedGuest.id!, 0, 1, 0)
+                }
+            })
+
+        } catch (error) {
+            console.error('获取批次数据失败:', error)
+        }
+    }
+}
 
 
 const columns = computed(() => {
@@ -466,18 +519,18 @@ watch(
     },
 )
 
-onMounted(async () => {
-    await store.fetchPage()
-})
 
 const handleSearch = async (keyword: string) => {
     const trimmed = keyword.trim()
     if (!trimmed) {
-        await store.fetchPage()
+        await fetchPageByGuestId(currentGuestId.value!,0,1,10)
         return
     }
     await store.search({ column: 'sku', keyword: trimmed } as any)
     setTableRows((store.searchResults as AccPurchaseContractType[]) || [])
+    store.total = store.searchResults.length
+    store.currentPage = 1
+    store.pageSize = 20
 }
 
 const generateName = (): string => {
@@ -492,7 +545,7 @@ const handleAdd = async () => {
     try {
         const payload: any = { productName: `新产品-${generateName()}`, status: 1 }
         await store.create(payload)
-        await store.fetchPage()
+        await fetchPageByGuestId(currentGuestId.value!,0,store.currentPage,store.pageSize)
     } catch (e) {
         console.error('添加失败', e)
     }
@@ -620,7 +673,7 @@ const handleSave = async (record: any) => {
         }
 
         // 无论如何都刷新数据，watch(store.pagedList) 会自动调用 setTableRows
-        await store.fetchPage()
+        await fetchPageByGuestId(currentGuestId.value!,0,store.currentPage,store.pageSize)
 
     } catch (e) {
         console.error("保存失败", e)
@@ -675,28 +728,49 @@ const handleRemove = (file: any) => {
 
 const selectedBatchId = ref<number | null>(null)
 
-const filteredDataSource = computed(() => {
-    if (selectedBatchId.value === null) {
-        return dataSource.value
-    }
-    return dataSource.value.filter(row => row.importId === selectedBatchId.value)
-})
+
 
 const batchOptions = computed(() => {
-    return tableImportStore.list.map((batch: any) => ({
-        label: `批次：${batch.id}`,
-        value: batch.id
+    return guestTableStore.searchResults.map((batch: any) => ({
+        label: `批次：${batch.importId}`,
+        value: batch.importId
     }))
 })
 
 const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
+    fetchPageByGuestId(currentGuestId.value!, selectedBatchId.value, 0, 0)
+}
+const pageChange = (val: number) => {
+    store.currentPage = val
+    fetchPageByGuestId(currentGuestId.value!, selectedBatchId.value || 0, store.currentPage, store.pageSize)
+}
+const pageSizeChange = (val: number) => {
+    store.pageSize = val
+    fetchPageByGuestId(currentGuestId.value!, selectedBatchId.value || 0, store.currentPage, store.pageSize)
 }
 // 添加编辑按钮的逻辑
 ///
 const selectedRow = ref();
+const selectedRows = ref<any[]>([]);
 const isEditButtonDisabled = computed(() => {
     return !selectedRow.value || Array.isArray(selectedRow.value) && selectedRow.value.length !== 1;
+});
+
+// 计算选中行的洗标总金额
+const selectedWashTotalAmount = computed(() => {
+    return selectedRows.value.reduce((sum, row) => {
+        const amount = Number(row.washTotalPrice) || 0;
+        return sum + amount;
+    }, 0);
+});
+
+// 计算选中行的吊牌总金额
+const selectedTagTotalAmount = computed(() => {
+    return selectedRows.value.reduce((sum, row) => {
+        const amount = Number(row.tagTotalPrice) || 0;
+        return sum + amount;
+    }, 0);
 });
 
 const openEditModal = ref(false);
@@ -719,18 +793,18 @@ const handleEditSave = async () => {
             form.append("file", modalEditUploadFile.value)
             form.append("acc", new Blob([JSON.stringify(editForm)], { type: "application/json" }))
             await updateFileWithInfo(form)
-            message.success("修改成功")
+
             // 重置上传状态
             modalEditUploadFile.value = null
             modalEditUploadFileList.value = []
         } else {
             // 没有上传图片，只更新文字信息
             await store.update(editForm)
-            message.success("修改成功")
+
         }
 
         openEditModal.value = false
-        await store.fetchPage()
+        await fetchPageByGuestId(currentGuestId.value!,0,store.currentPage,store.pageSize)
         // 重置表单
         Object.keys(editForm).forEach(k => delete editForm[k])
         // 强制重新设置表格数据，确保更新
@@ -754,6 +828,7 @@ const handleEditCancelBtn = () => {
     Object.keys(editForm).forEach(k => delete editForm[k])
 };
 const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: any[] }) => {
+    selectedRows.value = rows;
     selectedRow.value = rows.length === 1 ? rows[0] : null;
 };
 ///
@@ -784,6 +859,25 @@ const handleModalEditRemove = () => {
     modalEditUploadFileList.value = []
     return true
 }
+
+onMounted(async () => {
+    await guestInfoStore.fetchAll()
+
+    // 设置默认客户为第一个客户
+    if (guestInfoStore.list.length > 0) {
+        const firstGuest = (guestInfoStore.list as GuestType[])[0]!
+        currentCustomer.value = firstGuest.id!
+        currentGuestId.value = firstGuest.id || null
+        // 加载该客户的批次数据
+        if (firstGuest.id) {
+            await guestTableStore.exact({ column: 'guest_id', keyword: firstGuest.id.toString() })
+        }
+    }
+
+    await fetchPageByGuestId(currentGuestId.value!, 0, 0, 0)
+
+})
+
 </script>
 
 <style scoped>
@@ -949,5 +1043,31 @@ const handleModalEditRemove = () => {
 
 .fade-move {
     transition: transform 3s ease-in-out;
+}
+
+.selected-total {
+    margin-left: 10px;
+    background-color: rgb(201, 255, 223);
+    padding: 6px;
+    border-radius: 5px;
+}
+
+.customer {
+    margin-left: 10px;
+    background-color: rgb(101, 101, 101);
+    padding: 6px;
+    border-radius: 5px;
+    transition-duration: 0.3s;
+    cursor: pointer;
+}
+
+.customer:hover {
+    background-color: rgb(162, 162, 162);
+
+}
+
+.customer:active {
+    background-color: rgb(16, 16, 16);
+
 }
 </style>

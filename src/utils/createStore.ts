@@ -35,13 +35,6 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
     return []
   }
 
-  const pickTotal = (payload: any, fallbackLength = 0) =>
-    payload?.total ??
-    payload?.count ??
-    payload?.totalCount ??
-    payload?.recordsTotal ??
-    fallbackLength
-
   // 使用 defineStore 创建 store
   return defineStore(storeName, () => {
     // 数据列表
@@ -70,7 +63,6 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         const res = await api.getAll()
         const payload = unwrapResponse(res)
         list.value = pickArray(payload)
-        // message.success(successMessage.fetch || '获取数据成功')
       } catch (error) {
         // 错误已在拦截器中处理
       } finally {
@@ -84,10 +76,9 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         loading.value = true
         const res = await api.getPages(currentPage.value, pageSize.value)
         const payload = unwrapResponse(res)
-        const rows = pickArray(payload)
+        const rows = payload.records
         pagedList.value = rows
-        total.value = pickTotal(payload, rows.length)
-        // message.success(successMessage.fetch || '获取数据成功')
+        total.value = payload.total
       } catch (error) {
         // 错误已在拦截器中处理
       } finally {
@@ -100,7 +91,6 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       try {
         loading.value = true
         await api.add(newData)
-        await fetchAll()
         await fetchPage()
         message.success(successMessage.create || '创建成功')
       } catch (error) {
@@ -115,7 +105,6 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       try {
         loading.value = true
         await api.update(updatedData)
-        await fetchAll()
         await fetchPage()
         message.success(successMessage.update || '更新成功')
       } catch (error) {
@@ -130,7 +119,6 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       try {
         loading.value = true
         await api.delete(ids)
-        await fetchAll()
         await fetchPage()
         message.success(successMessage.delete || '删除成功')
       } catch (error) {
@@ -165,6 +153,20 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       }
     }
 
+    // 精确查询
+    const exact = async (exactData: T) => {
+      try {
+        loading.value = true
+        const res = await api.exact(exactData)
+        const payload = unwrapResponse(res)
+        searchResults.value = pickArray(payload)
+      }
+      catch (error) {
+        // 错误已在拦截器中处理
+      } finally {
+        loading.value = false
+      }
+    }
     // 过滤后的表格数据
     const filteredList = computed(() =>
       pagedList.value.filter((item) => {
@@ -212,6 +214,7 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       search,
       onSelectionChange,
       reset,
+      exact,
     }
   })
 }

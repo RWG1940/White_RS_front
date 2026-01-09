@@ -82,7 +82,7 @@ const handleMenuClick = ({ key }: { key: string }) => {
 }
 
 .logo-text {
-  margin: 10%;
+  margin: 15%;
   color: #fff;
   font-size: 20px;
   font-weight: 600;

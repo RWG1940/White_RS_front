@@ -1,9 +1,9 @@
 <template>
     <div>
-        <div v-if="isMobile" class="work-wrap-1">
+        <div v-if="isMobile">
             <ASMobileTable />
         </div>
-        <div v-else class="work-wrap-2">
+        <div v-else>
             <ASTable v-model:openImport="openImport" v-model:open-export="openExport" />
         </div>
 
@@ -252,13 +252,7 @@ const handleRemove = (file: any) => {
     return true;
 };
 
-const sortFields = [
-    { label: '创建时间', value: 'createdAt' },
-    { label: '修改时间', value: 'updatedAt' },
-    { label: '优先级', value: 'priority' },
-    { label: '状态', value: 'status' },
-    { label: '数量', value: 'quantity' }
-]
+
 </script>
 <style scoped>
 .header {
@@ -277,10 +271,4 @@ const sortFields = [
     width: 100%;
 }
 
-/* 使最外层工作区域可滚动，当内容超出时显示滚动条 */
-.work-wrap-1 {
-    /* 根据页面布局调整高度，这里使用视口高度减去顶部等间距，保证在多数页面中可滚动 */
-    max-height: calc(100vh - 150px);
-    overflow: auto;
-}
 </style>

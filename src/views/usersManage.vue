@@ -5,14 +5,18 @@
       :columns="columns"
       :editable-fields="editableFields"
       row-key="id"
-      :page-size="PAGE_SIZE"
       search-placeholder="搜索用户名"
+      v-model:total="store.total" 
+      v-model:currentPage="store.currentPage"
+      v-model:pageSize="store.pageSize"
       @search="handleSearch"
       @add="handleAddUser"
       @save="handleSave"
       @row-delete="handleRowDelete"
       @batch-delete="handleBatchDelete"
       @selection-change="handleSelectionChange"
+      @update:currentPage="pageChange" 
+      @update:pageSize="pageSizeChange"
     >
       <template #cell-status="{ record, isEditing, editableData, getInternalKey }">
         <template v-if="!isEditing">
@@ -77,6 +81,7 @@ import { formatTime } from '@/utils/formatTime'
 import dayjs from 'dayjs'
 import { batchCheckUsersOnline } from '@/api/services/websocket-api'
 import { roleStore } from '@/stores/role-store'
+import { message } from 'ant-design-vue'
 
 
 const store = userStore
@@ -347,6 +352,7 @@ const handleAddUser = async () => {
     const payload: any = { username: generateUsername(), status: 1, roles: [{ id: 2 }] }
     await createUserWithRoles(payload)
     await store.fetchPage()
+    message.success('添加用户成功')
   } catch (e) {
     console.error('添加用户失败', e)
   }
@@ -383,7 +389,14 @@ const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
 const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: userType[] }) => {
   store.onSelectionChange(rows as any)
 }
-
+const pageChange = (val:number) => { 
+    store.currentPage = val
+    store.fetchPage()
+}
+const pageSizeChange = (val:number) => { 
+    store.pageSize = val
+    store.fetchPage()
+}
 // 加载角色列表
 const loadRoles = async () => {
   try {

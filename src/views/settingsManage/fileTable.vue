@@ -1,10 +1,12 @@
 <template>
     <div>
         <ManagePage v-model:data-source="dataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
-            :show-operation="true" :show-add="true" :show-batch-delete="true" :page-size="PAGE_SIZE"
-            search-placeholder="搜索文件名" @search="handleSearch" @add="handleAdd" @save="handleSave"
-            @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" @selection-change="handleSelectionChange">
-            <template #custom-tool> 
+            :show-operation="true" :show-add="true" :show-batch-delete="true" v-model:total="store.total"
+            v-model:currentPage="store.currentPage" v-model:pageSize="store.pageSize" search-placeholder="搜索文件名"
+            @search="handleSearch" @add="handleAdd" @save="handleSave" @row-delete="handleRowDelete"
+            @batch-delete="handleBatchDelete" @selection-change="handleSelectionChange" @update:currentPage="pageChange"
+            @update:pageSize="pageSizeChange">
+            <template #custom-tool>
                 <a-button type="primary" :disabled="selectedKeys.length === 0" @click="handleReupload">重新上传</a-button>
             </template>
         </ManagePage>
@@ -32,13 +34,15 @@
             </a-form>
         </a-modal>
         <!-- 文件修改 模态框 -->
-        <a-modal v-model:open="openEdit" title="重新上传（替换文件）" ok-text="确认替换" cancel-text="取消" @ok="handleEditOk" @cancel="handleEditCancel" :confirmLoading="editUploadLoading">
+        <a-modal v-model:open="openEdit" title="重新上传（替换文件）" ok-text="确认替换" cancel-text="取消" @ok="handleEditOk"
+            @cancel="handleEditCancel" :confirmLoading="editUploadLoading">
             <a-form layout="vertical">
                 <a-form-item label="当前选中文件">
                     <div>{{ selectedRows[0]?.fileName || '-' }} （key: {{ selectedRows[0]?.fileKey || '-' }}）</div>
                 </a-form-item>
                 <a-form-item label="选择新文件" required>
-                    <a-upload :before-upload="beforeEditUpload" :max-count="1" :file-list="editUploadFileList" :on-remove="removeEditFile" :show-upload-list="false">
+                    <a-upload :before-upload="beforeEditUpload" :max-count="1" :file-list="editUploadFileList"
+                        :on-remove="removeEditFile" :show-upload-list="false">
                         <a-button>
                             <UploadOutlined />
                         </a-button>
@@ -342,6 +346,15 @@ const handleOk = async () => {
     } finally {
         uploadLoading.value = false
     }
+}
+
+const pageChange = (val: number) => {
+    store.currentPage = val
+    store.fetchPage()
+}
+const pageSizeChange = (val: number) => {
+    store.pageSize = val
+    store.fetchPage()
 }
 </script>
 <style></style>

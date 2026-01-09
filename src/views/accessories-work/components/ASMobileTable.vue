@@ -2,100 +2,107 @@
     <div class="as-mobile-table">
         <!-- 批次选择 -->
         <div class="batch-section">
-            <a-select
-                v-model:value="selectedBatchId"
-                :options="batchOptions"
-                placeholder="选择批次"
-                allow-clear
-                @change="handleBatchChange"
-                style="width: 100%; margin-bottom: 12px"
-            />
+            <a-select v-model:value="selectedBatchId" :options="batchOptions" placeholder="选择批次" allow-clear
+                @change="handleBatchChange" style="width: 100%; margin-bottom: 5px" />
         </div>
 
         <!-- 搜索框 -->
-        <div class="search-section">
-            <a-input-search
-                v-model:value="searchValue"
-                placeholder="搜索SKU"
-                enter-button
-                @search="handleSearch"
-                style="margin-bottom: 16px"
-            />
-        </div>
+            <div class="search-section">
+                <a-row :gutter="[8, 8]">
+                    <a-col :span="19">
+                        <a-input-search v-model:value="searchValue" placeholder="搜索SKU" enter-button
+                            @search="handleSearch" style="margin-bottom: 5px" />
+                    </a-col>
+                    <a-col :span="5">
+                        <a-button type="primary" @click="handleSearchReset"><ReloadOutlined /></a-button>
+                    </a-col>
+                </a-row>
+
+            </div>
 
         <!-- 列表 -->
         <div class="list-section">
-            <a-empty v-if="filteredList.length === 0" description="暂无数据" />
-            <div
-                v-for="item in filteredList"
-                :key="item.id"
-                class="list-item"
-                @click="selectedItem = item"
-            >
-                <div class="item-header">
-                    <div class="sku">{{ item.sku }}</div>
-                    <div class="status-badges">
-                        <div
-                            :style="{
+            <a-empty v-if="pagedList.length === 0" description="暂无数据" />
+            <div v-for="item in pagedList" :key="item.id" class="list-item" @click="selectedItem = item">
+                <a-row :gutter="[8, 8]">
+                    <!-- SKU 单独一行 -->
+                    <a-col :span="24">
+                        <div class="sku">{{ item.sku }}</div>
+                    </a-col>
+
+                    <!-- 状态徽章 -->
+                    <a-col :span="9">
+                        <div class="status-badges">
+                            <div :style="{
                                 borderRadius: '15px',
                                 backgroundColor: item.washPriority == 2 ? 'red' : item.washPriority == 0 ? 'lightgreen' : 'gold',
                                 width: '12px',
                                 height: '12px',
                                 boxShadow: `1px 1px 10px ${item.washPriority == 2 ? 'red' : item.washPriority == 0 ? 'lightgreen' : 'gold'}`,
-                            }"
-                        />
-                        <span style="margin: 0 4px; font-size: 12px; color: #666;">洗</span>
-                        <div
-                            :style="{
+                            }" />
+                            <span style="margin: 0 4px; font-size: 12px; color: #666;">洗</span>
+                            <div :style="{
                                 borderRadius: '15px',
                                 backgroundColor: item.tagPriority == 2 ? 'red' : item.tagPriority == 0 ? 'lightgreen' : 'gold',
                                 width: '12px',
                                 height: '12px',
                                 boxShadow: `1px 1px 10px ${item.tagPriority == 2 ? 'red' : item.tagPriority == 0 ? 'lightgreen' : 'gold'}`,
-                            }"
-                        />
-                        <span style="margin: 0 4px; font-size: 12px; color: #666;">吊</span>
-                    </div>
-                </div>
-                <div class="item-info">
-                    <span class="info-item">颜色: {{ item.color }}</span>
-                    <span class="info-item">品牌: {{ item.brand }}</span>
-                    <span class="info-item">数量: {{ item.quantity }}</span>
-                </div>
-                <div class="status-info">
-                    <a-tag
-                            :color="item.washStatus == 0 ? 'lightgrey' : item.washStatus == 1 ? 'orange' : item.washStatus == 2 ? 'pink' : item.washStatus == 3 ? 'green' : ''"
-                        >
-                            洗{{ item.washStatus == 0 ? '未下单' : item.washStatus == 1 ? '做货中' : item.washStatus == 2 ? '待付款' : item.washStatus == 3 ? '已出货' : '' }}
-                        </a-tag>
-                        <a-tag
-                            :color="item.tagStatus == 0 ? 'lightgrey' : item.tagStatus == 1 ? 'orange' : item.tagStatus == 2 ? 'pink' : item.tagStatus == 3 ? 'green' : ''"
-                        >
-                            吊{{ item.tagStatus == 0 ? '未下单' : item.tagStatus == 1 ? '做货中' : item.tagStatus == 2 ? '待付款' : item.tagStatus == 3 ? '已出货' : '' }}
-                        </a-tag>
-                </div>
-                <div class="edit-button">
-                    <a-button type="primary" size="small" @click.stop="openEditModal(item)">编辑</a-button>
-                </div>
+                            }" />
+                            <span style="margin: 0 4px; font-size: 12px; color: #666;">吊</span>
+                        </div>
+                    </a-col>
+                    <!-- 状态标签 -->
+                    <a-col :span="15">
+                        <div class="status-info">
+                            <a-tag
+                                :color="item.washStatus == 0 ? 'lightgrey' : item.washStatus == 1 ? 'orange' : item.washStatus == 2 ? 'pink' : item.washStatus == 3 ? 'green' : ''">
+                                洗{{ item.washStatus == 0 ? '未下单' : item.washStatus == 1 ? '做货中' : item.washStatus == 2 ?
+                                    '待付款' : item.washStatus == 3 ? '已出货' : '' }}
+                            </a-tag>
+                            <a-tag
+                                :color="item.tagStatus == 0 ? 'lightgrey' : item.tagStatus == 1 ? 'orange' : item.tagStatus == 2 ? 'pink' : item.tagStatus == 3 ? 'green' : ''">
+                                吊{{ item.tagStatus == 0 ? '未下单' : item.tagStatus == 1 ? '做货中' : item.tagStatus == 2 ?
+                                    '待付款' : item.tagStatus == 3 ? '已出货' : '' }}
+                            </a-tag>
+                        </div>
+                    </a-col>
+
+                    <!-- 颜色、品牌、数量 -->
+                    <a-col :span="24">
+                        <div class="info-item">颜色: {{ item.color }}</div>
+                    </a-col>
+                    <a-col :span="24">
+                        <div class="info-item">品牌: {{ item.brand }}</div>
+                    </a-col>
+                    <a-col :span="24">
+                        <div class="info-item">数量: {{ item.quantity }}</div>
+                    </a-col>
+
+                    <!-- 编辑按钮 -->
+                    <a-col :span="24">
+                        <div class="edit-button">
+                            <a-button type="primary" style="width: 100%;" @click.stop="openEditModal(item)">
+                                编辑</a-button>
+                        </div>
+                    </a-col>
+                </a-row>
             </div>
         </div>
 
+        <!-- 分页器 -->
+        <div class="pagination-section" v-if="pagedList.length > 0">
+            <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="store.total"
+                :showSizeChanger="true" :pageSizeOptions="['10', '20', '50', '100']" :showQuickJumper="true"
+                :showTotal="() => `共 ${store.total} 条`" @change="handlePageChange"
+                @showSizeChange="handleSizeChange" size="small" style="text-align: center; margin-top: 10px;" />
+        </div>
+
         <!-- 编辑弹窗 -->
-        <a-modal
-            title="编辑信息"
-            :open="editModalOpen"
-            @ok="handleEditSave"
-            @cancel="handleEditCancel"
-            ok-text="保存"
-            cancel-text="取消"
-        >
+        <a-modal title="编辑信息" :open="editModalOpen" @ok="handleEditSave" @cancel="handleEditCancel" ok-text="保存"
+            cancel-text="取消">
             <a-form layout="vertical">
                 <a-form-item label="洗标状态">
-                    <a-select
-                        v-model:value="editForm.washStatus"
-                        placeholder="选择洗标状态"
-                        allow-clear
-                    >
+                    <a-select v-model:value="editForm.washStatus" placeholder="选择洗标状态" allow-clear>
                         <a-select-option :value="0">未下单</a-select-option>
                         <a-select-option :value="1">做货中</a-select-option>
                         <a-select-option :value="2">货好等付款</a-select-option>
@@ -106,17 +113,10 @@
                     </div>
                 </a-form-item>
                 <a-form-item label="洗标快递单号">
-                    <a-input
-                        v-model:value="editForm.washExpressNo"
-                        placeholder="请输入洗标快递单号"
-                    />
+                    <a-input v-model:value="editForm.washExpressNo" placeholder="请输入洗标快递单号" />
                 </a-form-item>
                 <a-form-item label="吊牌状态">
-                    <a-select
-                        v-model:value="editForm.tagStatus"
-                        placeholder="选择吊牌状态"
-                        allow-clear
-                    >
+                    <a-select v-model:value="editForm.tagStatus" placeholder="选择吊牌状态" allow-clear>
                         <a-select-option :value="0">未下单</a-select-option>
                         <a-select-option :value="1">做货中</a-select-option>
                         <a-select-option :value="2">货好等付款</a-select-option>
@@ -127,30 +127,17 @@
                     </div>
                 </a-form-item>
                 <a-form-item label="吊牌快递单号">
-                    <a-input
-                        v-model:value="editForm.tagExpressNo"
-                        placeholder="请输入吊牌快递单号"
-                    />
+                    <a-input v-model:value="editForm.tagExpressNo" placeholder="请输入吊牌快递单号" />
                 </a-form-item>
                 <a-form-item label="备注">
-                    <a-textarea
-                        v-model:value="editForm.remark"
-                        placeholder="请输入备注信息"
-                        :rows="3"
-                    />
+                    <a-textarea v-model:value="editForm.remark" placeholder="请输入备注信息" :rows="3" />
                 </a-form-item>
             </a-form>
         </a-modal>
 
         <!-- 详情弹窗 -->
-        <a-modal
-            title="详细信息"
-            :open="!!selectedItem"
-            @cancel="selectedItem = null"
-            width="90%"
-            :footer="null"
-            :body-style="{ maxHeight: '70vh', overflowY: 'auto' }"
-        >
+        <a-modal title="详细信息" :open="!!selectedItem" @cancel="selectedItem = null" width="90%" :footer="null"
+            :body-style="{ maxHeight: '70vh', overflowY: 'auto' }">
             <template v-if="selectedItem">
                 <div class="detail-section">
                     <!-- 基本信息 -->
@@ -189,15 +176,13 @@
                     <div class="detail-item">
                         <div class="detail-label">洗标优先级</div>
                         <div class="detail-content">
-                            <div
-                                :style="{
-                                    borderRadius: '15px',
-                                    backgroundColor: selectedItem.washPriority == 2 ? 'red' : selectedItem.washPriority == 0 ? 'lightgreen' : 'gold',
-                                    width: '20px',
-                                    height: '20px',
-                                    boxShadow: `1px 1px 15px ${selectedItem.washPriority == 2 ? 'red' : selectedItem.washPriority == 0 ? 'lightgreen' : 'gold'}`,
-                                }"
-                            />
+                            <div :style="{
+                                borderRadius: '15px',
+                                backgroundColor: selectedItem.washPriority == 2 ? 'red' : selectedItem.washPriority == 0 ? 'lightgreen' : 'gold',
+                                width: '20px',
+                                height: '20px',
+                                boxShadow: `1px 1px 15px ${selectedItem.washPriority == 2 ? 'red' : selectedItem.washPriority == 0 ? 'lightgreen' : 'gold'}`,
+                            }" />
                         </div>
                     </div>
                     <div class="detail-item">
@@ -212,9 +197,9 @@
                         <div class="detail-label">洗标状态</div>
                         <div class="detail-content">
                             <a-tag
-                                :color="selectedItem.washStatus == 0 ? 'lightgrey' : selectedItem.washStatus == 1 ? 'orange' : selectedItem.washStatus == 2 ? 'pink' : selectedItem.washStatus == 3 ? 'green' : ''"
-                            >
-                                {{ selectedItem.washStatus == 0 ? '未下单' : selectedItem.washStatus == 1 ? '做货中' : selectedItem.washStatus == 2 ? '货好等付款' : selectedItem.washStatus == 3 ? '已出货' : '' }}
+                                :color="selectedItem.washStatus == 0 ? 'lightgrey' : selectedItem.washStatus == 1 ? 'orange' : selectedItem.washStatus == 2 ? 'pink' : selectedItem.washStatus == 3 ? 'green' : ''">
+                                {{ selectedItem.washStatus == 0 ? '未下单' : selectedItem.washStatus == 1 ? '做货中' :
+                                    selectedItem.washStatus == 2 ? '货好等付款' : selectedItem.washStatus == 3 ? '已出货' : '' }}
                             </a-tag>
                         </div>
                     </div>
@@ -240,15 +225,13 @@
                     <div class="detail-item">
                         <div class="detail-label">吊牌优先级</div>
                         <div class="detail-content">
-                            <div
-                                :style="{
-                                    borderRadius: '15px',
-                                    backgroundColor: selectedItem.tagPriority == 2 ? 'red' : selectedItem.tagPriority == 0 ? 'lightgreen' : 'gold',
-                                    width: '20px',
-                                    height: '20px',
-                                    boxShadow: `1px 1px 15px ${selectedItem.tagPriority == 2 ? 'red' : selectedItem.tagPriority == 0 ? 'lightgreen' : 'gold'}`,
-                                }"
-                            />
+                            <div :style="{
+                                borderRadius: '15px',
+                                backgroundColor: selectedItem.tagPriority == 2 ? 'red' : selectedItem.tagPriority == 0 ? 'lightgreen' : 'gold',
+                                width: '20px',
+                                height: '20px',
+                                boxShadow: `1px 1px 15px ${selectedItem.tagPriority == 2 ? 'red' : selectedItem.tagPriority == 0 ? 'lightgreen' : 'gold'}`,
+                            }" />
                         </div>
                     </div>
                     <div class="detail-item">
@@ -263,9 +246,9 @@
                         <div class="detail-label">吊牌状态</div>
                         <div class="detail-content">
                             <a-tag
-                                :color="selectedItem.tagStatus == 0 ? 'lightgrey' : selectedItem.tagStatus == 1 ? 'orange' : selectedItem.tagStatus == 2 ? 'pink' : selectedItem.tagStatus == 3 ? 'green' : ''"
-                            >
-                                {{ selectedItem.tagStatus == 0 ? '未下单' : selectedItem.tagStatus == 1 ? '做货中' : selectedItem.tagStatus == 2 ? '货好等付款' : selectedItem.tagStatus == 3 ? '已出货' : '' }}
+                                :color="selectedItem.tagStatus == 0 ? 'lightgrey' : selectedItem.tagStatus == 1 ? 'orange' : selectedItem.tagStatus == 2 ? 'pink' : selectedItem.tagStatus == 3 ? 'green' : ''">
+                                {{ selectedItem.tagStatus == 0 ? '未下单' : selectedItem.tagStatus == 1 ? '做货中' :
+                                    selectedItem.tagStatus == 2 ? '货好等付款' : selectedItem.tagStatus == 3 ? '已出货' : '' }}
                             </a-tag>
                         </div>
                     </div>
@@ -323,11 +306,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { accStore } from '@/stores/acc-store'
+import { ref, computed } from 'vue'
+import { accStore,fetchPageByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { tableImportStore } from '@/stores/tableImport-store'
+import { ReloadOutlined } from '@ant-design/icons-vue'
 
 const store = accStore
 const searchValue = ref('')
@@ -343,8 +327,28 @@ const editForm = ref({
     remark: '',
 })
 
-// 获取原始数据源
+const currentPage = computed({
+    get: () => store.currentPage,
+    set: (val) => {
+        store.currentPage = val
+    },
+})
+
+const pageSize = computed({
+    get: () => store.pageSize,
+    set: (val) => {
+        store.pageSize = val
+    },
+})
+
+
+// 获取原始数据源 - 与YDTable逻辑一致
 const dataSource = computed(() => {
+    // 如果有搜索关键词，使用搜索结果，否则使用分页列表
+    const keyword = searchValue.value.trim()
+    if (keyword && store.searchResults) {
+        return store.searchResults as AccPurchaseContractType[]
+    }
     if (!store.pagedList) return []
     return store.pagedList as AccPurchaseContractType[]
 })
@@ -357,20 +361,40 @@ const filteredDataSourceByBatch = computed(() => {
     return dataSource.value.filter(row => row.importId === selectedBatchId.value)
 })
 
-// 根据搜索关键词过滤列表
-const filteredList = computed(() => {
-    const keyword = searchValue.value.trim().toLowerCase()
-    if (!keyword) {
-        return filteredDataSourceByBatch.value
-    }
-    return filteredDataSourceByBatch.value.filter(item =>
-        (item.sku ?? '').toLowerCase().includes(keyword)
-    )
+// 分页后的列表
+const pagedList = computed(() => {
+    return filteredDataSourceByBatch.value
 })
 
-const handleSearch = () => {
-    // 搜索时自动进行过滤，computed会自动响应
+
+const handleSearch = async () => {
+    const keyword = searchValue.value.trim()
+    if (!keyword) {
+        await store.fetchPage()
+        return
+    }
+    await store.search({ column: 'sku', keyword: keyword } as any)
+    currentPage.value = 1 // 搜索时重置到第一页
 }
+
+/**
+ * 批次切换、页码切换、页大小切换时触发
+ */
+const handleBatchChange = (value: number) => {
+    selectedBatchId.value = value
+    store.currentPage = 1
+    store.pageSize = 10
+    fetchPageByImportId(selectedBatchId.value, 0, 0)
+}
+const handlePageChange = (val: number) => {
+    store.currentPage = val
+    fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+}
+const handleSizeChange = (val: number) => {
+    store.pageSize = val
+    fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+}
+
 
 const batchOptions = computed(() => {
     return tableImportStore.list.map((batch: any) => ({
@@ -379,9 +403,6 @@ const batchOptions = computed(() => {
     }))
 })
 
-const handleBatchChange = (value: number | undefined) => {
-    selectedBatchId.value = value
-}
 
 const openEditModal = (item: AccPurchaseContractType) => {
     editingItem.value = item
@@ -397,10 +418,10 @@ const openEditModal = (item: AccPurchaseContractType) => {
 
 const handleEditSave = async () => {
     if (!editingItem.value) return
-    
+
     try {
         const updatedItem: any = { ...editingItem.value }
-        
+
         // 如果填了洗标快递单号，则状态自动设置为已出货
         if (editForm.value.washExpressNo.trim()) {
             updatedItem.washStatus = 3
@@ -408,7 +429,7 @@ const handleEditSave = async () => {
             updatedItem.washStatus = editForm.value.washStatus
         }
         updatedItem.washExpressNo = editForm.value.washExpressNo
-        
+
         // 如果填了吊牌快递单号，则状态自动设置为已出货
         if (editForm.value.tagExpressNo.trim()) {
             updatedItem.tagStatus = 3
@@ -416,18 +437,18 @@ const handleEditSave = async () => {
             updatedItem.tagStatus = editForm.value.tagStatus
         }
         updatedItem.tagExpressNo = editForm.value.tagExpressNo
-        
+
         // 保存备注
         updatedItem.remark = editForm.value.remark
-        
+
         // 调用店铺更新接口
         await store.update(updatedItem)
-        
+
         // 刷新数据
         await store.fetchPage()
-        
+
         editModalOpen.value = false
-        
+
         // 更新selectedItem以反映最新数据
         if (selectedItem.value && selectedItem.value.id === editingItem.value.id) {
             selectedItem.value = updatedItem
@@ -442,44 +463,38 @@ const handleEditCancel = () => {
     editingItem.value = null
 }
 
-// 获取状态标签
-const getStatusLabel = (status: number | undefined) => {
-    switch (status) {
-        case 0: return '未下单'
-        case 1: return '做货中'
-        case 2: return '货好等付款'
-        case 3: return '已出货'
-        default: return '-'
-    }
+/*
+* 搜索重置
+ */
+const handleSearchReset = () => {
+    searchValue.value = ''
+    handleSearch()
 }
 
-// 监听props变化或初始化
-watch(
-    () => store.pagedList,
-    () => {
-        // 数据变化时重新渲染列表
-    },
-    { deep: true }
-)
+
+
+
 </script>
 
 <style scoped>
 .as-mobile-table {
-    padding: 16px;
+    padding: 5px;
 }
 
 .batch-section {
-    margin-bottom: 12px;
+    margin-bottom: 5px;
 }
 
 .search-section {
-    margin-bottom: 16px;
+    margin-bottom: 5px;
 }
 
 .list-section {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-height: calc(100vh - 320px);
+    overflow: auto;
 }
 
 .list-item {
@@ -487,60 +502,39 @@ watch(
     border: 1px solid #f0f0f0;
     border-radius: 8px;
     padding: 12px;
-    padding-bottom: 50px;
     cursor: pointer;
     transition: all 0.3s;
-    position: relative;
 }
 
 .list-item:active {
     background: #fafafa;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(36, 36, 36, 0.1);
 }
 
 .sku {
-    font-weight: 500;
+    font-weight: bold;
     font-size: 16px;
     color: #333;
-    flex: 1;
 }
 
 .status-badges {
     display: flex;
     gap: 4px;
-    flex-shrink: 0;
     align-items: center;
 }
 
-.item-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+.info-item {
     font-size: 12px;
     color: #666;
-    margin-bottom: 8px;
-}
-
-.info-item {
-    flex: 0 1 calc(50% - 6px);
 }
 
 .status-info {
     display: flex;
-    gap: 8px;
 }
 
 .edit-button {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
+    margin-top: 8px;
+
 }
 
 .detail-section {
@@ -574,5 +568,38 @@ watch(
 
 :deep(.ant-divider) {
     margin: 16px 0 12px 0;
+}
+
+.pagination-section {
+    background: rgba(255, 255, 255, 0.268);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: -10px;
+    backdrop-filter: blur(10px);
+    border: 1px solid #f0f0f0;
+}
+
+:deep(.ant-pagination) {
+    font-size: 12px;
+}
+
+:deep(.ant-pagination-item) {
+    min-width: 28px;
+    height: 28px;
+    line-height: 26px;
+}
+
+:deep(.ant-pagination-prev),
+:deep(.ant-pagination-next) {
+    min-width: 28px;
+    height: 28px;
+    line-height: 26px;
+}
+
+:deep(.ant-pagination-jump-prev),
+:deep(.ant-pagination-jump-next) {
+    min-width: 28px;
+    height: 28px;
+    line-height: 26px;
 }
 </style>

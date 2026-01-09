@@ -1,8 +1,12 @@
 <template>
-    <div>
-
+    <ScrollContent>
+        <template #content>
+       
+        <div v-if="isMobile">
+            <YDMobileTable />
+        </div>
         <!-- pc 端 -->
-        <div class="work-wrap-2">
+        <div v-else>
             <YDTable v-model:openImport="openImport" v-model:open-export="openExport" v-model:open-info="openInfo"
                 v-model:openHistory="openHistory" />
         </div>
@@ -10,7 +14,7 @@
         <!-- 导入弹窗：放在模板外层，桌面和移动端都可见 -->
         <a-modal v-model:open="openImport" title="导入Excel" ok-text="导入" cancel-text="取消" @ok="handleExcelImportOk"
             @cancel="handleExcelImportCancel" :confirmLoading="excelImportLoading">
-            <a-alert message="使用说明" description="上传Excel表格和批次号，系统将存储该批次的导入数据。" type="info" show-icon
+            <a-alert message="使用说明" description="上传表格文件、批次号，选择要关联的客户，系统将导入数据（若批次号已存在则更新数据）。" type="info" show-icon
                 style="margin-bottom: 16px" />
             <a-form layout="vertical">
                 <a-form-item label="选择Excel文件" required>
@@ -25,8 +29,11 @@
                         支持格式：.xlsx, .xls，文件大小不超过100MB
                     </div>
                 </a-form-item>
-                <a-form-item label="设置导入id" required>
+                <a-form-item label="设置批次号（如20260101）" required>
                     <a-input v-model:value="importId" placeholder="请填写导入id" style="width: 200px"></a-input>
+                </a-form-item>
+                <a-form-item label="设置关联客户" required>
+                    <a-select v-model:value="guestId"  placeholder="请选择客户" style="width: 200px" :options="guestOptions"></a-select>
                 </a-form-item>
             </a-form>
 
@@ -89,17 +96,21 @@
 
 
         </a-drawer>
-    </div>
+        </template>
+    </ScrollContent>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { message } from 'ant-design-vue';
 import type { DrawerProps } from 'ant-design-vue';
 import YDTable from './components/YDTable.vue';
 import { importExcel, exportExcel } from '@/api/services/acc-api';
 import { PlusOutlined } from '@ant-design/icons-vue';
-import { accStore } from '@/stores/acc-store';
+import { accStore, fetchPageByGuestId } from '@/stores/acc-store';
 import { tableImportStore } from '@/stores/tableImport-store';
+import YDMobileTable from './components/YDMobileTable.vue';
+import ScrollContent from '@/components/scrollContent.vue';
+import { guestStore } from '@/stores/guest-store';
 
 
 const placement = ref<DrawerProps['placement']>('top');
@@ -109,6 +120,7 @@ const openExport = ref<boolean>(false);
 const openHistory = ref<boolean>(false);
 const size = ref<'default' | 'large' | number>('large');
 const options = ref<any[]>([])
+const guestOptions = ref<any[]>([])
 
 // Excel 导入相关状态
 const excelImportLoading = ref(false);
@@ -117,6 +129,7 @@ const uploadExcelList = ref<any>([]);
 const previewVisible = ref(false);
 const previewImage = ref('');
 const importId = ref();
+const guestId = ref();
 const exportIds = ref<string[]>([])
 const sortBy = ref<string>('')
 const sortOrder = ref<string>('asc')
@@ -126,7 +139,12 @@ const showDrawer = () => {
 };
 
 
+// 响应式判断是否为移动端（宽度 <= 768px）
+const isMobile = ref(false)
 
+const updateIsMobile = () => {
+    isMobile.value = window.innerWidth <= 768
+}
 
 // Excel 上传相关方法
 const beforeExcelUpload = async (file: File) => {
@@ -176,16 +194,21 @@ const handleExcelImportOk = async () => {
         message.warning('请填写导入id');
         return;
     }
+    if (!guestId.value) {
+        message.warning('请选择关联客户');
+        return;
+    }
     try {
         excelImportLoading.value = true;
         const form = new FormData();
         form.append('file', uploadExcelFile.value);
         form.append('importId', importId.value);
+        form.append('guestId', guestId.value);
         await importExcel(form);
         message.success('Excel 导入成功');
+        await fetchPageByGuestId(guestId.value, 0, accStore.currentPage, accStore.pageSize);
         // 重置状态
         handleExcelImportCancel();
-        await accStore.fetchPage();
         await tableImportStore.fetchAll();
     } catch (error) {
         message.error('Excel 导入失败，请检查文件格式');
@@ -197,15 +220,13 @@ const handleExcelImportOk = async () => {
 const handleExcelExportOk = async () => {
     try {
         excelImportLoading.value = true;
-        const form = new FormData();
-        // 将数组中的每个元素单独添加到FormData中
-        exportIds.value.forEach(id => {
-            form.append('exportIds', id);
-        });
-        form.append('sortBy', sortBy.value);
-        form.append('sortOrder', sortOrder.value);
+        const requestData = {
+            exportIds: exportIds.value,
+            sortBy: sortBy.value,
+            sortOrder: sortOrder.value
+        };
 
-        const response = await exportExcel(form);
+        const response = await exportExcel(requestData);
 
         // 从 AxiosResponse 中提取 Blob 数据
         const blob = new Blob([response.data], { type: 'application/vnd.ms-excel' });
@@ -240,6 +261,7 @@ const handleExcelImportCancel = () => {
     uploadExcelFile.value = null;
     uploadExcelList.value = [];
     importId.value = '';
+    guestId.value = '';
     openImport.value = false;
 };
 // Excel 导出取消
@@ -274,7 +296,8 @@ const sortFields = [
 
 
 onMounted(() => {
-
+    updateIsMobile()
+    window.addEventListener('resize', updateIsMobile)
     // 加载可用的表格批次
     tableImportStore.fetchAll().then(() => {
         options.value = tableImportStore.list.map((item: any) => ({
@@ -282,8 +305,20 @@ onMounted(() => {
             label: item.id
         }));
     });
+    
+    // 加载客户列表
+    guestStore.fetchAll().then(() => {
+        guestOptions.value = guestStore.list.map((item: any) => ({
+            value: item.id,
+            label: item.name || `客户 ${item.id}`
+        }));
+    });
 
 });
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateIsMobile)
+})
 </script>
 <style scoped>
 .header {

@@ -1,8 +1,11 @@
 import apiClient from '../api/index'
+import { message } from 'ant-design-vue'
 
 const resolveId = (data: any) => data?.id ?? data?.Id ?? data?.ID ?? data?.userId
 
 export const createCRUDService = (basePath: string) => ({
+  // 获取单个数据
+  get: (id: number) => apiClient.get(`${basePath}/${id}`),
   // 获取所有数据
   getAll: () => apiClient.get(`${basePath}/list`),
 
@@ -12,12 +15,16 @@ export const createCRUDService = (basePath: string) => ({
       params: { current: page, size: pageSize },
     }),
 
-  // 搜索数据，使用 column/keyword 查询
+  // 搜索数据，使用 column/keyword 模糊查询
   search: (params: { column: string; keyword: string }) =>
     apiClient.get(`${basePath}/search`, {
       params,
     }),
-
+  // 精确查询数据，使用 column/value 精确查询
+  exact: (params: { column: string; value: string }) =>
+    apiClient.get(`${basePath}/exact`, {
+      params,
+    }),
   // 添加数据
   add: (data: any) => apiClient.post(basePath, data),
 
@@ -28,7 +35,7 @@ export const createCRUDService = (basePath: string) => ({
   update: (data: any) => {
     const id = resolveId(data)
     if (id === undefined || id === null) {
-      throw new Error(`update 调用缺少 id 字段`)
+       message.info('缺少主键id')
     }
     return apiClient.put(`${basePath}/${id}`, data)
   },

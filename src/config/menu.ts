@@ -1,4 +1,4 @@
-import { HomeOutlined, UserOutlined, SettingOutlined, DesktopOutlined, CoffeeOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, UserOutlined, SettingOutlined, DesktopOutlined,CloudOutlined } from '@ant-design/icons-vue'
 
 // 统一的菜单和路由配置
 export interface MenuItem {
@@ -75,17 +75,7 @@ export const menuConfig: MenuItem[] = [
     // 只有辅料工厂角色(6666)和管理员(3294)可以访问
     allowedRoles: ['6666', '3294'],
   },
-  {
-    key: '/materials-distribution',
-    path: 'materials-distribution',
-    name: 'materials-distribution',
-    icon: CoffeeOutlined,
-    label: 'materials工作台',
-    title: 'materials工作台',
-    component: () => import('@/views/mdw-work/materialsDistribution.vue').catch(() => import('@/views/NotFound.vue')),
-    requiresAuth: true,
-    // materials工作台暂时所有角色都可访问
-  },
+  
   {
     key: '/usersManage',
     path: 'usersManage',
@@ -99,6 +89,17 @@ export const menuConfig: MenuItem[] = [
     allowedRoles: ['3294'],
   },
   {
+    key: '/rsDrive',
+    path: 'rsDrive',
+    name: 'rsDrive',
+    icon: CloudOutlined,
+    label: '优鼎云盘',
+    title: '优鼎云盘',
+    component: () => import('@/views/fileDrive.vue').catch(() => import('@/views/NotFound.vue')),
+    requiresAuth: true,
+    allowedRoles: ['3294','5293'],
+  },
+  {
     key: '/settingsManage',
     path: 'settingsManage',
     name: 'settingsManage',
@@ -110,6 +111,7 @@ export const menuConfig: MenuItem[] = [
     // 只有管理员(3294)可以访问
     allowedRoles: ['3294'],
   },
+  
 ]
 
 // 根据角色过滤菜单项

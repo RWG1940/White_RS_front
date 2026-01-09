@@ -13,7 +13,7 @@
             </a-col>
             <a-col v-if="showSearch" :span="isMobile ? 8 : undefined">
               <a-button type="primary" block :class="{ 'mobile-button': isMobile }" @click="resetSearch">
-                <ReloadOutlined />刷新
+                <ReloadOutlined />
               </a-button>
             </a-col>
             <a-col v-if="showAdd" :span="isMobile ? 8 : undefined">
@@ -35,8 +35,8 @@
       </div>
       <!-- 表格  -->
       <div class="content">
-        <a-table size="middle" :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection"
-          bordered :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll"
+        <a-table size="small" :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection"
+          :bordered="isBordered" :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll"
           :custom-row="handleRowClick">
           <template #bodyCell="{ column, text, record, index }">
             <slot v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
@@ -115,11 +115,14 @@ const props = withDefaults(
     showAdd?: boolean
     showBatchDelete?: boolean
     showDelete?: boolean
-    pageSize?: number
     pagination?: false | TableProps<RecordType>['pagination']
     showOperation?: boolean
     enableColumnDrag?: boolean
     clickToEdit?: boolean
+    total?: number
+    pageSize?: number
+    currentPage?:number
+    isBordered?: boolean
   }>(),
   {
     dataSource: () => [],
@@ -133,13 +136,16 @@ const props = withDefaults(
     showAdd: true,
     showBatchDelete: true,
     showDelete: true,
-    pageSize: 10,
     pagination: undefined,
     showOperation: true,
     // 列任意调整位置
     enableColumnDrag: true,
     // 点击行切换编辑模式
     clickToEdit: true,
+    total: 0,
+    currentPage:1,
+    pageSize:10,
+    isBordered: true,
   },
 )
 // 组件事件
@@ -155,6 +161,8 @@ const emit = defineEmits<{
   (e: 'edit', record: RecordType): void
   (e: 'columns-reordered', columns: TableColumnType<RecordType>[]): void
   (e: 'row-click', record: RecordType, event: Event): void
+  (e: 'update:currentPage', value: number): void
+  (e: 'update:pageSize', value: number): void
 }>()
 // 组件内部状态
 const searchValue = ref('')
@@ -165,8 +173,16 @@ const selectedRowKeys = ref<(string | number)[]>([])
 const selectedRows = ref<RecordType[]>([])
 const windowSize = ref({ width: 0, height: 0 })
 const isMobile = ref(false)
-const currentPage = ref(1)
-const currentPageSize = ref(props.pageSize)
+
+const current = computed({
+  get: () => props.currentPage,
+  set: (val) => emit('update:currentPage', val)
+})
+
+const size = computed({
+  get: () => props.pageSize,
+  set: (val) => emit('update:pageSize', val)
+})
 
 // 检测是否为移动端
 const checkMobile = () => {
@@ -213,13 +229,6 @@ watch(
   { immediate: true },
 )
 
-// 监听 pageSize prop 变化
-watch(
-  () => props.pageSize,
-  (value) => {
-    currentPageSize.value = value
-  },
-)
 // 监听 tableData 变化，更新已选择的行
 watch(
   () => tableData.value,
@@ -331,27 +340,29 @@ const mergedRowSelection = computed(() => {
 // 计算可编辑字段集合和分页配置
 const editableFieldSet = computed(() => new Set(props.editableFields))
 const paginationConfig = computed(() => {
-  if (props.pagination === false) {
-    return false
-  }
-  if (props.pagination) {
-    return props.pagination
-  }
+  if (props.pagination === false) return false
+  if (props.pagination) return props.pagination
+
   return {
-    current: currentPage.value,
-    pageSize: currentPageSize.value,
-    total: tableData.value.length,
+    current: current.value,
+    pageSize: size.value,
+    total: props.total,
+
     showSizeChanger: true,
     showQuickJumper: true,
-    showTotal: (total: number) => `共 ${total} 条`,
+    showTotal: (total: number) => `总共 ${total} 条数据`,
     pageSizeOptions: ['10', '20', '50', '100'],
+
+    //  切换页码
     onChange: (page: number, pageSize: number) => {
-      currentPage.value = page
-      currentPageSize.value = pageSize
+      emit('update:currentPage', page)
+      emit('update:pageSize', pageSize)
     },
-    onShowSizeChange: (current: number, pageSize: number) => {
-      currentPageSize.value = pageSize
-      currentPage.value = 1
+
+    //  切换 pageSize
+    onShowSizeChange: (page: number, pageSize: number) => {
+      emit('update:currentPage', page)
+      emit('update:pageSize', pageSize)
     },
   }
 })
@@ -382,7 +393,7 @@ const mergedScroll = computed(() => {
   // 桌面端计算
   // Y 轴：视口高度 - header(64px) - 工具栏高度(约60px) - 分页器高度(约56px) - 边距(约140px)
   const scrollY = windowSize.value.height > 0
-    ? windowSize.value.height - 64 - (props.showToolbar ? 60 : 0) - (paginationConfig.value ? 56 : 0) - 140
+    ? windowSize.value.height - 64 - (props.showToolbar ? 60 : 0) - (paginationConfig.value ? 56 : 0) - 170
     : 390
 
   // X 轴：视口宽度 - 侧边栏宽度(200px) - 边距(约40px)

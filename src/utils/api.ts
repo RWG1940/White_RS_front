@@ -23,4 +23,11 @@ export const getApiUrl = (path: string): string => {
 export const getBackendUrl = (): string => {
   return appConfig.backendUrl
 }
+/**
+ * 获取前端基础 URL
+ */
+export const getFrontendUrl = (): string => {
+  return appConfig.frontendUrl
+}
+
 

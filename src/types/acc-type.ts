@@ -41,6 +41,7 @@ export interface AccPurchaseContractType {
   priority?: number              // 整体优先级
 
   importId?: number              // 导入批次ID
+  customer?: string              // 客户名称
   extraJson?: any                // 额外信息（JSON）
 
   createdAt?: string             // 创建时间

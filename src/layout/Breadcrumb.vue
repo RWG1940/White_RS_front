@@ -60,7 +60,5 @@ const breadcrumbItems = computed(() => {
 </template>
 
 <style scoped>
-.breadcrumb-container {
-  margin-bottom: 5px;
-}
+
 </style>

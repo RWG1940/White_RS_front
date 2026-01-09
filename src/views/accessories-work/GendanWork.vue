@@ -1,8 +1,10 @@
 <template>
     <div>
-       
+        <div v-if="isMobile">
+            <GDMobileTable />
+        </div>
         <!-- pc 端 -->
-        <div class="work-wrap-2">
+        <div v-else>
             <GDTable />
         </div>
 
@@ -96,14 +98,17 @@
     </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,onUnmounted } from 'vue';
 import { message } from 'ant-design-vue';
 import type { DrawerProps } from 'ant-design-vue';
 import GDTable from './components/GDTable.vue';
+import GDMobileTable from './components/GDMobileTable.vue';
+
 import { importExcel, exportExcel } from '@/api/services/acc-api';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { accStore } from '@/stores/acc-store';
 import { tableImportStore } from '@/stores/tableImport-store';
+
 
 
 const placement = ref<DrawerProps['placement']>('top');
@@ -129,7 +134,12 @@ const showDrawer = () => {
     openInfo.value = !openInfo.value;
 };
 
+// 响应式判断是否为移动端（宽度 <= 768px）
+const isMobile = ref(false)
 
+const updateIsMobile = () => {
+    isMobile.value = window.innerWidth <= 768
+}
 
 // Excel 上传相关方法
 const beforeExcelUpload = async (file: File) => {
@@ -277,6 +287,8 @@ const sortFields = [
 
 
 onMounted(() => {
+    updateIsMobile()
+    window.addEventListener('resize', updateIsMobile)
     // 加载可用的表格批次
     tableImportStore.fetchAll().then(() => {
         options.value = tableImportStore.list.map((item: any) => ({
@@ -286,6 +298,10 @@ onMounted(() => {
     });
 
 });
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateIsMobile)
+})
 </script>
 <style scoped>
 .header {
@@ -303,6 +319,4 @@ onMounted(() => {
 .process-card {
     width: 100%;
 }
-
-
 </style>

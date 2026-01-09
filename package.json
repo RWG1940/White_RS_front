@@ -16,12 +16,16 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
+    "@handsontable/vue3": "^16.2.0",
     "ant-design-vue": "^4.2.6",
     "axios": "^1.13.2",
+    "handsontable": "^16.2.0",
     "nprogress": "^0.2.0",
+    "pdfjs-dist": "^5.4.530",
     "pinia": "^3.0.4",
     "vue": "^3.5.25",
-    "vue-router": "^4.6.3"
+    "vue-router": "^4.6.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.3",

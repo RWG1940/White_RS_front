@@ -1,9 +1,11 @@
 <template>
     <div>
         <ManagePage v-model:data-source="dataSource" :columns="columns" :editable-fields="editableFields" row-key="id"
-            :show-operation="true" :show-add="true" :show-batch-delete="true" :page-size="PAGE_SIZE"
-            search-placeholder="搜索webhook" @search="handleSearch" @add="handleAdd" @save="handleSave"
-            @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" @selection-change="handleSelectionChange">
+            :show-operation="true" :show-add="true" :show-batch-delete="true" v-model:total="store.total"
+            v-model:currentPage="store.currentPage" v-model:pageSize="store.pageSize" search-placeholder="搜索webhook"
+            @search="handleSearch" @add="handleAdd" @save="handleSave" @row-delete="handleRowDelete"
+            @batch-delete="handleBatchDelete" @selection-change="handleSelectionChange" @update:currentPage="pageChange"
+            @update:pageSize="pageSizeChange">
             <template #cell-status="{ record, isEditing, editableData, getInternalKey }">
                 <template v-if="!isEditing">
                     <a-tag :color="record.status === 1 ? 'blue' : 'red'">
@@ -41,15 +43,15 @@ const columns: TableColumnType<WebhookType>[] = [
     { title: 'ID', dataIndex: 'id', width: '80px' },
     { title: '机器人名称', dataIndex: 'name', width: '180px' },
     { title: '地址', dataIndex: 'url', width: '120px' },
-    { title: '状态', dataIndex: 'status', width: '80px'},
-    { title: '创建时间', dataIndex: 'createdAt', width: '120px' ,customRender: ({ text }) => formatTime(text) },
-    { title: '更新时间', dataIndex: 'updatedAt', width: '120px',customRender: ({ text }) => formatTime(text) },
+    { title: '状态', dataIndex: 'status', width: '80px' },
+    { title: '创建时间', dataIndex: 'createdAt', width: '120px', customRender: ({ text }) => formatTime(text) },
+    { title: '更新时间', dataIndex: 'updatedAt', width: '120px', customRender: ({ text }) => formatTime(text) },
     { title: '备注', dataIndex: 'remark', width: '120px' },
     { title: '发送次数', dataIndex: 'sendCount', width: '80px' },
     { title: '最后发送时间', dataIndex: 'lastSendTime', width: '120px', customRender: ({ text }) => formatTime(text) },
 
 
-    
+
 ]
 // 表格原始数据
 const rawRows = ref<WebhookType[]>([])
@@ -119,7 +121,14 @@ const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: Webh
     store.onSelectionChange(rows as any)
 }
 
-
+const pageChange = (val: number) => {
+    store.currentPage = val
+    store.fetchPage()
+}
+const pageSizeChange = (val: number) => {
+    store.pageSize = val
+    store.fetchPage()
+}
 </script>
 
 <style scoped></style>
