@@ -12,6 +12,7 @@
                     @change="handleBatchChange" />
                 <a-button style="margin-left: 8px;" @click="handleEditClick" :disabled="isEditButtonDisabled">编辑
                 </a-button>
+                <div v-if="selectedBatchId! > 0" class="the-total">（所有）洗标总金额：{{ washTotal }}&ensp;吊牌总金额：{{ tagTotal }}</div>
                 <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(2) }}</div>
                 <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}</div>
             </template>
@@ -176,7 +177,7 @@
 import { ref, watch, onMounted, reactive, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData,fetchPageByImportId } from '@/stores/acc-store'
+import { accStore, editFormData,fetchPageByImportId,washTotal,tagTotal,getTotalPriceByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { updateFileWithInfo } from '@/api/services/acc-api'
@@ -518,6 +519,7 @@ const batchOptions = computed(() => {
 const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
     fetchPageByImportId(selectedBatchId.value,0,0)
+    getTotalPriceByImportId(selectedBatchId.value || 0)
 }
 const pageChange = (val:number) => { 
     store.currentPage = val
@@ -574,6 +576,13 @@ const pageSizeChange = (val:number) => {
 .selected-total {
     margin-left: 10px;
     background-color: rgb(201, 255, 223);
+    padding: 6px;
+    border-radius: 5px;
+}
+
+.the-total {
+    margin-left: 10px;
+    background-color: rgb(255, 221, 201);
     padding: 6px;
     border-radius: 5px;
 }

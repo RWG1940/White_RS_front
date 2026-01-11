@@ -30,9 +30,10 @@
                     </div>
                 </a-form-item>
                 <a-form-item label="设置批次号（如20260101）" required>
-                    <a-input v-model:value="importId" placeholder="请填写导入id" style="width: 200px"></a-input>
+                    <a-select v-model:value="importId" :options="options" mode="multiple" placeholder="请填写导入批次id"
+                        style="width: 200px"></a-select>
                 </a-form-item>
-                <a-form-item label="设置关联客户" required>
+                <a-form-item label="设置关联客户" >
                     <a-select v-model:value="guestId"  placeholder="请选择客户" style="width: 200px" :options="guestOptions"></a-select>
                 </a-form-item>
             </a-form>
@@ -76,10 +77,10 @@
         <a-modal v-model:open="openHistory" title="历史批次管理" width="50%" wrap-class-name="full-modal">
             <template #default>
                 <div>
-                    <a-alert message="使用说明" description="用于管理批次号，删除批次号不会影响导入的表格数据。" type="info" show-icon
+                    <a-alert message="使用说明" description="用于管理批次号及对应的数据，可以理解为批量删除该批次的数据。" type="info" show-icon
                         style="margin-bottom: 16px" />
                     <a-tag v-for="batch in tableImportStore.list as any" :key="batch.id" color="blue" :closable="true"
-                        @close="tableImportStore.remove([batch.id])"
+                        @close="handleDeleteBatch(batch.id)"
                         style="margin-bottom: 8px; display: inline-flex; align-items: center;">
                         {{ batch.id }}
 
@@ -106,7 +107,7 @@ import type { DrawerProps } from 'ant-design-vue';
 import YDTable from './components/YDTable.vue';
 import { importExcel, exportExcel } from '@/api/services/acc-api';
 import { PlusOutlined } from '@ant-design/icons-vue';
-import { accStore, fetchPageByGuestId } from '@/stores/acc-store';
+import { accStore, fetchPageByGuestId,deleteByImportId } from '@/stores/acc-store';
 import { tableImportStore } from '@/stores/tableImport-store';
 import YDMobileTable from './components/YDMobileTable.vue';
 import ScrollContent from '@/components/scrollContent.vue';
@@ -194,16 +195,15 @@ const handleExcelImportOk = async () => {
         message.warning('请填写导入id');
         return;
     }
-    if (!guestId.value) {
-        message.warning('请选择关联客户');
-        return;
-    }
+    
     try {
         excelImportLoading.value = true;
         const form = new FormData();
         form.append('file', uploadExcelFile.value);
         form.append('importId', importId.value);
-        form.append('guestId', guestId.value);
+        if (guestId.value) {
+            form.append('guestId', guestId.value);
+        }
         await importExcel(form);
         message.success('Excel 导入成功');
         await fetchPageByGuestId(guestId.value, 0, accStore.currentPage, accStore.pageSize);
@@ -285,14 +285,12 @@ const handleRemove = (file: any) => {
     return true;
 };
 
-const sortFields = [
-    { label: '创建时间', value: 'createdAt' },
-    { label: '修改时间', value: 'updatedAt' },
-    { label: '优先级', value: 'priority' },
-    { label: '状态', value: 'status' },
-    { label: '数量', value: 'quantity' }
-]
 
+const handleDeleteBatch = async (batchId: number) => {
+        await tableImportStore.remove([batchId]);
+        await tableImportStore.fetchAll();
+        await deleteByImportId(batchId);
+};
 
 
 onMounted(() => {

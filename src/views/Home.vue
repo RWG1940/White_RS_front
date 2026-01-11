@@ -16,7 +16,7 @@
         </a-row>
 
       </a-card>
-      <a-card title="最近系统更新内容" style="margin-top: 16px;">
+      <a-card title="最近系统更新内容-2026.01.09" style="margin-top: 16px;">
         <div class="announcement-list">
           <div v-for="(announcement, index) in updates" :key="index" class="announcement-item">
             <span class="update-number">{{ index + 1 }}、</span>
@@ -24,6 +24,16 @@
           </div>
         </div>
       </a-card>
+
+      <a-card title="未来将要更新内容" style="margin-top: 16px;">
+        <div class="announcement-list">
+          <div v-for="(announcement, index) in fetureUpdates" :key="index" class="announcement-item">
+            <span class="feture-update-number">{{ index + 1 }}、</span>
+            <span class="announcement-content">{{ announcement.content }}</span>
+          </div>
+        </div>
+      </a-card>
+
       <!-- 反馈弹窗 -->
       <feedback-modal ref="feedbackModalRef" />
 
@@ -59,6 +69,15 @@ const updates = ref([
   { content: '首页新增“操作说明”功能' },
   { content: '新增“优鼎云盘”功能，共享文件上传下载功能，目前是优鼎角色可用（公共云盘）' },
   { content: '优化界面布局、修复网页性能问题' },
+])
+// 待更新内容数据
+const fetureUpdates = ref([
+  { content: '“优鼎云盘-通过excel分发文件给对应工厂”功能' },
+  { content: '“工作台-一次性导入多个批次数据”功能' },
+  { content: '“优鼎云盘-个人云盘”功能，所有用户都能使用云盘功能' },
+  { content: '“个人中心-我分享的文件”功能，能撤销分享的文件' },
+  { content: '“数据统计”功能，能查看各工作台数据统计，直观查看如数据更新条数，数量金额统计等，以统计图的形式显示' },
+  { content: '“用户资料的细化，头像修改，找回密码等' },
 ])
 // 处理反馈按钮点击
 const handleFeedback = () => {
@@ -130,5 +149,11 @@ onMounted(async () => {
 .announcement-content {
   flex: 1;
   word-break: break-word;
+}
+.feture-update-number {
+  color: #fa8c16;
+  font-weight: 500;
+  margin-right: 8px;
+  min-width: 20px;
 }
 </style>

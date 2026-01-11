@@ -30,7 +30,8 @@
                         <p>2、导出数据的范围</p>
                     </div>
 
-                    <a-input v-model:value="importId" placeholder="请填写导入id" style="width: 200px"></a-input>
+                    <a-select v-model:value="importId" :options="options" mode="multiple" placeholder="请填写导入批次id"
+                        style="width: 200px"></a-select>
                 </a-form-item>
             </a-form>
 

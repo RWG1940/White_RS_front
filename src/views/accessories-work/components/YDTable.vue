@@ -554,7 +554,7 @@ const handleAdd = async () => {
 const handleRowDelete = async (id: string | number) => {
     try {
         await store.remove([Number(id)])
-        await store.fetchPage()
+        await fetchPageByGuestId(currentGuestId.value!,0,store.currentPage,store.pageSize)
     } catch (e) {
         console.error('删除失败', e)
     }
@@ -564,7 +564,7 @@ const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
     try {
         const ids = keys.map((k) => Number(k))
         await store.remove(ids)
-        await store.fetchPage()
+        await fetchPageByGuestId(currentGuestId.value!,0,store.currentPage,store.pageSize)
     } catch (e) {
         console.error('批量删除失败', e)
     }
@@ -583,9 +583,6 @@ const onImportClick = () => {
 }
 const onExportClick = () => {
     emit('update:openExport', true)
-}
-const onInfoClick = () => {
-    emit('update:openInfo', true)
 }
 const onHistoryClick = () => {
     emit('update:openHistory', true)

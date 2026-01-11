@@ -35,7 +35,7 @@
                             </a-button>
                             </a-col>
                             <a-col>
-                                <a-button :disabled="store.selectedIds.length == 0" type="primary" @click="">
+                                <a-button :disabled="store.selectedIds.length == 0" type="primary" @click="()=>{message.info('该功能还未实现，正在做...') }">
                                     通过Excel分发
                                 </a-button>
                             </a-col>
@@ -213,9 +213,9 @@ const filteredFileList = computed(() => {
 });
 
 // 删除文件
-const handleDelete = async (fileId: number) => {
+const handleDelete = async (fileId: string | number) => {
     try {
-        await store.remove([fileId]);
+        await store.remove([Number(fileId)]);
         loadFileList(); // 重新加载列表
     } catch (error) {
         console.error('删除文件失败:', error);

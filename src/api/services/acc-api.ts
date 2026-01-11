@@ -54,3 +54,13 @@ export const getAccListByGuestId = (guestId: number,importId: number,page: numbe
       }
    )
 }
+
+// 根据importId删除辅料记录
+export const deleteAccByImportId = (importId: number) => {
+   return apiClient.delete(`/acc/deleteByImportId/${importId}`)
+}
+
+// 根据importId获取洗标和吊牌总金额
+export const getTotalByImportId = (importId: number) => {
+   return apiClient.get(`/acc/getTotalByImportId/${importId}`)
+}
