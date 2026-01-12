@@ -129,7 +129,8 @@ const handleShare = async () => {
             shareTime: dayjs().format('YYYY-MM-DD HH:mm:ss')
         }
         const result = await shareFiles(shareData)
-        shareResult.value = getFrontendUrl()+'/white-rs-share/'+result
+        // 在 hash 模式下，分享链接需要包含 # 前缀
+        shareResult.value = getFrontendUrl()+'/#/white-rs-share/'+result
         emit('share-success')
     } catch (error) {
         console.error('分享失败:', error)

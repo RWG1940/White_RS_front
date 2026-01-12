@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHashHistory,createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { message } from 'ant-design-vue'
 import NProgress from '@/utils/nprogress'
@@ -45,7 +45,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 })
 
@@ -53,6 +53,20 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   NProgress.start() // 开始进度条
   const authStore = useAuthStore()
+  
+  // 检测并修复 hash 模式下的分享链接
+  // 如果用户直接访问 /white-rs-share/:shareUrl（没有 #），需要重定向到正确的 hash 路由
+  const fullPath = window.location.pathname + window.location.search
+  const hashMatch = fullPath.match(/^\/white-rs-share\/(.+)$/)
+  if (hashMatch && !window.location.hash) {
+    // 检测到访问分享链接但没有 hash，重定向到正确的 hash 路由
+    const shareUrl = hashMatch[1]
+    NProgress.done()
+    // 在 hash 模式下，使用 router.push 跳转到正确的 hash 路由
+    next({ path: `/white-rs-share/${shareUrl}`, replace: true })
+    return
+  }
+  
   // 检查token是否有效
   
   // 如果未初始化，先初始化（从本地存储恢复 token）
@@ -61,10 +75,31 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 检查路由是否需要登录
+  // 明确检查 requiresAuth 是否为 false，如果是 false 则不需要登录
   const requiresAuth = to.meta.requiresAuth !== false
 
+  // 对于不需要登录的路由（如登录页、分享页），直接放行
+  if (to.meta.requiresAuth === false) {
+    // Share 页面和登录页等不需要登录的页面，直接允许访问
+    if (to.path === '/login' && authStore.isAuthenticated) {
+      // 已登录访问登录页，跳转到首页
+      NProgress.done()
+      next({ path: '/' })
+      return
+    }
+    // Share 页面等不需要登录的页面，直接放行
+    // 设置页面标题
+    if (to.meta.title) {
+      import('@/config').then(({ appConfig }) => {
+        document.title = `${to.meta.title} - ${appConfig.siteTitle}`
+      })
+    }
+    next()
+    return
+  }
+
+  // 需要登录的路由
   if (requiresAuth) {
-    // 需要登录
     if (!authStore.isAuthenticated) {
       // 未登录，跳转到登录页
       message.warning('请先登录')
@@ -89,14 +124,6 @@ router.beforeEach(async (to, from, next) => {
         next({ path: '/' })
         return
       }
-    }
-  } else {
-    // 不需要登录（如登录页）
-    if (to.path === '/login' && authStore.isAuthenticated) {
-      // 已登录访问登录页，跳转到首页
-      NProgress.done()
-      next({ path: '/' })
-      return
     }
   }
 

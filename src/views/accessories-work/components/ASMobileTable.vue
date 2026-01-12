@@ -101,6 +101,18 @@
         <a-modal title="编辑信息" :open="editModalOpen" @ok="handleEditSave" @cancel="handleEditCancel" ok-text="保存"
             cancel-text="取消">
             <a-form layout="vertical">
+                <a-form-item label="洗标单价">
+                    <a-input-number v-model:value="editForm.washUnitPrice" style="width: 100%;" :min="0" />
+                </a-form-item>
+                <a-form-item label="吊牌单价">
+                    <a-input-number v-model:value="editForm.tagUnitPrice" style="width: 100%;" :min="0" />
+                </a-form-item>
+                <a-form-item label="洗标确认时间">
+                    <a-date-picker show-time style="width: 100%;" placeholder="请选择时间"
+                        :value="editForm.washConfirmTime ? dayjs(editForm.washConfirmTime) : null"
+                        @change="(val: any) => editForm.washConfirmTime = val ? val.toISOString() : ''"
+                        @ok="(val: any) => editForm.washConfirmTime = val ? val.toISOString() : ''" />
+                </a-form-item>
                 <a-form-item label="洗标状态">
                     <a-select v-model:value="editForm.washStatus" placeholder="选择洗标状态" allow-clear>
                         <a-select-option :value="0">未下单</a-select-option>
@@ -115,6 +127,16 @@
                 <a-form-item label="洗标快递单号">
                     <a-input v-model:value="editForm.washExpressNo" placeholder="请输入洗标快递单号" />
                 </a-form-item>
+                <a-form-item label="洗标出货时间">
+                    <a-date-picker show-time style="width: 100%;" placeholder="请选择时间"
+                        :value="editForm.washShipTime ? dayjs(editForm.washShipTime) : null"
+                        @change="(val: any) => editForm.washShipTime = val ? val.toISOString() : ''"
+                        @ok="(val: any) => editForm.washShipTime = val ? val.toISOString() : ''" />
+                </a-form-item>
+                <a-form-item label="洗标实际出货数量">
+                    <a-input-number v-model:value="editForm.washShipQuantity" style="width: 100%;" :min="0" />
+                </a-form-item>
+                
                 <a-form-item label="吊牌状态">
                     <a-select v-model:value="editForm.tagStatus" placeholder="选择吊牌状态" allow-clear>
                         <a-select-option :value="0">未下单</a-select-option>
@@ -128,6 +150,21 @@
                 </a-form-item>
                 <a-form-item label="吊牌快递单号">
                     <a-input v-model:value="editForm.tagExpressNo" placeholder="请输入吊牌快递单号" />
+                </a-form-item>
+                <a-form-item label="吊牌出货时间">
+                    <a-date-picker show-time style="width: 100%;" placeholder="请选择时间"
+                        :value="editForm.tagShipTime ? dayjs(editForm.tagShipTime) : null"
+                        @change="(val: any) => editForm.tagShipTime = val ? val.toISOString() : ''"
+                        @ok="(val: any) => editForm.tagShipTime = val ? val.toISOString() : ''" />
+                </a-form-item>
+                <a-form-item label="吊牌实际出货数量">
+                    <a-input-number v-model:value="editForm.tagShipQuantity" style="width: 100%;" :min="0" />
+                </a-form-item>
+                <a-form-item label="吊牌确认时间">
+                    <a-date-picker show-time style="width: 100%;" placeholder="请选择时间"
+                        :value="editForm.tagConfirmTime ? dayjs(editForm.tagConfirmTime) : null"
+                        @change="(val: any) => editForm.tagConfirmTime = val ? val.toISOString() : ''"
+                        @ok="(val: any) => editForm.tagConfirmTime = val ? val.toISOString() : ''" />
                 </a-form-item>
                 <a-form-item label="备注">
                     <a-textarea v-model:value="editForm.remark" placeholder="请输入备注信息" :rows="3" />
@@ -312,6 +349,7 @@ import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { tableImportStore } from '@/stores/tableImport-store'
 import { ReloadOutlined } from '@ant-design/icons-vue'
+import dayjs from 'dayjs'
 
 const store = accStore
 const searchValue = ref('')
@@ -319,10 +357,18 @@ const selectedItem = ref<AccPurchaseContractType | null>(null)
 const selectedBatchId = ref<number | undefined>(undefined)
 const editModalOpen = ref(false)
 const editingItem = ref<AccPurchaseContractType | null>(null)
-const editForm = ref({
-    washStatus: undefined as number | undefined,
+const editForm = ref<Record<string, any>>({
+    washUnitPrice: '',
+    tagUnitPrice: '',
+    tagConfirmTime: '',
+    washConfirmTime: '',
+    washStatus: '',
+    washShipQuantity: '',
+    washShipTime: '',
     washExpressNo: '',
-    tagStatus: undefined as number | undefined,
+    tagStatus: '',
+    tagShipTime: '',
+    tagShipQuantity: '',
     tagExpressNo: '',
     remark: '',
 })
@@ -407,9 +453,17 @@ const batchOptions = computed(() => {
 const openEditModal = (item: AccPurchaseContractType) => {
     editingItem.value = item
     editForm.value = {
+        washUnitPrice: item.washUnitPrice || '',
+        tagUnitPrice: item.tagUnitPrice || '',
+        tagConfirmTime: item.tagConfirmTime || '',
+        washConfirmTime: item.washConfirmTime || '',
         washStatus: item.washStatus,
+        washShipQuantity: item.washShipQuantity || '',
+        washShipTime: item.washShipTime || '',
         washExpressNo: item.washExpressNo || '',
         tagStatus: item.tagStatus,
+        tagShipTime: item.tagShipTime || '',
+        tagShipQuantity: item.tagShipQuantity || '',
         tagExpressNo: item.tagExpressNo || '',
         remark: item.remark || '',
     }
@@ -437,6 +491,16 @@ const handleEditSave = async () => {
             updatedItem.tagStatus = editForm.value.tagStatus
         }
         updatedItem.tagExpressNo = editForm.value.tagExpressNo
+
+        // 其他可编辑字段
+        updatedItem.washUnitPrice = editForm.value.washUnitPrice
+        updatedItem.tagUnitPrice = editForm.value.tagUnitPrice
+        updatedItem.tagConfirmTime = editForm.value.tagConfirmTime
+        updatedItem.washConfirmTime = editForm.value.washConfirmTime
+        updatedItem.washShipQuantity = editForm.value.washShipQuantity
+        updatedItem.washShipTime = editForm.value.washShipTime
+        updatedItem.tagShipTime = editForm.value.tagShipTime
+        updatedItem.tagShipQuantity = editForm.value.tagShipQuantity
 
         // 保存备注
         updatedItem.remark = editForm.value.remark

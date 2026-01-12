@@ -161,6 +161,7 @@ const handleClose = () => {
     store.reset()
     // 重新获取数据，确保下次打开时数据是最新的
     store.fetchPage()
+    store.fetchAll()
 }
 
 </script>

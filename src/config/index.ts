@@ -26,15 +26,15 @@ const defaultConfig: AppConfig = {
   browserTitle: '利拉辅料系统',
   frontendPort: 8888,
   //生产
-  //backendUrl: '/api',
+  backendUrl: '/api',
   //开发
-  backendUrl: 'http://192.168.24.77:8080',
+  //backendUrl: 'http://192.168.24.77:8080',
   enableDebug: true,
   bottomText: 'Copyright © 2025 优鼎 All Rights Reserved.',
   // 生产
-  //frontendUrl: 'http://123.157.20.70:25080',
+  frontendUrl: 'http://123.157.20.70:25080',
   // 开发
-  frontendUrl: 'http://192.168.24.77:8888'
+  //frontendUrl: 'http://192.168.24.77:8888'
 }
 
 // 从环境变量或本地存储中读取配置（可选）

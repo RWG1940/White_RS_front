@@ -566,7 +566,7 @@ onMounted(() => {
 <style scoped>
 .share-page {
     padding: 24px;
-    min-height: 100vh;
+    height: 100vh;
     background-color: #f5f5f5;
 }
 

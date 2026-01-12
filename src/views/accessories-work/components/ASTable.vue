@@ -1,20 +1,25 @@
 <template>
     <div>
-        <ManagePage v-model:data-source="dataSource" v-model:total="store.total" v-model:currentPage="store.currentPage" v-model:pageSize="store.pageSize" :columns="columns" :editable-fields="editableFields"
-            row-key="id" search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd"
-            @save="handleSave" @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" :show-add="false"
-            :show-batch-delete="false" @selection-change="handleSelectionChange" :show-delete="false" @update:currentPage="pageChange" @update:pageSize="pageSizeChange">
+        <ManagePage v-model:data-source="dataSource" v-model:total="store.total" v-model:currentPage="store.currentPage"
+            v-model:pageSize="store.pageSize" :columns="columns" :editable-fields="editableFields" row-key="id"
+            search-placeholder="搜索sku" @search="handleSearch" @add="handleAdd" @save="handleSave"
+            @row-delete="handleRowDelete" @batch-delete="handleBatchDelete" :show-add="false" :show-batch-delete="false"
+            @selection-change="handleSelectionChange" :show-delete="false" @update:currentPage="pageChange"
+            @update:pageSize="pageSizeChange">
 
             <template #custom-tool>
                 <a-button style="margin-left: 5px;" type="primary" @click="onImportClick">导入</a-button>
                 <a-button style="margin-left: 5px;" type="primary" @click="onExportClick">导出</a-button>
-                <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;width:150px" placeholder="选择批次"
-                    @change="handleBatchChange" />
+                <a-select v-model="selectedBatchId" :options="batchOptions" style="margin-left: 5px;width:150px"
+                    placeholder="选择批次" @change="handleBatchChange" />
                 <a-button style="margin-left: 8px;" @click="handleEditClick" :disabled="isEditButtonDisabled">编辑
                 </a-button>
-                <div v-if="selectedBatchId! > 0" class="the-total">（所有）洗标总金额：{{ washTotal }}&ensp;吊牌总金额：{{ tagTotal }}</div>
-                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(2) }}</div>
-                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}</div>
+                <div v-if="selectedBatchId! > 0" class="the-total">（所有）洗标总金额：{{ washTotal }}&ensp;吊牌总金额：{{ tagTotal }}
+                </div>
+                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(2)
+                    }}</div>
+                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}
+                </div>
             </template>
             <template #cell-__index__="{ index }">
                 <span>{{ (index ?? 0) + 1 }}</span>
@@ -107,6 +112,24 @@
                         @ok="(val: any) => editableData[getInternalKey(record)]!.tagShipTime = val ? val.toISOString() : null" />
                 </template>
             </template>
+            <!-- 洗标确认时间选择器 -->
+            <template #cell-washConfirmTime="{ record, isEditing, editableData, getInternalKey }">
+                <template v-if="isEditing">
+                    <a-date-picker show-time style="width: 100%;" placeholder="Select Time"
+                        :value="editableData[getInternalKey(record)]!.washConfirmTime ? dayjs(editableData[getInternalKey(record)]!.washConfirmTime) : null"
+                        @change="(val: any) => editableData[getInternalKey(record)]!.washConfirmTime = val ? val.toISOString() : null"
+                        @ok="(val: any) => editableData[getInternalKey(record)]!.washConfirmTime = val ? val.toISOString() : null" />
+                </template>
+            </template>
+            <!-- 吊牌确认时间选择器 -->
+            <template #cell-tagConfirmTime="{ record, isEditing, editableData, getInternalKey }">
+                <template v-if="isEditing">
+                    <a-date-picker show-time style="width: 100%;" placeholder="Select Time"
+                        :value="editableData[getInternalKey(record)]!.tagConfirmTime ? dayjs(editableData[getInternalKey(record)]!.tagConfirmTime) : null"
+                        @change="(val: any) => editableData[getInternalKey(record)]!.tagConfirmTime = val ? val.toISOString() : null"
+                        @ok="(val: any) => editableData[getInternalKey(record)]!.tagConfirmTime = val ? val.toISOString() : null" />
+                </template>
+            </template>
         </ManagePage>
 
         <!-- 编辑弹窗 模态框 -->
@@ -118,13 +141,8 @@
                     :label="columns.find((col: any) => col.dataIndex === field)?.title">
                     <!-- 洗标状态下拉选择 -->
                     <template v-if="field === 'washStatus'">
-                        <a-select
-                            :value="editForm[field]"
-                            @update:value="(val: any) => editForm[field] = val"
-                            placeholder="选择洗标状态"
-                            allow-clear
-                            style="width: 100%;"
-                        >
+                        <a-select :value="editForm[field]" @update:value="(val: any) => editForm[field] = val"
+                            placeholder="选择洗标状态" allow-clear style="width: 100%;">
                             <a-select-option :value="0">未下单</a-select-option>
                             <a-select-option :value="1">做货中</a-select-option>
                             <a-select-option :value="2">货好等付款</a-select-option>
@@ -136,13 +154,8 @@
                     </template>
                     <!-- 吊牌状态下拉选择 -->
                     <template v-else-if="field === 'tagStatus'">
-                        <a-select
-                            :value="editForm[field]"
-                            @update:value="(val: any) => editForm[field] = val"
-                            placeholder="选择吊牌状态"
-                            allow-clear
-                            style="width: 100%;"
-                        >
+                        <a-select :value="editForm[field]" @update:value="(val: any) => editForm[field] = val"
+                            placeholder="选择吊牌状态" allow-clear style="width: 100%;">
                             <a-select-option :value="0">未下单</a-select-option>
                             <a-select-option :value="1">做货中</a-select-option>
                             <a-select-option :value="2">货好等付款</a-select-option>
@@ -158,15 +171,10 @@
                         @change="(val: any) => editForm[field] = val ? val.toISOString() : null"
                         @ok="(val: any) => editForm[field] = val ? val.toISOString() : null" />
                     <!-- 备注文本域 -->
-                    <a-textarea v-else-if="field === 'remark'"
-                        :value="editForm[field]"
-                        @update:value="(val: any) => editForm[field] = val"
-                        placeholder="请输入备注信息"
-                        :rows="3"
-                    />
+                    <a-textarea v-else-if="field === 'remark'" :value="editForm[field]"
+                        @update:value="(val: any) => editForm[field] = val" placeholder="请输入备注信息" :rows="3" />
                     <!-- 普通输入 -->
-                    <a-input v-else :value="editForm[field]"
-                        @update:value="(val: any) => editForm[field] = val" />
+                    <a-input v-else :value="editForm[field]" @update:value="(val: any) => editForm[field] = val" />
                 </a-form-item>
             </a-form>
         </a-modal>
@@ -177,7 +185,7 @@
 import { ref, watch, onMounted, reactive, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData,fetchPageByImportId,washTotal,tagTotal,getTotalPriceByImportId } from '@/stores/acc-store'
+import { accStore, editFormData, fetchPageByImportId, washTotal, tagTotal, getTotalPriceByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { updateFileWithInfo } from '@/api/services/acc-api'
@@ -323,7 +331,8 @@ const columns = computed(() => {
 const editableFields = [
     'washUnitPrice',
     'tagUnitPrice',
-    
+    'tagConfirmTime',
+    'washConfirmTime',
     'washStatus',
     'washShipQuantity',
     'washShipTime',
@@ -435,17 +444,17 @@ const handleEditClick = () => {
 const handleEditSave = async () => {
     try {
         const updatedItem: any = { ...editForm }
-        
+
         // 如果填了洗标快递单号，则状态自动设置为已出货
         if (updatedItem.washExpressNo && updatedItem.washExpressNo.trim()) {
             updatedItem.washStatus = 3
         }
-        
+
         // 如果填了吊牌快递单号，则状态自动设置为已出货
         if (updatedItem.tagExpressNo && updatedItem.tagExpressNo.trim()) {
             updatedItem.tagStatus = 3
         }
-        
+
         await store.update(updatedItem).then(() => {
             message.success('修改成功')
             openEditModal.value = false
@@ -518,16 +527,16 @@ const batchOptions = computed(() => {
 })
 const handleBatchChange = (value: number) => {
     selectedBatchId.value = value
-    fetchPageByImportId(selectedBatchId.value,0,0)
+    fetchPageByImportId(selectedBatchId.value, 0, 0)
     getTotalPriceByImportId(selectedBatchId.value || 0)
 }
-const pageChange = (val:number) => { 
+const pageChange = (val: number) => {
     store.currentPage = val
-    fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
+    fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
 }
-const pageSizeChange = (val:number) => { 
+const pageSizeChange = (val: number) => {
     store.pageSize = val
-        fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
+    fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
 }
 </script>
 
