@@ -69,7 +69,7 @@ import { shareFiles } from '@/stores/fileResource-store'
 import type { FileSharingType } from '@/types/fileSharing-type'
 import { formatTime } from '@/utils/formatTime'
 import dayjs from 'dayjs'
-import { getFrontendUrl } from '@/utils/api'
+import { getFrontendUrl } from '@/utils/getApiUrl'
 
 interface Props {
     visible: boolean

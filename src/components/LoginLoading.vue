@@ -1,4 +1,5 @@
 <style scoped>
+  /* 登陆界面的加载动画 */
   .spinner {
     position: relative;
     width: 80px;

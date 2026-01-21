@@ -1,6 +1,6 @@
 <template>
 <div class="page-container">
-    <!-- 插槽 -->
+    <!-- 插槽 这个插槽用于放置页面内容，用以解决页面内容滚动的问题，建议每个页面都用TA包裹 -->
      <slot name="content"></slot>
 </div>
 </template>

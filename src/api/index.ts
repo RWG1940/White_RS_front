@@ -2,7 +2,7 @@ import axios from 'axios'
 import type { AxiosInstance } from 'axios'
 import { requestInterceptor } from './interceptors/requestInterceptor'
 import { responseInterceptor, responseInterceptorError } from './interceptors/responseInterceptor'
-import { getBackendUrl } from '../utils/api'
+import { getBackendUrl } from '../utils/getApiUrl'
 const instance: AxiosInstance = axios.create({
   baseURL: getBackendUrl(),
   timeout: 5000,

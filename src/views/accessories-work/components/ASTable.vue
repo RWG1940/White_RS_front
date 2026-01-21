@@ -16,9 +16,9 @@
                 </a-button>
                 <div v-if="selectedBatchId! > 0" class="the-total">（所有）洗标总金额：{{ washTotal }}&ensp;吊牌总金额：{{ tagTotal }}
                 </div>
-                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(2)
+                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(4)
                     }}</div>
-                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}
+                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(4) }}
                 </div>
             </template>
             <template #cell-__index__="{ index }">

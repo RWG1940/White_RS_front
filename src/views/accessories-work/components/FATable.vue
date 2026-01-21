@@ -85,7 +85,7 @@ import ManagePage from '@/components/ManagePage.vue'
 import { accStore, editFormData,fetchPageByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
-import { getBackendUrl } from '@/utils/api'
+import { getBackendUrl } from '@/utils/getApiUrl'
 import { EyeOutlined } from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { tableImportStore } from '@/stores/tableImport-store'
@@ -192,16 +192,16 @@ watch(
 )
 
 onMounted(async () => {
-    await store.fetchPage()
+    await fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
 })
 
 const handleSearch = async (keyword: string) => {
     const trimmed = keyword.trim()
     if (!trimmed) {
-        await store.fetchPage()
+        await fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
         return
     }
-    await store.search({ column: 'sku', keyword: trimmed } as any)
+    await store.search({ column: 'sku', keyword: trimmed,column1:'factory',keyword1:useAuthStore().user?.username } as any)
     setTableRows((store.searchResults as AccPurchaseContractType[]) || [])
 }
 
@@ -324,7 +324,7 @@ const handleSave = async (record: any) => {
             await noticeGroup(record.importId, record.sku)
         }
         // 无论如何都刷新数据
-        await store.fetchPage()
+        await fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
     } catch (e) {
         console.error("保存失败", e)
     }

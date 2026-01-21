@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
 
+/**
+ * 构建 CRUD Store
+ */
 export interface CRUDStoreOptions {
   successMessage?: {
     fetch?: string
@@ -160,8 +163,7 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         const res = await api.exact(exactData)
         const payload = unwrapResponse(res)
         searchResults.value = pickArray(payload)
-      }
-      catch (error) {
+      } catch (error) {
         // 错误已在拦截器中处理
       } finally {
         loading.value = false

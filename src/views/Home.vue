@@ -1,6 +1,52 @@
 <template>
   <scroll-content>
     <template #content>
+
+      <a-card title="辅料工厂收款信息" style="margin-bottom: 16px;">
+        <a-row :gutter="[16, 16]">
+          <a-col :span="24">
+            <div class="bank-info">
+              <div class="info-item">
+                <span class="label">银行账号：</span>
+                <span class="value">6217 0014 3000 9420 110</span>
+              </div>
+              <div class="info-item">
+                <span class="label">开户行：</span>
+                <span class="value">建设银行（开户网点：建行海盐南门支行）</span>
+              </div>
+              <div class="info-item">
+                <span class="label">户名：</span>
+                <span class="value">王雪峰</span>
+              </div>
+            </div>
+          </a-col>
+        </a-row>
+        <a-divider />
+        <a-row :gutter="[24, 16]">
+          <a-col :xs="24" :sm="8">
+            <div class="qr-code-item">
+              <div class="qr-title">辅料工厂微信</div>
+              <a-image :width="180" :height="230" src="/images/flgc_wechat.png" style="border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);" />
+            </div>
+          </a-col>
+          <a-col :xs="24" :sm="8">
+            <div class="qr-code-item">
+              <div class="qr-title">辅料工厂微信收款码</div>
+              <a-image :width="180" :height="230" src="/images/flgc_wechat_pay.png" style="border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);" />
+            </div>
+          </a-col>
+          <a-col :xs="24" :sm="8">
+            <div class="qr-code-item">
+              <div class="qr-title">辅料工厂支付宝收款码</div>
+              <a-image :width="180" :height="230" src="/images/flgc_zfb_pay.jpg" style="border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);" />
+            </div>
+          </a-col>
+        </a-row>
+      </a-card>
+
       <a-card title="公告">
         <div class="announcement-list">
           <div v-for="(announcement, index) in announcements" :key="index" class="announcement-item">
@@ -9,6 +55,7 @@
           </div>
         </div>
       </a-card>
+
       <a-card title="工具栏" class="message-card">
         <a-row :gutter="[8, 8]">
           <a-col><a-button @click="handleFeedback">点我反馈意见</a-button></a-col>
@@ -63,12 +110,11 @@ const announcements = ref([
 ])
 // 更新内容数据
 const updates = ref([
-  { content: '优鼎工作台新增客户管理、客户-批次数据关联管理' },
-  { content: '新增各工作台手机端网页' },
-  { content: '首页新增“反馈”功能' },
-  { content: '首页新增“操作说明”功能' },
-  { content: '新增“优鼎云盘”功能，共享文件上传下载功能，目前是优鼎角色可用（公共云盘）' },
-  { content: '优化界面布局、修复网页性能问题' },
+  { content: '首页展示辅料工厂收款信息' },
+  { content: '表格选中数据的总金额保留四位小数' },
+  { content: '工厂页、跟单页显示错误' },
+
+
 ])
 // 待更新内容数据
 const fetureUpdates = ref([
@@ -150,10 +196,79 @@ onMounted(async () => {
   flex: 1;
   word-break: break-word;
 }
+
 .feture-update-number {
   color: #fa8c16;
   font-weight: 500;
   margin-right: 8px;
   min-width: 20px;
+}
+
+/* 辅料工厂信息样式 */
+.bank-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.info-item .label {
+  color: #666;
+  font-weight: 500;
+  min-width: 70px;
+  margin-right: 8px;
+}
+
+.info-item .value {
+  color: #333;
+  font-weight: 400;
+}
+
+.qr-code-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.qr-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.qr-image {
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .info-item .label {
+    min-width: auto;
+  }
+
+  .qr-code-item {
+    margin-bottom: 16px;
+  }
 }
 </style>

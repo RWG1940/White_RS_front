@@ -17,9 +17,9 @@
                 <a-select v-model="selectedBatchId" :options="batchOptions" class="batch-select" placeholder="选择批次"
                     @change="handleBatchChange" />
                 <a-button class="edit-btn" @click="handleEditClick" :disabled="isEditButtonDisabled">编辑</a-button>
-                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(2)
+                <div v-if="selectedRows.length > 0" class="selected-total">洗标总金额：{{ selectedWashTotalAmount.toFixed(4)
                     }}</div>
-                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}
+                <div v-if="selectedRows.length > 0" class="selected-total">吊牌总金额：{{ selectedTagTotalAmount.toFixed(4) }}
                 </div>
                 <div class="customer" @click="guestTableVisible = true"><span style="color: white;">
                         <CrownOutlined />&ensp;客户管理&ensp;
@@ -256,7 +256,7 @@ import ManagePage from '@/components/ManagePage.vue'
 import { accStore, editFormData, fetchPageByImportId, fetchPageByGuestId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
-import { getBackendUrl } from '@/utils/api'
+import { getBackendUrl } from '@/utils/getApiUrl'
 import { EyeOutlined, PlusOutlined, CrownOutlined } from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { guestTableImportStore } from '@/stores/guestTableImport-store'

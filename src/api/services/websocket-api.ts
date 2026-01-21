@@ -33,7 +33,7 @@ const buildWsBase = () => {
   const isDev = import.meta.env.DEV
   if (isDev) {
     // 开发环境：使用配置的后端地址
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
+    const backendUrl = 'http://localhost:8080'
     const url = new URL(backendUrl)
     const protocol = url.protocol === 'https:' ? 'wss' : 'ws'
     return `${protocol}://${url.host}`

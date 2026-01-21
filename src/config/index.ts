@@ -20,33 +20,39 @@ export interface AppConfig {
   frontendUrl: string
 }
 
-// 默认配置
-const defaultConfig: AppConfig = {
+// 生产配置
+const productConfig: AppConfig = {
   siteTitle: '利拉辅料系统',
   browserTitle: '利拉辅料系统',
   frontendPort: 8888,
-  //生产
   backendUrl: '/api',
-  //开发
-  //backendUrl: 'http://192.168.24.77:8080',
-  enableDebug: true,
+  enableDebug: false,
   bottomText: 'Copyright © 2025 优鼎 All Rights Reserved.',
-  // 生产
   frontendUrl: 'http://123.157.20.70:25080',
-  // 开发
-  //frontendUrl: 'http://192.168.24.77:8888'
 }
 
-// 从环境变量或本地存储中读取配置（可选）
-// 这里可以根据需要扩展，比如从 .env 文件读取
-const getConfig = (): AppConfig => {
-  // 可以在这里添加从环境变量读取的逻辑
-  // 例如：const envConfig = import.meta.env.VITE_APP_CONFIG
+// 开发配置
+const developConfig: AppConfig = {
+  siteTitle: '开发测试系统',
+  browserTitle: '开发测试系统',
+  frontendPort: 8888,
+  backendUrl: 'http://192.168.24.77:8080',
+  enableDebug: true,
+  bottomText: 'Copyright © 2025 数字技术部 All Rights Reserved.',
+  frontendUrl: 'http://192.168.24.77:8888',
+}
 
-  return {
-    ...defaultConfig,
-    // 可以在这里覆盖默认配置
-    // ...envConfig,
+// 根据环境选择配置
+const getConfig = (): AppConfig => {
+  const isDev = 0
+  if (isDev == 0) {
+    return {
+      ...developConfig,
+    }
+  } else {
+    return {
+      ...productConfig,
+    }
   }
 }
 

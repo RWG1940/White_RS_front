@@ -170,7 +170,7 @@ import {
   fetchOnlineCount,
   checkUserOnline,
 } from '@/api/services/websocket-api'
-import { getBackendUrl } from '@/utils/api'
+import { getBackendUrl } from '@/utils/getApiUrl'
 import { changePassword } from '@/api/services/login-api'
 import { userStore } from '@/stores/user-store'
 import { CloseCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, CheckCircleOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'

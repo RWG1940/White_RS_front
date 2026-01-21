@@ -211,7 +211,7 @@ import { ref, computed, watch } from 'vue'
 import { accStore, fetchPageByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
-import { getBackendUrl } from '@/utils/api'
+import { getBackendUrl } from '@/utils/getApiUrl'
 import { useAuthStore } from '@/stores/auth-store'
 import { tableImportStore } from '@/stores/tableImport-store'
 import { ReloadOutlined } from '@ant-design/icons-vue'
@@ -274,10 +274,10 @@ const pagedList = computed(() => {
 const handleSearch = async () => {
     const keyword = searchValue.value.trim()
     if (!keyword) {
-        await store.fetchPage()
+        await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
         return
     }
-    await store.search({ column: 'sku', keyword: keyword } as any)
+    await store.search({ column: 'sku', keyword: keyword,column1:'factory',keyword1:useAuthStore().user?.username } as any)
     currentPage.value = 1 // 搜索时重置到第一页
 }
 

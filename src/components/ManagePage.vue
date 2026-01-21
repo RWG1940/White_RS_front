@@ -1,68 +1,133 @@
 <template>
-  <!-- 表格管理页面, 带工具栏、搜索框、添加、删除、编辑功能, 带分页功能 -->
+  <!-- 表格管理页面 这是一个强大的表格组件，通过传入必要数据，你可以轻松实现一个能增删改查的前端表格  2026-01-12 By RenWeiGuo -->
   <div class="manage-page-wrapper">
     <a-spin tip="刷新中" :spinning="spinning" size="large">
+      <!-- 工具栏 -->
       <div v-if="showToolbar" class="header">
-        <!-- 工具栏 -->
-        <slot name="toolbar" :search-value="searchValue" :trigger-search="onSearch" :add="handleAdd"
-          :batch-delete="handleBatchDelete">
+        <slot
+          name="toolbar"
+          :search-value="searchValue"
+          :trigger-search="onSearch"
+          :add="handleAdd"
+          :batch-delete="handleBatchDelete"
+        >
           <a-row :gutter="[5, 5]" align="middle" :class="{ 'mobile-toolbar': isMobile }">
             <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
-              <a-input-search v-model:value="searchValue" :placeholder="searchPlaceholder" enter-button
-                @search="onSearch" />
+              <a-input-search
+                v-model:value="searchValue"
+                :placeholder="searchPlaceholder"
+                enter-button
+                @search="onSearch"
+              />
             </a-col>
             <a-col v-if="showSearch" :span="isMobile ? 8 : undefined">
-              <a-button type="primary" block :class="{ 'mobile-button': isMobile }" @click="resetSearch">
+              <a-button
+                type="primary"
+                block
+                :class="{ 'mobile-button': isMobile }"
+                @click="resetSearch"
+              >
                 <ReloadOutlined />
               </a-button>
             </a-col>
             <a-col v-if="showAdd" :span="isMobile ? 8 : undefined">
-              <a-button type="primary" block :class="{ 'mobile-button': isMobile }" @click="handleAdd">
+              <a-button
+                type="primary"
+                block
+                :class="{ 'mobile-button': isMobile }"
+                @click="handleAdd"
+              >
                 <PlusOutlined />
                 <span v-if="isMobile" style="margin-left: 4px">添加</span>
               </a-button>
             </a-col>
             <a-col v-if="showBatchDelete" :span="isMobile ? 8 : undefined">
-              <a-button type="primary" danger block :class="{ 'mobile-button': isMobile }"
-                :disabled="!selectedRowKeys.length" @click="handleBatchDelete">
+              <a-button
+                type="primary"
+                danger
+                block
+                :class="{ 'mobile-button': isMobile }"
+                :disabled="!selectedRowKeys.length"
+                @click="handleBatchDelete"
+              >
                 <DeleteOutlined />
                 <span v-if="isMobile" style="margin-left: 4px">删除</span>
               </a-button>
             </a-col>
+            <!-- 自定义工具插槽 -->
             <slot name="custom-tool"></slot>
           </a-row>
         </slot>
       </div>
       <!-- 表格  -->
       <div class="content">
-        <a-table size="small" :columns="mergedColumns" :data-source="tableData" :row-selection="mergedRowSelection"
-          :bordered="isBordered" :row-key="resolvedRowKey" :pagination="paginationConfig" :scroll="mergedScroll"
-          :custom-row="handleRowClick">
+        <a-table
+          size="small"
+          :columns="mergedColumns"
+          :data-source="tableData"
+          :row-selection="mergedRowSelection"
+          :bordered="isBordered"
+          :row-key="resolvedRowKey"
+          :pagination="paginationConfig"
+          :scroll="mergedScroll"
+          :custom-row="handleRowClick"
+        >
           <template #bodyCell="{ column, text, record, index }">
-            <slot v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
-              :name="`cell-${String(column?.dataIndex ?? '')}`" :column="column" :text="text" :record="record" :index="index"
-              :is-editing="isEditing(record)" :editable-data="editableData" :get-internal-key="getInternalKey"  />
-            <slot v-else name="bodyCell" :column="column" :text="text" :record="record" :index="index" :is-editing="isEditing(record)">
+            <slot
+              v-if="$slots[`cell-${String(column?.dataIndex ?? '')}`]"
+              :name="`cell-${String(column?.dataIndex ?? '')}`"
+              :column="column"
+              :text="text"
+              :record="record"
+              :index="index"
+              :is-editing="isEditing(record)"
+              :editable-data="editableData"
+              :get-internal-key="getInternalKey"
+            />
+            <slot
+              v-else
+              name="bodyCell"
+              :column="column"
+              :text="text"
+              :record="record"
+              :index="index"
+              :is-editing="isEditing(record)"
+            >
               <template v-if="isEditing(record) && isEditableColumn(column)">
-                <a-input v-model:value="editableData[getInternalKey(record)]![column.dataIndex as string]"
-                  style="margin: -5px 0" />
+                <a-input
+                  v-model:value="editableData[getInternalKey(record)]![column.dataIndex as string]"
+                  style="margin: -5px 0"
+                />
               </template>
               <template v-else-if="isOperationColumn(column)">
-                <slot name="operation" :record="record" :is-editing="isEditing(record)" :save="save" :cancel="cancel"
-                  :edit="edit" :remove="onDeleteRow">
+                <slot
+                  name="operation"
+                  :record="record"
+                  :is-editing="isEditing(record)"
+                  :save="save"
+                  :cancel="cancel"
+                  :edit="edit"
+                  :remove="onDeleteRow"
+                >
                   <div class="editable-row-operations">
                     <span v-if="isEditing(record)">
-                      <a-typography-link @click="save(getRowKeyValue(record))">保存</a-typography-link>
+                      <a-typography-link @click="save(getRowKeyValue(record))"
+                        >保存</a-typography-link
+                      >
 
                       <a style="margin-left: 8px" @click="cancel(getRowKeyValue(record))">取消</a>
 
-                      <a-popconfirm title="确认删除?" ok-text="是" cancel-text="否"
-                        @confirm="onDeleteRow(getRowKeyValue(record))">
+                      <a-popconfirm
+                        title="确认删除?"
+                        ok-text="是"
+                        cancel-text="否"
+                        @confirm="onDeleteRow(getRowKeyValue(record))"
+                      >
                         <a v-show="showDelete" style="margin-left: 8px">删除</a>
                       </a-popconfirm>
                     </span>
                     <span v-else>
-                      <div style="display: flex;align-items: center;justify-content: center;">
+                      <div style="display: flex; align-items: center; justify-content: center">
                         <a-button size="small" @click="edit(getRowKeyValue(record))">
                           <EditOutlined />
                           编辑
@@ -72,6 +137,7 @@
                   </div>
                 </slot>
               </template>
+              <!-- 自定义列插槽 -->
               <template v-else-if="hasCustomRender(column)">
                 <CellRenderer :column="column" :text="text" :record="record" />
               </template>
@@ -87,41 +153,74 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, onMounted, onUnmounted, type UnwrapRef, defineComponent, h, isVNode } from 'vue'
+import {
+  computed,
+  reactive,
+  ref,
+  watch,
+  onMounted,
+  onUnmounted,
+  type UnwrapRef,
+  defineComponent,
+  h,
+  isVNode,
+} from 'vue'
 import type { TableColumnType, TableProps } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons-vue'
 
+// 组件加载状态
 const spinning = ref(false)
-// RecordType 定义为任意键值对对象 
+// RecordType 定义为任意键值对对象
 type RecordType = Record<string, any>
 // 操作列的 dataIndex 常量
 const OPERATION_DATA_INDEX = '__operation__'
 // 为了解决类型实例化过深的问题，明确定义列类型
 type ColumnType = TableColumnType<RecordType>
 // 深拷贝函数
-const cloneDeep = <T extends Record<string, any> | Record<string, any>[]>(value: T): T => JSON.parse(JSON.stringify(value))
+const cloneDeep = <T extends Record<string, any> | Record<string, any>[]>(value: T): T =>
+  JSON.parse(JSON.stringify(value))
 // 定义组件属性及默认值
 const props = withDefaults(
   defineProps<{
+    // 表格数据源
     dataSource: RecordType[]
+    // 表格列
     columns: TableColumnType<RecordType>[]
+    // 可编辑字段列表
     editableFields?: string[]
+    // 行主键
     rowKey?: string
+    // 表格滚动
     scroll?: TableProps<RecordType>['scroll']
+    // 行选择器
     rowSelection?: TableProps<RecordType>['rowSelection'] | null
+    // 显示工具栏
     showToolbar?: boolean
+    // 工具栏显示搜索框
     showSearch?: boolean
+    // 工具栏搜索框占位符
     searchPlaceholder?: string
+    // 工具栏显示添加按钮
     showAdd?: boolean
+    // 工具栏显示批量删除按钮
     showBatchDelete?: boolean
+    // 编辑操作显示删除按钮
     showDelete?: boolean
+    // 分页配置, false 表示不显示分页
     pagination?: false | TableProps<RecordType>['pagination']
+    // 显示操作列
     showOperation?: boolean
+    // 列任意调整位置
     enableColumnDrag?: boolean
+    // 点击行切换编辑模式
     clickToEdit?: boolean
+    // 总数
     total?: number
+    // 每页数量
     pageSize?: number
-    currentPage?:number
+    // 当前页码
+    currentPage?: number
+    // 是否显示边框
     isBordered?: boolean
   }>(),
   {
@@ -138,57 +237,74 @@ const props = withDefaults(
     showDelete: true,
     pagination: undefined,
     showOperation: true,
-    // 列任意调整位置
     enableColumnDrag: true,
-    // 点击行切换编辑模式
     clickToEdit: true,
     total: 0,
-    currentPage:1,
-    pageSize:10,
+    currentPage: 1,
+    pageSize: 10,
     isBordered: true,
   },
 )
 // 组件事件
 const emit = defineEmits<{
+  // 更新数据源
   (e: 'update:dataSource', value: RecordType[]): void
+  // 搜索
   (e: 'search', value: string): void
+  // 添加
   (e: 'add'): void
+  // 批量删除
   (e: 'batch-delete', payload: { keys: (string | number)[]; rows: RecordType[] }): void
+  // 删除
   (e: 'row-delete', key: string | number): void
+  // 行选择
   (e: 'selection-change', payload: { keys: (string | number)[]; rows: RecordType[] }): void
+  // 保存
   (e: 'save', record: RecordType): void
+  // 取消
   (e: 'cancel', key: string | number): void
+  // 编辑
   (e: 'edit', record: RecordType): void
+  //  列排序
   (e: 'columns-reordered', columns: TableColumnType<RecordType>[]): void
+  // 行双击
   (e: 'row-click', record: RecordType, event: Event): void
+  // 切换页码
   (e: 'update:currentPage', value: number): void
+  // 每页数量变化
   (e: 'update:pageSize', value: number): void
 }>()
 // 组件内部状态
+// 搜索框值
 const searchValue = ref('')
+// 解析行主键字段
 const resolvedRowKey = computed(() => props.rowKey ?? 'key')
+// 表格数据
 const tableData = ref<RecordType[]>([])
+// 表格列
 const editableData: UnwrapRef<Record<string, RecordType>> = reactive({})
+// 已选择的行
 const selectedRowKeys = ref<(string | number)[]>([])
+// 已选择的行数据
 const selectedRows = ref<RecordType[]>([])
+// 窗口大小
 const windowSize = ref({ width: 0, height: 0 })
+// 是否为移动端
 const isMobile = ref(false)
-
+// 当前页码
 const current = computed({
   get: () => props.currentPage,
-  set: (val) => emit('update:currentPage', val)
+  set: (val) => emit('update:currentPage', val),
 })
-
+// 每页数量
 const size = computed({
   get: () => props.pageSize,
-  set: (val) => emit('update:pageSize', val)
+  set: (val) => emit('update:pageSize', val),
 })
-
 // 检测是否为移动端
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
-
 // 监听窗口大小变化
 const updateWindowSize = () => {
   windowSize.value = {
@@ -197,10 +313,8 @@ const updateWindowSize = () => {
   }
   checkMobile()
 }
-
 // resize 防抖定时器 id
 const resizeTimer = ref<number | null>(null)
-
 // 带防抖的 resize 处理函数
 const handleResize = () => {
   if (resizeTimer.value !== null) {
@@ -210,16 +324,7 @@ const handleResize = () => {
     updateWindowSize()
   }, 200)
 }
-// 组件挂载和卸载时添加和移除事件监听
-onMounted(() => {
-  updateWindowSize()
-  checkMobile()
-  window.addEventListener('resize', handleResize)
-})
 
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-})
 // 监听 dataSource 属性变化，更新表格数据
 watch(
   () => props.dataSource,
@@ -242,21 +347,22 @@ watch(
 )
 
 // 可拖拽列状态（当 enableColumnDrag 为 true 时使用）
-const columnsState = ref<TableColumnType<RecordType>[]>(cloneDeep(props.columns || []) as TableColumnType<RecordType>[])
+const columnsState = ref<TableColumnType<RecordType>[]>(
+  cloneDeep(props.columns || []) as TableColumnType<RecordType>[],
+)
 
 // 同步 props.columns 到 columnsState
 watch(
   () => props.columns as any,
   (v) => {
     columnsState.value = (v || []).map((col: any) => ({ ...col }))
-
   },
   { immediate: true },
 )
 
 // 拖拽索引
 const draggingIndex = ref<number | null>(null)
-
+// 拖拽开始
 const onHeaderDragStart = (e: DragEvent, index: number) => {
   draggingIndex.value = index
   // 必须设置 dataTransfer 以便某些浏览器允许 drag/drop
@@ -264,15 +370,15 @@ const onHeaderDragStart = (e: DragEvent, index: number) => {
     e.dataTransfer?.setData('text/plain', String(index))
     e.dataTransfer!.effectAllowed = 'move'
   } catch (err) {
-    // ignore
+    console.error(err)
   }
 }
-
+// 拖拽经过
 const onHeaderDragOver = (e: DragEvent) => {
   e.preventDefault()
   e.dataTransfer!.dropEffect = 'move'
 }
-
+// 拖拽放下
 const onHeaderDrop = (e: DragEvent, toIndex: number) => {
   e.preventDefault()
   const from = draggingIndex.value
@@ -290,7 +396,12 @@ const onHeaderDrop = (e: DragEvent, toIndex: number) => {
 // 渲染可拖拽标题
 const renderDraggableTitle = (col: TableColumnType<RecordType> | any, index: number) => {
   const raw = col.title ?? ''
-  const titleText = typeof raw === 'string' || typeof raw === 'number' ? String(raw) : (raw && (raw.children || raw.default) ? raw : String(raw))
+  const titleText =
+    typeof raw === 'string' || typeof raw === 'number'
+      ? String(raw)
+      : raw && (raw.children || raw.default)
+        ? raw
+        : String(raw)
   return h(
     'div',
     {
@@ -306,12 +417,17 @@ const renderDraggableTitle = (col: TableColumnType<RecordType> | any, index: num
 
 // 计算合并后的列配置，确保包含操作列（当 showOperation 为 true 时才自动添加）
 const mergedColumns = computed(() => {
-  const baseCols: ColumnType[] = props.enableColumnDrag ? columnsState.value : props.columns as any
+  const baseCols: ColumnType[] = props.enableColumnDrag
+    ? columnsState.value
+    : (props.columns as any)
   let cols: ColumnType[] = baseCols || []
   if (props.showOperation !== false) {
     const hasOperation = cols.some((column) => column.dataIndex === OPERATION_DATA_INDEX)
     if (!hasOperation) {
-      cols = [...cols, { title: '操作', dataIndex: OPERATION_DATA_INDEX, fixed: 'right', width: '120px' }]
+      cols = [
+        ...cols,
+        { title: '操作', dataIndex: OPERATION_DATA_INDEX, fixed: 'right', width: '120px' },
+      ]
     }
   }
   // 如果启用了列拖拽，在返回的列中替换 title 为可拖拽节点
@@ -373,15 +489,18 @@ const mergedScroll = computed(() => {
 
   if (isMobile.value) {
     // 移动端计算
-    // Y 轴：视口高度 - header(64px) - 工具栏高度(约60px) - 分页器高度(约56px) - 额外边距(约100px)
-    const scrollY = windowSize.value.height > 0
-      ? windowSize.value.height - 64 - (props.showToolbar ? 60 : 0) - (paginationConfig.value ? 40 : 0) - 198
-      : 250
+    // Y 轴
+    const scrollY =
+      windowSize.value.height > 0
+        ? windowSize.value.height -
+          64 -
+          (props.showToolbar ? 60 : 0) -
+          (paginationConfig.value ? 40 : 0) -
+          198
+        : 250
 
-    // X 轴：移动端侧边栏隐藏，使用全宽减去边距
-    const scrollX = windowSize.value.width > 0
-      ? windowSize.value.width - 20
-      : 300
+    // X 轴
+    const scrollX = windowSize.value.width > 0 ? windowSize.value.width - 20 : 300
 
     return {
       ...baseScroll,
@@ -391,15 +510,18 @@ const mergedScroll = computed(() => {
   }
 
   // 桌面端计算
-  // Y 轴：视口高度 - header(64px) - 工具栏高度(约60px) - 分页器高度(约56px) - 边距(约140px)
-  const scrollY = windowSize.value.height > 0
-    ? windowSize.value.height - 64 - (props.showToolbar ? 60 : 0) - (paginationConfig.value ? 56 : 0) - 170
-    : 390
+  // Y 轴
+  const scrollY =
+    windowSize.value.height > 0
+      ? windowSize.value.height -
+        64 -
+        (props.showToolbar ? 60 : 0) -
+        (paginationConfig.value ? 56 : 0) -
+        170
+      : 390
 
-  // X 轴：视口宽度 - 侧边栏宽度(200px) - 边距(约40px)
-  const scrollX = windowSize.value.width > 0
-    ? windowSize.value.width - 200 - 40
-    : 600
+  // X 轴
+  const scrollX = windowSize.value.width > 0 ? windowSize.value.width - 200 - 40 : 600
 
   return {
     ...baseScroll,
@@ -407,11 +529,11 @@ const mergedScroll = computed(() => {
     y: baseScroll.y ?? scrollY,
   }
 })
-//  
+// 更新父组件数据源
 const updateParent = () => {
   emit('update:dataSource', cloneDeep(tableData.value))
 }
-
+// 获取行主键值
 const getRowKeyValue = (record: RecordType): string | number => {
   const keyField = resolvedRowKey.value
   if (record[keyField] !== undefined) {
@@ -419,17 +541,19 @@ const getRowKeyValue = (record: RecordType): string | number => {
   }
   return record.key ?? ''
 }
-
+// 获取行的内部键，用于 editableData 索引
 const getInternalKey = (recordOrKey: RecordType | string | number): string => {
   if (typeof recordOrKey === 'object') {
     return String(getRowKeyValue(recordOrKey))
   }
   return String(recordOrKey)
 }
-
+// 检测行是否处于编辑状态
 const isEditing = (record: RecordType) => Boolean(editableData[getInternalKey(record)])
+// 检测列是否可编辑
 const isEditableColumn = (column: TableColumnType<RecordType>) =>
   typeof column.dataIndex === 'string' && editableFieldSet.value.has(column.dataIndex)
+// 列可操作列检测
 const isOperationColumn = (column: TableColumnType<RecordType>) =>
   column.dataIndex === OPERATION_DATA_INDEX
 
@@ -447,7 +571,6 @@ const callCustomRender = (column: TableColumnType<RecordType>, text: any, record
     return res
   } catch (e) {
     // 渲染异常时输出错误并返回原始文本，避免破坏表格渲染
-    // eslint-disable-next-line no-console
     console.error('callCustomRender error:', e)
     return text ?? ''
   }
@@ -470,11 +593,11 @@ const CellRenderer = defineComponent({
     }
   },
 })
-
+// 编辑：编辑行
 const edit = (key: string | number) => {
   // 清除所有其他行的编辑状态，确保只能编辑一行
   const currentEditingKeys = Object.keys(editableData)
-  currentEditingKeys.forEach(editKey => {
+  currentEditingKeys.forEach((editKey) => {
     if (editKey !== String(key)) {
       delete editableData[editKey]
       emit('cancel', editKey)
@@ -486,7 +609,7 @@ const edit = (key: string | number) => {
   editableData[String(key)] = cloneDeep(target)
   emit('edit', cloneDeep(target))
 }
-
+// 保存：保存行
 const save = (key: string | number) => {
   const target = tableData.value.find((item) => getRowKeyValue(item) === key)
   if (!target) return
@@ -497,12 +620,12 @@ const save = (key: string | number) => {
   delete editableData[String(key)]
   updateParent()
 }
-
+// 取消：取消行编辑
 const cancel = (key: string | number) => {
   delete editableData[String(key)]
   emit('cancel', key)
 }
-
+// 删除行
 const onDeleteRow = (key: string | number) => {
   tableData.value = tableData.value.filter((item) => getRowKeyValue(item) !== key)
   delete editableData[String(key)]
@@ -511,11 +634,11 @@ const onDeleteRow = (key: string | number) => {
   updateParent()
   emit('row-delete', key)
 }
-
+// 搜索：触发搜索事件
 const onSearch = () => {
   emit('search', searchValue.value.trim())
 }
-
+// 新增：触发添加事件
 const handleAdd = () => {
   emit('add')
 }
@@ -530,13 +653,12 @@ const resetSearch = () => {
   }, 500)
 }
 
-
 // 处理行双击事件
 const handleRowClick = (record: RecordType, index: number) => {
   return {
     onDblclick: (event: Event) => {
       emit('row-click', record, event)
-      
+
       if (props.clickToEdit) {
         const key = getRowKeyValue(record)
         // 如果当前行已经是编辑状态，则双击非操作区域时不退出编辑
@@ -550,7 +672,7 @@ const handleRowClick = (record: RecordType, index: number) => {
     class: isEditing(record) ? 'editing-row' : '',
   }
 }
-
+// 批量删除
 const handleBatchDelete = () => {
   if (!selectedRowKeys.value.length) {
     return
@@ -567,6 +689,18 @@ const handleBatchDelete = () => {
   selectedRowKeys.value = []
   selectedRows.value = []
 }
+
+// 组件挂载和卸载时添加和移除事件监听
+onMounted(() => {
+  // 初始化窗口大小和是否移动端状态
+  updateWindowSize()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  // 移除窗口大小和是否移动端状态监听
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <style scoped>
@@ -595,8 +729,6 @@ const handleBatchDelete = () => {
   .manage-page-wrapper {
     padding: 0;
   }
-
-
 }
 
 /* 编辑行的样式 */

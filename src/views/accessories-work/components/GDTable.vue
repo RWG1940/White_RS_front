@@ -103,7 +103,7 @@ import ManagePage from '@/components/ManagePage.vue'
 import { accStore, editFormData,fetchPageByImportId } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
-import { getBackendUrl } from '@/utils/api'
+import { getBackendUrl } from '@/utils/getApiUrl'
 import { EyeOutlined } from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { tableImportStore } from '@/stores/tableImport-store'
@@ -259,13 +259,13 @@ watch(
 )
 
 onMounted(async () => {
-    await store.fetchPage()
+    fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
 })
 
 const handleSearch = async (keyword: string) => {
     const trimmed = keyword.trim()
     if (!trimmed) {
-        await store.fetchPage()
+        fetchPageByImportId(selectedBatchId.value || 0,store.currentPage,store.pageSize)
         return
     }
     await store.search({ column: 'sku', keyword: trimmed } as any)

@@ -30,8 +30,8 @@
                     </div>
                 </a-form-item>
                 <a-form-item label="设置批次号（如20260101）" required>
-                    <a-select v-model:value="importId" :options="options" mode="multiple" placeholder="请填写导入批次id"
-                        style="width: 200px"></a-select>
+                    <a-input v-model:value="importId"  placeholder="请填写导入批次id"
+                        style="width: 200px"></a-input>
                 </a-form-item>
                 <a-form-item label="设置关联客户" >
                     <a-select v-model:value="guestId"  placeholder="请选择客户" style="width: 200px" :options="guestOptions"></a-select>
