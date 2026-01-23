@@ -1,10 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
+import type { TableColumnType } from 'ant-design-vue'
 
-/**
- * 构建 CRUD Store
- */
 export interface CRUDStoreOptions {
   successMessage?: {
     fetch?: string
@@ -14,7 +12,9 @@ export interface CRUDStoreOptions {
     search?: string
   }
 }
-
+/**
+ * 创建 CRUD Store
+ */
 export function createCRUDStore<T>(storeName: string, api: any, options: CRUDStoreOptions = {}) {
   const {
     successMessage = {
@@ -58,7 +58,24 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
     const searchResults = ref<T[]>([])
     // 加载状态
     const loading = ref(false)
-
+    // 分页条件数据
+    const conditionsData = ref<T>({} as T)
+    // 搜索条件数据
+    const searchData = ref<T>({} as T)
+    // 精确查询条件数据
+    const exactData = ref<T>({} as T)
+    // 筛选框下拉选项
+    const searchSelectOptions = ref<Array<{ label: string; value: string }>>([])
+    // 表格列数据
+    const columns = ref<TableColumnType<T>[]>([])
+    // 表格可编辑字段
+    const editableFields = ref<string[]>([])
+    // 搜索筛选值
+    const searchSelectValue = ref('')
+    /**
+     * 基础方法，分为两类：一类用于操作没有条件的分页表格，另一类用于有条件的分页表格
+     * 方法名后缀加 N 表示不刷新分页数据，便于有条件分页时调用
+     */
     // 获取所有数据
     const fetchAll = async () => {
       try {
@@ -66,8 +83,6 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         const res = await api.getAll()
         const payload = unwrapResponse(res)
         list.value = pickArray(payload)
-      } catch (error) {
-        // 错误已在拦截器中处理
       } finally {
         loading.value = false
       }
@@ -82,8 +97,23 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         const rows = payload.records
         pagedList.value = rows
         total.value = payload.total
-      } catch (error) {
-        // 错误已在拦截器中处理
+      } finally {
+        loading.value = false
+      }
+    }
+    // 获取有条件的分页数据，
+    const fetchPageByConditions = async () => {
+      try {
+        loading.value = true
+        const res = await api.getPagesByConditions(
+          ...conditionsData.value,
+          currentPage.value,
+          pageSize.value,
+        )
+        const payload = unwrapResponse(res)
+        const rows = payload.records
+        pagedList.value = rows
+        total.value = payload.total
       } finally {
         loading.value = false
       }
@@ -96,13 +126,20 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         await api.add(newData)
         await fetchPage()
         message.success(successMessage.create || '创建成功')
-      } catch (error) {
-        // 错误已在拦截器中处理
       } finally {
         loading.value = false
       }
     }
-
+    // 创建数据 - 不刷新分页数据，便于有条件分页时调用
+    const createN = async (newData: T) => {
+      try {
+        loading.value = true
+        await api.add(newData)
+        message.success(successMessage.create || '创建成功')
+      } finally {
+        loading.value = false
+      }
+    }
     // 更新数据
     const update = async (updatedData: T) => {
       try {
@@ -110,19 +147,43 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         await api.update(updatedData)
         await fetchPage()
         message.success(successMessage.update || '更新成功')
+      } finally {
+        loading.value = false
+      }
+    }
+    // 更新数据 - 不刷新分页数据，便于有条件分页时调用
+    const updateN = async (updatedData: T) => {
+      try {
+        loading.value = true
+        await api.update(updatedData)
+        message.success(successMessage.update || '更新成功')
       } catch (error) {
         // 错误已在拦截器中处理
       } finally {
         loading.value = false
       }
     }
-
     // 删除数据
     const remove = async (ids: number[]) => {
       try {
         loading.value = true
         await api.delete(ids)
-        await fetchPage()
+        if(currentPage.value == 1){
+          await fetchPage()
+        }else{
+          currentPage.value = currentPage.value - 1
+          await fetchPage()
+        }
+        message.success(successMessage.delete || '删除成功')
+      } finally {
+        loading.value = false
+      }
+    }
+    // 删除数据 - 不刷新分页数据，便于有条件分页时调用
+    const removeN = async (ids: number[]) => {
+      try {
+        loading.value = true
+        await api.delete(ids)
         message.success(successMessage.delete || '删除成功')
       } catch (error) {
         // 错误已在拦截器中处理
@@ -130,7 +191,9 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         loading.value = false
       }
     }
-
+    /**
+     * 表格操作方法
+     */
     // 删除选中的数据
     const removeSelected = async () => {
       if (selectedIds.value.length === 0) {
@@ -140,31 +203,34 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       await remove(selectedIds.value)
       selectedIds.value = []
     }
-
-    // 搜索数据
-    const search = async (searchData: T) => {
+    // 删除选中的数据 - 不刷新分页数据，便于有条件分页时调用
+    const removeSelectedN = async () => {
+      if (selectedIds.value.length === 0) {
+        message.warning('请先选择要删除的数据')
+        return
+      }
+      await removeN(selectedIds.value)
+      selectedIds.value = []
+    }
+    // 搜索数据（模糊查询），传入数据结构： { column: string , keyword: string , column1: string, keyword1: string, ... }
+    const search = async () => {
       try {
         loading.value = true
-        const res = await api.search(searchData)
+        const res = await api.search(searchData.value)
         const payload = unwrapResponse(res)
         searchResults.value = pickArray(payload)
         message.success(successMessage.search || '搜索完成')
-      } catch (error) {
-        // 错误已在拦截器中处理
       } finally {
         loading.value = false
       }
     }
-
-    // 精确查询
-    const exact = async (exactData: T) => {
+    // 搜索数据（精确查询），传入数据结构： { column: string , keyword: string , column1: string, keyword1: string, ... }
+    const exact = async () => {
       try {
         loading.value = true
-        const res = await api.exact(exactData)
+        const res = await api.exact(exactData.value)
         const payload = unwrapResponse(res)
         searchResults.value = pickArray(payload)
-      } catch (error) {
-        // 错误已在拦截器中处理
       } finally {
         loading.value = false
       }
@@ -177,11 +243,58 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       }),
     )
 
-    // 处理选择变化
-    const onSelectionChange = (selection: T[]) => {
-      selectedIds.value = selection.map((item: any) => item.id)
+    // 处理表格选择变化
+    const onSelectionChange = ({ rows }: { keys: (string | number)[]; rows: T[] }) => {
+      selectedIds.value = rows.map((item: any) => item.id)
     }
 
+    // 处理表格分页变化
+    const pageChange = (val: number) => {
+      currentPage.value = val
+      fetchPage()
+    }
+    // 处理表格每页数量变化
+    const pageSizeChange = (val: number) => {
+      pageSize.value = val
+      fetchPage()
+    }
+    // 处理表格搜索-单个条件
+    const handleSearch = async (column: string, keyword: string) => {
+      const trimmed = keyword.trim()
+      if (!trimmed) {
+        await fetchPage()
+        return
+      }
+      searchData.value = { column: column, keyword: keyword }
+      await search()
+      pagedList.value = searchResults.value as T[]
+      total.value = searchResults.value.length
+    }
+    // 处理表格搜索-单个条件-不刷新分页数据
+    const handleSearchN = async (column: string, keyword: string) => {
+      const trimmed = keyword.trim()
+      if (!trimmed) {
+        return
+      }
+      searchData.value = { column: column, keyword: keyword }
+      await search()
+      pagedList.value = searchResults.value as T[]
+      total.value = searchResults.value.length
+    }
+    // 处理表格搜索-多个条件-不刷新分页数据
+    const handleSearchByParams = async () => {
+      await search()
+      pagedList.value = searchResults.value as T[]
+      total.value = searchResults.value.length
+    }
+    // 处理表格单个删除
+    const handleRowDelete = async (id: string | number) => {
+      await remove([Number(id)])
+    }
+    // 处理表格单个删除 - 不刷新分页数据，便于有条件分页时调用
+    const handleRowDeleteN = async (id: string | number) => {
+      await removeN([Number(id)])
+    }
     // 重置状态
     const reset = () => {
       list.value = []
@@ -191,6 +304,8 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       selectedIds.value = []
       searchKeyword.value = ''
       searchResults.value = []
+      searchData.value = {}
+      exactData.value = {}
     }
 
     return {
@@ -205,18 +320,37 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       searchResults,
       loading,
       filteredList,
+      searchData,
+      exactData,
+      columns,
+      searchSelectOptions,
+      editableFields,
+      conditionsData,
+      searchSelectValue,
 
       // 方法
       fetchAll,
       fetchPage,
       create,
+      createN,
       update,
+      updateN,
       remove,
+      removeN,
       removeSelected,
+      removeSelectedN,
       search,
       onSelectionChange,
       reset,
       exact,
+      pageChange,
+      pageSizeChange,
+      handleRowDelete,
+      handleRowDeleteN,
+      handleSearch,
+      handleSearchByParams,
+      handleSearchN,
+      fetchPageByConditions,
     }
   })
 }

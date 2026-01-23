@@ -10,11 +10,17 @@ export const userStore = createCRUDStore('user-store', userApi)()
 export const addFormData = ref<userType>({})
 export const editFormData = ref<userType>({})
 
-// 包装后的方法，使用包含角色关系的专用 API
+// 搜索选项
+export const userSearchSelectOptions = [
+  { label: '用户名', value: 'username' },
+  { label: '邮箱', value: 'email' },
+  { label: '手机号', value: 'phone' },
+]
+// 创建用户及其角色
 export const createUserWithRoles = async (user: any) => {
   return apiAddUserWithRoles(user)
 }
-
+// 更新用户及其角色
 export const updateUserWithRoles = async (user: any) => {
   return apiUpdateUserWithRoles(user)
 }

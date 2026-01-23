@@ -63,6 +63,7 @@ declare module 'vue' {
     ATypographyLink: typeof import('ant-design-vue/es')['TypographyLink']
     AUpload: typeof import('ant-design-vue/es')['Upload']
     AUploadDragger: typeof import('ant-design-vue/es')['UploadDragger']
+    BaseTable: typeof import('./src/components/baseTable.vue')['default']
     LoginLoading: typeof import('./src/components/LoginLoading.vue')['default']
     ManagePage: typeof import('./src/components/ManagePage.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

@@ -3,9 +3,9 @@ import 'nprogress/nprogress.css'
 
 // 可选配置
 NProgress.configure({
-  showSpinner: false, // 右上角小圈圈
-  trickleSpeed: 200,
-  minimum: 0.1,
+  showSpinner: false,
+  trickleSpeed: 50,
+  minimum: 0.95,
 })
 
 export default NProgress

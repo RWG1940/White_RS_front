@@ -1,23 +1,27 @@
 <template>
   <!-- 表格管理页面 这是一个强大的表格组件，通过传入必要数据，你可以轻松实现一个能增删改查的前端表格  2026-01-12 By RenWeiGuo -->
   <div class="manage-page-wrapper">
-    <a-spin tip="刷新中" :spinning="spinning" size="large">
+    <a-spin tip="刷新中" :spinning="loading" size="large">
       <!-- 工具栏 -->
       <div v-if="showToolbar" class="header">
-        <slot
-          name="toolbar"
-          :search-value="searchValue"
-          :trigger-search="onSearch"
-          :add="handleAdd"
-          :batch-delete="handleBatchDelete"
-        >
+        <slot name="toolbar">
           <a-row :gutter="[5, 5]" align="middle" :class="{ 'mobile-toolbar': isMobile }">
-            <a-col v-if="showSearch" :span="isMobile ? 24 : undefined">
+            <a-col v-if="showSearch" :span="isMobile ? 24 : 2">
+              <a-select
+                v-model:value="searchSelectValue"
+                :options="searchSelectOptions"
+                placeholder="☘筛选"
+                style="width: 100%"
+              >
+              </a-select>
+            </a-col>
+            <a-col v-if="showSearch" :span="isMobile ? 24 : 3">
               <a-input-search
                 v-model:value="searchValue"
                 :placeholder="searchPlaceholder"
                 enter-button
                 @search="onSearch"
+                allowClear
               />
             </a-col>
             <a-col v-if="showSearch" :span="isMobile ? 8 : undefined">
@@ -28,6 +32,7 @@
                 @click="resetSearch"
               >
                 <ReloadOutlined />
+                <span v-if="isMobile" style="margin-left: 4px">刷新</span>
               </a-button>
             </a-col>
             <a-col v-if="showAdd" :span="isMobile ? 8 : undefined">
@@ -168,8 +173,6 @@ import {
 import type { TableColumnType, TableProps } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons-vue'
 
-// 组件加载状态
-const spinning = ref(false)
 // RecordType 定义为任意键值对对象
 type RecordType = Record<string, any>
 // 操作列的 dataIndex 常量
@@ -222,6 +225,11 @@ const props = withDefaults(
     currentPage?: number
     // 是否显示边框
     isBordered?: boolean
+    // 加载状态
+    loading?: boolean
+    // 搜索选择项
+    searchSelectOptions?: { label: string; value: string }[]
+    
   }>(),
   {
     dataSource: () => [],
@@ -243,6 +251,8 @@ const props = withDefaults(
     currentPage: 1,
     pageSize: 10,
     isBordered: true,
+    loading: false,
+    searchSelectOptions: () => [],
   },
 )
 // 组件事件
@@ -250,7 +260,7 @@ const emit = defineEmits<{
   // 更新数据源
   (e: 'update:dataSource', value: RecordType[]): void
   // 搜索
-  (e: 'search', value: string): void
+  (e: 'search', column: string, key: string): void
   // 添加
   (e: 'add'): void
   // 批量删除
@@ -277,6 +287,7 @@ const emit = defineEmits<{
 // 组件内部状态
 // 搜索框值
 const searchValue = ref('')
+const searchSelectValue = ref()
 // 解析行主键字段
 const resolvedRowKey = computed(() => props.rowKey ?? 'key')
 // 表格数据
@@ -313,6 +324,8 @@ const updateWindowSize = () => {
   }
   checkMobile()
 }
+// 加载状态
+const loading = ref(props.loading)
 // resize 防抖定时器 id
 const resizeTimer = ref<number | null>(null)
 // 带防抖的 resize 处理函数
@@ -529,10 +542,7 @@ const mergedScroll = computed(() => {
     y: baseScroll.y ?? scrollY,
   }
 })
-// 更新父组件数据源
-const updateParent = () => {
-  emit('update:dataSource', cloneDeep(tableData.value))
-}
+
 // 获取行主键值
 const getRowKeyValue = (record: RecordType): string | number => {
   const keyField = resolvedRowKey.value
@@ -618,7 +628,6 @@ const save = (key: string | number) => {
   Object.assign(target, current)
   emit('save', cloneDeep(target))
   delete editableData[String(key)]
-  updateParent()
 }
 // 取消：取消行编辑
 const cancel = (key: string | number) => {
@@ -631,12 +640,15 @@ const onDeleteRow = (key: string | number) => {
   delete editableData[String(key)]
   selectedRowKeys.value = selectedRowKeys.value.filter((selectedKey) => selectedKey !== key)
   selectedRows.value = selectedRows.value.filter((row) => getRowKeyValue(row) !== key)
-  updateParent()
   emit('row-delete', key)
 }
 // 搜索：触发搜索事件
 const onSearch = () => {
-  emit('search', searchValue.value.trim())
+  if (!searchValue.value && !searchSelectValue.value) {
+    emit('update:currentPage', 1)
+    return
+  }
+  emit('search', searchSelectValue.value.trim(), searchValue.value.trim())
 }
 // 新增：触发添加事件
 const handleAdd = () => {
@@ -645,11 +657,11 @@ const handleAdd = () => {
 
 // 新增：重置搜索，清空搜索框并触发搜索事件
 const resetSearch = () => {
-  spinning.value = true
+  loading.value = true
   searchValue.value = ''
   setTimeout(async () => {
     onSearch()
-    spinning.value = false
+    loading.value = false
   }, 500)
 }
 
@@ -681,7 +693,6 @@ const handleBatchDelete = () => {
   tableData.value = tableData.value.filter(
     (item) => !keysToRemove.has(String(getRowKeyValue(item))),
   )
-  updateParent()
   emit('batch-delete', {
     keys: [...selectedRowKeys.value],
     rows: cloneDeep(selectedRows.value),

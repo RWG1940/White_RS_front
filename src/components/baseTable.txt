@@ -1,0 +1,152 @@
+<template>
+  <div class="table-container">
+    <a-spin :spinning="loading" tip="加载中...">
+      <ManagePage
+        v-model:data-source="dataList"
+        row-key="id"
+        :columns="columns"
+        :editable-fields="editableFields"
+        :show-operation="true"
+        :show-add="true"
+        :show-batch-delete="true"
+        :isBordered="false"
+        :search-select-options="searchSelectOptions"
+        v-model:total="total"
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
+        v-model:loading="loading"
+        search-placeholder="搜索"
+        @search="handleSearch"
+        @add="addRow"
+        @save="saveRow"
+        @row-delete="deleteRow"
+        @batch-delete="batchDelete"
+        @selection-change="onSelectionChange"
+        @update:currentPage="handlePageChange"
+        @update:pageSize="handlePageSizeChange"
+      >
+      </ManagePage>
+    </a-spin>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import ManagePage from '@/components/ManagePage.vue'
+import { exampleStore, columns, editableFields, searchSelectOptions } from '@/stores/example-store'
+import { generateName } from '@/utils/randomStr'
+// 定义组件 Props 接口
+interface Props {
+  conditions: { [key: string]: any }
+}
+// 接收组件 Props
+const props = defineProps<Props>()
+// 使用 Pinia Store
+const store = exampleStore
+// 组件独立的数据（每个实例一份，不共享）
+const dataList = ref<any[]>([])
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const loading = ref(false)
+const selectedRows = ref<any[]>([])
+
+// 处理搜索
+const handleSearch = async (column: string, keyword: string) => {
+  if (column && keyword) {
+    store.searchData = {
+      ...props.conditions,
+      column: column,
+      keyword: keyword,
+    }
+    await store.handleSearchByParams()
+    dataList.value = store.pagedList
+  } else {
+    await handlePageChange(currentPage.value || 1)
+  }
+}
+
+// 添加方法
+const addRow = async () => {
+  await store.createN({ label: `new data-${generateName()}`, ...props.conditions })
+  await handlePageChange(currentPage.value || 1)
+}
+
+// 删除方法
+const deleteRow = async (id: string | number) => {
+  await store.handleRowDeleteN(id)
+  await handlePageChange(currentPage.value || 1)
+}
+
+// 批量删除方法
+const batchDelete = async (_payload: { keys: (string | number)[]; rows: any[] }) => {
+  await store.removeSelectedN()
+  await handlePageChange(currentPage.value || 1)
+}
+
+// 保存更新方法
+const saveRow = async (record: any) => {
+  await store.updateN(record)
+  await handlePageChange(currentPage.value || 1)
+}
+
+// 选择变化
+const onSelectionChange = (selected: any[]) => {
+  selectedRows.value = selected
+  store.selectedIds = selected.map((item: any) => item.id)
+}
+
+// 统一的页面改变方法
+const handlePageChange = async (page: number) => {
+  loading.value = true
+  try {
+    store.currentPage = page
+    await store.fetchPageByConditions()
+    // 将 store 的数据复制到组件独立的数据中
+    dataList.value = store.pagedList
+    total.value = store.total
+    currentPage.value = store.currentPage
+  } finally {
+    loading.value = false
+  }
+}
+
+// 统一的页面大小改变方法
+const handlePageSizeChange = async (size: number) => {
+  pageSize.value = size
+  await handlePageChange(1)
+}
+
+// 获取数据
+onMounted(async () => {
+  await handlePageChange(1)
+})
+</script>
+
+<style scoped>
+.table-container {
+  animation: fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  transition: all 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 添加表格内容的悬停效果 */
+:deep(.ant-table) {
+  transition: all 0.3s ease;
+}
+
+/* 让加载动画更平滑 */
+:deep(.ant-spin) {
+  transition: opacity 0.3s ease;
+}
+</style>

@@ -8,3 +8,9 @@ export const guestStore = createCRUDStore('guest-store', guestApi)()
 // 表单数据
 export const addFormData = ref<GuestType>({})
 export const editFormData = ref<GuestType>({})
+// 搜索选项 
+guestStore.searchSelectOptions = [
+  { label: '姓名', value: 'name' },
+  { label: '电话', value: 'phone' },
+]
+

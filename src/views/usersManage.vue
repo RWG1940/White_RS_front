@@ -1,22 +1,28 @@
 <template>
-  <div>
+  <div class="table-container">
     <ManagePage
       v-model:data-source="dataSource"
+      row-key="id"
       :columns="columns"
       :editable-fields="editableFields"
-      row-key="id"
-      search-placeholder="搜索用户名"
-      v-model:total="store.total" 
+      :show-operation="true"
+      :show-add="true"
+      :show-batch-delete="true"
+      :isBordered="false"
+      :search-select-options="userSearchSelectOptions"
+      search-placeholder="搜索用户"
+      v-model:total="store.total"
       v-model:currentPage="store.currentPage"
       v-model:pageSize="store.pageSize"
+      v-model:loading="store.loading"
       @search="handleSearch"
       @add="handleAddUser"
       @save="handleSave"
-      @row-delete="handleRowDelete"
-      @batch-delete="handleBatchDelete"
-      @selection-change="handleSelectionChange"
-      @update:currentPage="pageChange" 
-      @update:pageSize="pageSizeChange"
+      @row-delete="store.handleRowDelete"
+      @batch-delete="store.removeSelected"
+      @selection-change="store.onSelectionChange"
+      @update:currentPage="store.pageChange"
+      @update:pageSize="store.pageSizeChange"
     >
       <template #cell-status="{ record, isEditing, editableData, getInternalKey }">
         <template v-if="!isEditing">
@@ -25,11 +31,7 @@
           </a-tag>
         </template>
         <template v-else>
-          <a-select
-            v-model:value="editableData[getInternalKey(record)]!.status"
-            style="width: 100px"
-            size="small"
-          >
+          <a-select v-model:value="editableData[getInternalKey(record)]!.status" size="small">
             <a-select-option :value="1">启用</a-select-option>
             <a-select-option :value="0">禁用</a-select-option>
           </a-select>
@@ -38,10 +40,7 @@
       <template #cell-onlineStatus="{ record }">
         <div class="online-status-cell">
           <a-spin v-if="onlineStatusLoading" size="small" />
-          <a-tag
-            v-else
-            :color="isUserOnline(record) ? 'success' : 'default'"
-          >
+          <a-tag v-else :color="isUserOnline(record) ? 'success' : 'default'">
             {{ isUserOnline(record) ? '在线' : '离线' }}
           </a-tag>
         </div>
@@ -50,7 +49,24 @@
       <template #cell-roles="{ record, isEditing, editableData, getInternalKey }">
         <div>
           <template v-if="!isEditing">
-            <a-tag v-for="r in record.roles ?? []" :key="r.id" :color="r.id == 1 ? 'orange' : r.id == 3?'pink':r.id == 4?'purple':r.id == 5?'default':r.id == 7?'cyan':'lightgrey'" style="margin-right:6px">
+            <a-tag
+              v-for="r in record.roles ?? []"
+              :key="r.id"
+              :color="
+                r.id == 1
+                  ? 'orange'
+                  : r.id == 3
+                    ? 'pink'
+                    : r.id == 4
+                      ? 'purple'
+                      : r.id == 5
+                        ? 'default'
+                        : r.id == 7
+                          ? 'cyan'
+                          : 'lightgrey'
+              "
+              style="margin-right: 6px"
+            >
               {{ r.name }}
             </a-tag>
           </template>
@@ -59,10 +75,11 @@
               mode="multiple"
               size="small"
               :value="(editableData[getInternalKey(record)]?.roles || []).map((r: any) => r.id)"
-              @change="(vals:any) => onRolesChange(editableData, getInternalKey(record), vals)"
-              style="min-width: 180px"
+              @change="(vals: any) => onRolesChange(editableData, getInternalKey(record), vals)"
             >
-              <a-select-option v-for="opt in allRoles" :key="opt.id" :value="opt.id">{{ opt.name }}</a-select-option>
+              <a-select-option v-for="opt in allRoles" :key="opt.id" :value="opt.id">{{
+                opt.name
+              }}</a-select-option>
             </a-select>
           </template>
         </div>
@@ -74,7 +91,12 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { userStore, updateUserWithRoles, createUserWithRoles } from '@/stores/user-store'
+import {
+  userStore,
+  updateUserWithRoles,
+  createUserWithRoles,
+  userSearchSelectOptions,
+} from '@/stores/user-store'
 import type { userType, userListType } from '@/types/user-type'
 import type { roleType } from '@/types/role-type'
 import { formatTime } from '@/utils/formatTime'
@@ -83,19 +105,16 @@ import { batchCheckUsersOnline } from '@/api/services/websocket-api'
 import { roleStore } from '@/stores/role-store'
 import { message } from 'ant-design-vue'
 
-
 const store = userStore
-const PAGE_SIZE = 15
-store.pageSize = PAGE_SIZE
 
 // 本地行类型：在 userType 基础上可能携带 roles
 type LocalRow = userType & { roles?: roleType[] }
 
 // 使用 any 避免与第三方 TableColumnType 复杂签名产生的类型不匹配警告
 const columns = computed(() => {
-  const roleFilters = (allRoles.value
+  const roleFilters = allRoles.value
     .filter((r) => r && r.id !== undefined && r.id !== null)
-    .map((r) => ({ text: r.name ?? '', value: Number(r.id) })) ) as any[]
+    .map((r) => ({ text: r.name ?? '', value: Number(r.id) })) as any[]
 
   return [
     {
@@ -246,27 +265,26 @@ const onlineStatusMap = ref<Record<string, boolean>>({})
 const onlineStatusLoading = ref(false)
 // 所有可选角色（从后端获取）
 const allRoles = ref<roleType[]>([])
-
+// 根据 user 获取唯一键值字符串
 const getUserKey = (user?: userType) => {
   if (!user) return ''
   const id = user.userId ?? user.id
   return id === undefined || id === null ? '' : String(id)
 }
-
+// 判断用户是否在线
 const isUserOnline = (user: userType) => {
   const key = getUserKey(user)
   if (!key) return false
   return Boolean(onlineStatusMap.value[key])
 }
-
+// 根据 onlineStatusMap 更新 dataSource 中的在线状态字段
 const applyOnlineStatus = () => {
-  // 将本地行转换为供表格使用的 userType 行，同时注入 onlineStatus
   dataSource.value = rawRows.value.map((row) => ({
     ...row,
     onlineStatus: isUserOnline(row),
   }))
 }
-
+// 标准化在线状态映射，确保 key 为字符串，value 为布尔值
 const normalizeOnlineMap = (payload?: Record<string | number, boolean>) => {
   const normalized: Record<string, boolean> = {}
   if (!payload) return normalized
@@ -275,7 +293,7 @@ const normalizeOnlineMap = (payload?: Record<string | number, boolean>) => {
   })
   return normalized
 }
-
+// 刷新在线状态
 const refreshOnlineStatus = async () => {
   const ids = rawRows.value
     .map((item) => item?.userId ?? item?.id)
@@ -312,29 +330,17 @@ const setTableRows = (rows: (userType | userListType)[] = []) => {
   applyOnlineStatus()
   refreshOnlineStatus()
 }
-
-watch(
-  () => store.pagedList,
-  (list) => {
-    // store.pagedList 可能是 userListType[] 或 userType[]，按上面逻辑传入
-    setTableRows((list as any) ?? [])
-  },
-  { immediate: true, deep: true },
-)
-
-onMounted(async () => {
-  await store.fetchPage()
-  loadRoles()
-})
-
-const handleSearch = async (keyword: string) => {
-  const trimmed = keyword.trim()
-  if (!trimmed) {
+// 搜索用户
+const handleSearch = async (column: string, keyword: string) => {
+  if(!keyword) {
     await store.fetchPage()
     return
   }
-  await store.search({ column: 'username', keyword: trimmed } as any)
-  setTableRows((store.searchResults as any) ?? [])
+  store.searchData = {
+    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
+    keyword: keyword,
+  } as any
+  await store.handleSearchByParams()
 }
 
 // 生成一个类似 UUID 的 6 位用户名。优先使用浏览器的 crypto.randomUUID，失败时回退到 Math.random。
@@ -345,7 +351,7 @@ const generateUsername = (): string => {
     return Math.random().toString(36).slice(2, 8)
   }
 }
-
+// 新增用户
 const handleAddUser = async () => {
   try {
     // 新增用户默认赋予角色 id = 2
@@ -357,7 +363,7 @@ const handleAddUser = async () => {
     console.error('添加用户失败', e)
   }
 }
-
+// 保存用户
 const handleSave = async (record: any) => {
   try {
     await updateUserWithRoles(record)
@@ -365,37 +371,6 @@ const handleSave = async (record: any) => {
   } catch (e) {
     console.error('保存用户失败', e)
   }
-}
-
-const handleRowDelete = async (id: string | number) => {
-  try {
-    await store.remove([Number(id)])
-    await store.fetchPage()
-  } catch (e) {
-    console.error('删除用户失败', e)
-  }
-}
-
-const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
-  try {
-    const ids = keys.map((k) => Number(k))
-    await store.remove(ids)
-    await store.fetchPage()
-  } catch (e) {
-    console.error('批量删除用户失败', e)
-  }
-}
-
-const handleSelectionChange = ({ rows }: { keys: (string | number)[]; rows: userType[] }) => {
-  store.onSelectionChange(rows as any)
-}
-const pageChange = (val:number) => { 
-    store.currentPage = val
-    store.fetchPage()
-}
-const pageSizeChange = (val:number) => { 
-    store.pageSize = val
-    store.fetchPage()
 }
 // 加载角色列表
 const loadRoles = async () => {
@@ -407,7 +382,6 @@ const loadRoles = async () => {
     console.error('加载角色失败', e)
   }
 }
-
 // 编辑时角色选择变化处理：将选中的 role id 列表映射为 role 对象数组放回 editableData
 const onRolesChange = (editableDataRef: any, key: string, selectedIds: (string | number)[]) => {
   const ed = editableDataRef[key]
@@ -415,13 +389,20 @@ const onRolesChange = (editableDataRef: any, key: string, selectedIds: (string |
   const roles = allRoles.value.filter((r) => selectedIds.includes(r.id as any))
   ed.roles = roles
 }
-
+// 监听 store.pagedList 变化，将后端返回的 userType[] 转换为 LocalRow[]
+watch(
+  () => store.pagedList,
+  (list) => {
+    setTableRows((list as any) ?? [])
+  },
+  { immediate: true, deep: true },
+)
+// 组件挂载时加载数据
+onMounted(async () => {
+  await store.fetchPage()
+  loadRoles()
+})
 </script>
 
 <style scoped>
-.online-status-cell {
-  display: flex;
-  align-items: center;
-  min-height: 24px;
-}
 </style>
