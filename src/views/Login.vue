@@ -1,3 +1,52 @@
+<template>
+  <div class="login-container">
+    <a-row justify="center" align="middle" class="login-row">
+      <a-col :xs="22" :sm="18" :md="14" :lg="10" :xl="8" :xxl="6">
+        <a-card class="login-card" :bordered="false">
+          <template #title>
+            <h2 class="login-title">登录</h2>
+          </template>
+          <a-form
+            v-show="!loading"
+            ref="formRef"
+            :model="loginForm"
+            :rules="rules"
+            @submit.prevent="handleLogin"
+            layout="vertical"
+          >
+            <a-form-item label="账号" name="username">
+              <a-input v-model:value="loginForm.username" placeholder="请输入账号" size="large" />
+            </a-form-item>
+            <a-form-item label="密码" name="password">
+              <a-input-password
+                v-model:value="loginForm.password"
+                placeholder="请输入密码"
+                size="large"
+                @press-enter="handleLogin"
+              />
+            </a-form-item>
+            <a-form-item>
+              <a-button type="primary" html-type="submit" size="large" block :loading="loading">
+                登录
+              </a-button>
+              <a-row>
+                <a-col :span="12">
+                  <a-button type="link" @click="router.push('/forget-password')">忘记密码</a-button>
+                </a-col>
+                <a-col :span="12">
+                  <a-button type="link" @click="router.push('/register')"
+                    >没有账号？点我注册</a-button
+                  >
+                </a-col>
+              </a-row>
+            </a-form-item>
+          </a-form>
+          <LoginLoading v-show="loading" />
+        </a-card>
+      </a-col>
+    </a-row>
+  </div>
+</template>
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -51,7 +100,6 @@ const handleLogin = async () => {
     loading.value = true
     const result = await authStore.login(loginForm.value)
     if (result && result.success) {
-
       // 登录成功提示
       message.success({
         content: '登录成功',
@@ -83,53 +131,11 @@ const handleLogin = async () => {
       loading.value = false
     }
   } catch (error) {
-    
   } finally {
     loading.value = false
   }
 }
 </script>
-
-<template>
-  <div class="login-container">
-    <a-row justify="center" align="middle" class="login-row">
-      <a-col :xs="22" :sm="18" :md="14" :lg="10" :xl="8" :xxl="6">
-        <a-card class="login-card" :bordered="false">
-          <template #title>
-            <h2 class="login-title">登录</h2>
-          </template>
-          <a-form
-          v-show="!loading"
-            ref="formRef"
-            :model="loginForm"
-            :rules="rules"
-            @submit.prevent="handleLogin"
-            layout="vertical"
-          >
-            <a-form-item label="账号" name="username">
-              <a-input v-model:value="loginForm.username" placeholder="请输入账号" size="large" />
-            </a-form-item>
-            <a-form-item label="密码" name="password">
-              <a-input-password
-                v-model:value="loginForm.password"
-                placeholder="请输入密码"
-                size="large"
-                @press-enter="handleLogin"
-              />
-            </a-form-item>
-            <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block :loading="loading">
-                登录
-              </a-button>
-            </a-form-item>
-          </a-form>
-          <LoginLoading v-show="loading"/>
-        </a-card>
-      </a-col>
-    </a-row>
-  </div>
-</template>
-
 <style scoped>
 .login-container {
   min-height: 100vh;
