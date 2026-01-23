@@ -31,7 +31,15 @@
               </a-button>
               <a-row>
                 <a-col :span="12">
-                  <a-button type="link" @click="router.push('/forget-password')">忘记密码</a-button>
+                  <a-button
+                    type="link"
+                    @click="
+                      () => {
+                        message.info('功能暂未开放')
+                      }
+                    "
+                    >忘记密码</a-button
+                  >
                 </a-col>
                 <a-col :span="12">
                   <a-button type="link" @click="router.push('/register')"

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { userLogin, userCurrent, userLogout } from '@/api/services/login-api'
+import { userLogin, userCurrent, userLogout, userRegister } from '@/api/services/auth-api'
 import type { userType } from '@/types/user-type'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -39,7 +39,19 @@ export const useAuthStore = defineStore('auth', () => {
       loading.value = false
     }
   }
-
+  // 注册
+  const register = async (registerData: { username: string; password: string; email: string; phone: string }) => {
+    try {
+      loading.value = true
+      const res = await userRegister(registerData)
+      // code 为 200 表示成功
+      return { success: res.data.code === 200, code: res.data.code }
+    } catch (error) {
+      return { success: false, code: 0 }
+    } finally {
+      loading.value = false
+    }
+  }
   // 获取用户信息
   const fetchUserInfo = async () => {
     try {
@@ -104,5 +116,6 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     fetchUserInfo,
     init,
+    register
   }
 })

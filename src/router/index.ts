@@ -1,9 +1,13 @@
-import { createRouter, createWebHashHistory,createWebHistory, type RouteRecordRaw } from 'vue-router'
+import {
+  createRouter,
+  createWebHashHistory,
+  createWebHistory,
+  type RouteRecordRaw,
+} from 'vue-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { message } from 'ant-design-vue'
 import NProgress from '@/utils/nprogress'
 import { menuConfig, menuItemsToRoutes } from '@/config/menu'
-
 
 // 路由配置
 const routes: RouteRecordRaw[] = [
@@ -17,9 +21,19 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/views/Register.vue').catch(() => import('@/views/NotFound.vue')),
+    meta: {
+      title: '注册',
+      requiresAuth: false, // 不需要登录
+    },
+  },
+  {
     path: '/white-rs-share/:shareUrl',
     name: 'Share',
-    component: () => import('@/views/file-drive/filesSharePage.vue').catch(() => import('@/views/NotFound.vue')),
+    component: () =>
+      import('@/views/file-drive/filesSharePage.vue').catch(() => import('@/views/NotFound.vue')),
     meta: {
       title: '分享的文件',
       requiresAuth: false, // 不需要登录
@@ -53,7 +67,7 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   NProgress.start() // 开始进度条
   const authStore = useAuthStore()
-  
+
   // 检测并修复 hash 模式下的分享链接
   // 如果用户直接访问 /white-rs-share/:shareUrl（没有 #），需要重定向到正确的 hash 路由
   const fullPath = window.location.pathname + window.location.search
@@ -66,9 +80,9 @@ router.beforeEach(async (to, from, next) => {
     next({ path: `/white-rs-share/${shareUrl}`, replace: true })
     return
   }
-  
+
   // 检查token是否有效
-  
+
   // 如果未初始化，先初始化（从本地存储恢复 token）
   if (!authStore.isLoaded && authStore.token) {
     await authStore.init()
@@ -115,8 +129,8 @@ router.beforeEach(async (to, from, next) => {
     const allowedRoles = to.meta.allowedRoles as string[]
     if (allowedRoles && allowedRoles.length > 0) {
       const userRoles = (authStore.user?.roles || []).map((r: any) => String(r))
-      const hasPermission = userRoles.some(role => allowedRoles.includes(role))
-      
+      const hasPermission = userRoles.some((role) => allowedRoles.includes(role))
+
       if (!hasPermission) {
         // 无权限访问，跳转到首页并提示
         message.error('您没有权限访问此页面')

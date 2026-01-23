@@ -1,6 +1,5 @@
 import { createCRUDService } from '@/utils/createApi'
 import apiClient from '@/api/index'
-import type { userType } from '@/types/user-type'
 
 export const userApi = createCRUDService('/user')
 
@@ -25,4 +24,3 @@ export const updateUserWithRoles = (user: any) => {
   if (roleIds.length) params.roleIds = roleIds.join(',')
   return apiClient.put(`/user/dto/${id}`, user, { params })
 }
-

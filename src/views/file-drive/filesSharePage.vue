@@ -133,10 +133,9 @@ import { FileOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { getSharedFiles } from '@/stores/fileResource-store'
 import { downloadFile as downloadFileApi } from '@/api/services/fileResource-api'
 import type { FileResourceType } from '@/types/fileResource-type'
-import { userApi } from '@/api/services/user-api'
-import type { userType } from '@/types/user-type'
 import { appConfig } from '@/config'
 import ScrollContent from '@/components/scrollContent.vue'
+import {getUserNameById} from "@/api/services/auth-api";
 
 interface FileSharing {
     shareId?: number
@@ -471,9 +470,8 @@ const verifyPassword = async () => {
 
 // 获取分享人姓名
 const getShareUserName = async (shareId: number) => {
-    const res = await userApi.get(shareId)
-    const user = res.data.data.user as userType
-    shareUserName.value = user.username || '未知'
+    const res = await getUserNameById(shareId)
+    shareUserName.value = res.data.data as string
 }
 
 // 选择变化处理
