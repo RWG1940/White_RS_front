@@ -17,8 +17,8 @@ export const addFormData = ref<FileResourceType>({})
 export const editFormData = ref<FileResourceType>({})
 // 搜索表单下拉框数据
 export const searchOptions = [
-  { label: '文件名称', value: 'fileName' },
-  { label: '文件类型', value: 'fileType' },
+  { label: '文件名称', value: 'file_name' },
+  { label: '文件类型', value: 'file_type' },
 ]
 // 文件之和
 export const filesTotalSize = ref(0)

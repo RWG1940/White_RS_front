@@ -13,7 +13,7 @@
       :show-delete="false"
       :search-select-options="searchSelectOptions"
       search-placeholder="搜索"
-      @search="handleSearch"
+      @search="store.handleSearch"
       @save="handleSave"
       @selection-change="handleSelectionChange"
       @update:currentPage="pageChange"
@@ -567,18 +567,6 @@ const setTableRows = (rows: AccPurchaseContractType[]) => {
   dataSource.value = safeRows.slice()
 }
 
-// 搜索
-const handleSearch = async (column: string, keyword: string) => {
-  if (!keyword) {
-    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
-    return
-  }
-  store.searchData = {
-    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
-    keyword: keyword,
-  } as any
-  await store.handleSearchByParams()
-}
 
 // 添加编辑按钮的逻辑
 ///

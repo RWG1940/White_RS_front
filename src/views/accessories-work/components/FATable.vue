@@ -174,6 +174,7 @@ import { tableImportStore } from '@/stores/tableImport-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { EditOutlined } from '@ant-design/icons-vue'
 import { noticeGroup } from '@/api/services/webhookTableImport-api'
+import type { factory } from 'typescript'
 
 // 接收父组件的 openImport、openExport、openInfo、openHistory（双向绑定）并提供触发事件
 const props = defineProps<{
@@ -269,18 +270,12 @@ const setTableRows = (rows: AccPurchaseContractType[]) => {
 }
 
 // 搜索
-const handleSearch = async (column: string, keyword: string) => {
-  if (!keyword) {
-    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
-    return
+const handleSearch = async (payload: Record<string, string>) => {
+  const searchConditions = {
+    ...payload,
+    factory: useAuthStore().user?.username || '',
   }
-  store.searchData = {
-    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
-    keyword: keyword,
-    column1: 'factory',
-    keyword1: useAuthStore().user?.username,
-  } as any
-  await store.handleSearchByParams()
+  await store.handleSearch(searchConditions)
 }
 
 const selectedRows = ref<AccPurchaseContractType[]>([])

@@ -367,19 +367,12 @@ const setTableRows = (rows: AccPurchaseContractType[]) => {
   dataSource.value = safeRows.slice()
 }
 
-// 搜索
-const handleSearch = async (column: string, keyword: string) => {
-  if (!keyword) {
-    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
-    return
+const handleSearch = async (payload: Record<string, string>) => {
+  const searchConditions = {
+    ...payload,
+    follower: useAuthStore().user?.username || '',
   }
-  store.searchData = {
-    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
-    keyword: keyword,
-    column1: 'follower',
-    keyword1: useAuthStore().user?.username || '',
-  } as any
-  await store.handleSearchByParams()
+  await store.handleSearch(searchConditions)
 }
 // 选择变化
 const handleSelectionChange = ({
@@ -459,7 +452,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-
 .changeImgA {
   margin-top: -40px;
   margin-left: 15px;
@@ -502,6 +494,4 @@ onMounted(async () => {
 .fade-move {
   transition: transform 3s ease-in-out;
 }
-
-
 </style>

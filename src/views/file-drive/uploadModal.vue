@@ -1,5 +1,5 @@
 <template>
-    <a-modal v-model:visible="visible" title="上传文件" width="800px" @cancel="handleCancel"
+    <a-modal v-model:open="visible" title="上传文件" width="800px" @cancel="handleCancel"
         :ok-button-props="{ disabled: uploading }" :cancel-button-props="{ disabled: uploading }"
         :confirm-loading="uploading">
         <div class="upload-container">

@@ -301,9 +301,9 @@ import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { tableImportStore } from '@/stores/tableImport-store'
 import { getBackendUrl } from '@/utils/getApiUrl'
-import { updateFileWithInfo } from '@/api/services/acc-api'
 import { message } from 'ant-design-vue'
-import { EyeOutlined,ReloadOutlined } from '@ant-design/icons-vue'
+import { ReloadOutlined } from '@ant-design/icons-vue'
+import { useAuthStore } from '@/stores/auth-store'
 
 const store = accStore
 const searchValue = ref('')
@@ -388,7 +388,7 @@ const handleSearch = async () => {
         await store.fetchPage()
         return
     }
-    await store.search({ column: 'sku', keyword: keyword } as any)
+    await store.handleSearch({sku: keyword, follower: useAuthStore().user?.username || ''})
     currentPage.value = 1 // 搜索时重置到第一页
 }
 

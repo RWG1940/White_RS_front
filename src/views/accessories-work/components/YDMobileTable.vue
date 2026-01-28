@@ -663,11 +663,7 @@ const handleSearch = async () => {
     await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
     return
   }
-  store.searchData = {
-    column: 'sku',
-    keyword: searchValue.value.trim(),
-  } as any
-  await store.handleSearchByParams()
+  await store.handleSearch({sku: searchValue.value.trim()})
 }
 
 const batchOptions = computed(() => {

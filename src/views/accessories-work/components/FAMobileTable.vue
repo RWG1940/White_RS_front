@@ -331,6 +331,7 @@ import { getBackendUrl } from '@/utils/getApiUrl'
 import { useAuthStore } from '@/stores/auth-store'
 import { tableImportStore } from '@/stores/tableImport-store'
 import { ReloadOutlined } from '@ant-design/icons-vue'
+import type { factory } from 'typescript'
 
 // 图片URL处理，添加时间戳防止缓存
 const getImageUrl = (imageUrl: string) => {
@@ -386,15 +387,13 @@ const pagedList = computed(() => {
 
 // 搜索
 const handleSearch = async () => {
-  if (!searchValue.value.trim()) {
-    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
-    return
-  }
-  store.searchData = {
-    column: 'sku',
-    keyword: searchValue.value.trim(),
-  } as any
-  await store.handleSearchByParams()
+    const keyword = searchValue.value.trim()
+    if (!keyword) {
+        await store.fetchPage()
+        return
+    }
+    await store.handleSearch({sku: keyword, factory: useAuthStore().user?.username || ''})
+    currentPage.value = 1 // 搜索时重置到第一页
 }
 
 const batchOptions = computed(() => {

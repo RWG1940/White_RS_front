@@ -90,8 +90,7 @@ const fetchBatchData = async () => {
   try {
     loading.value = true
     // 使用exact方法根据客户ID获取批次数据
-    store.exactData = { column: 'guest_id', keyword: props.guestId } as any
-    await store.exact()
+    await store.handleExact({ guest_id :String(props.guestId) })
     batchList.value = store.searchResults as GuestTableImportType[]
   } catch (error) {
     console.error('获取批次数据失败:', error)

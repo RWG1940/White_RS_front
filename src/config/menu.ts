@@ -4,6 +4,7 @@ import {
   SettingOutlined,
   DesktopOutlined,
   CloudOutlined,
+  BulbOutlined
 } from '@ant-design/icons-vue'
 
 // 统一的菜单和路由配置
@@ -104,6 +105,17 @@ export const menuConfig: MenuItem[] = [
     // 只有管理员(3294)可以访问
     allowedRoles: ['3294'],
   },
+  {
+    key: '/aiPromptsManage',
+    path: 'aiPromptsManage',
+    name: 'aiPromptsManage',
+    icon: BulbOutlined,
+    label: 'ai提示词管理',
+    title: 'ai提示词管理',
+    component: () => import('@/views/ai-prompts-admin/aiPromptsManage.vue').catch(() => import('@/views/NotFound.vue')),
+    requiresAuth: false,
+  },
+
   {
     key: '/rsDrive',
     path: 'rsDrive',

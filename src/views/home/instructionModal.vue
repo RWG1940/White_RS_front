@@ -1,5 +1,5 @@
 <template>
-  <a-modal v-model:visible="visible" title="操作说明" :width="600" :footer="null" @cancel="handleCancel">
+  <a-modal v-model:open="visible" title="操作说明" :width="600" :footer="null" @cancel="handleCancel">
     <div class="instruction-content">
       <div class="instruction-section">
         <h3>一、系统模块概览</h3>

@@ -561,15 +561,13 @@ const pagedList = computed(() => {
 
 // 搜索
 const handleSearch = async () => {
-  if (!searchValue.value.trim()) {
-    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
-    return
-  }
-  store.searchData = {
-    column: 'sku',
-    keyword: searchValue.value.trim(),
-  } as any
-  await store.handleSearchByParams()
+    const keyword = searchValue.value.trim()
+    if (!keyword) {
+        await store.fetchPage()
+        return
+    }
+    await store.handleSearch({sku: searchValue.value.trim()})
+    currentPage.value = 1 // 搜索时重置到第一页
 }
 
 /**

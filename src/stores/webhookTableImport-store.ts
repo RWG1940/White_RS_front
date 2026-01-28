@@ -13,6 +13,6 @@ export const addFormData = ref<WebhookTableImportType>({})
 export const editFormData = ref<WebhookTableImportType>({})
 // 搜索表单下拉框数据
 export const searchOptions = [
-  { label: 'webhookId', value: 'webhookId' },
-  { label: '批次id', value: 'importId' },
+  { label: 'webhookId', value: 'webhook_id' },
+  { label: '批次id', value: 'import_id' },
 ]

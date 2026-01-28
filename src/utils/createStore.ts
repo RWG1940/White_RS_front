@@ -101,14 +101,14 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         loading.value = false
       }
     }
-    // 获取有条件的分页数据，
+    // 获取有条件的分页数据
     const fetchPageByConditions = async () => {
       try {
         loading.value = true
-        const res = await api.getPagesByConditions(
-          ...conditionsData.value,
+        const res = await api.getPagesByCondition(
           currentPage.value,
           pageSize.value,
+          conditionsData.value,
         )
         const payload = unwrapResponse(res)
         const rows = payload.records
@@ -168,9 +168,9 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       try {
         loading.value = true
         await api.delete(ids)
-        if(currentPage.value == 1){
+        if (currentPage.value == 1) {
           await fetchPage()
-        }else{
+        } else {
           currentPage.value = currentPage.value - 1
           await fetchPage()
         }
@@ -185,8 +185,30 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
         loading.value = true
         await api.delete(ids)
         message.success(successMessage.delete || '删除成功')
-      } catch (error) {
-        // 错误已在拦截器中处理
+      } finally {
+        loading.value = false
+      }
+    }
+
+    // 搜索数据（模糊查询）
+    const search = async () => {
+      try {
+        loading.value = true
+        const res = await api.queryLike(searchData.value)
+        const payload = unwrapResponse(res)
+        searchResults.value = pickArray(payload)
+        message.success(successMessage.search || '搜索完成')
+      } finally {
+        loading.value = false
+      }
+    }
+    // 搜索数据（精确查询）
+    const exact = async () => {
+      try {
+        loading.value = true
+        const res = await api.queryEq(exactData.value)
+        const payload = unwrapResponse(res)
+        searchResults.value = pickArray(payload)
       } finally {
         loading.value = false
       }
@@ -212,29 +234,7 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       await removeN(selectedIds.value)
       selectedIds.value = []
     }
-    // 搜索数据（模糊查询），传入数据结构： { column: string , keyword: string , column1: string, keyword1: string, ... }
-    const search = async () => {
-      try {
-        loading.value = true
-        const res = await api.search(searchData.value)
-        const payload = unwrapResponse(res)
-        searchResults.value = pickArray(payload)
-        message.success(successMessage.search || '搜索完成')
-      } finally {
-        loading.value = false
-      }
-    }
-    // 搜索数据（精确查询），传入数据结构： { column: string , keyword: string , column1: string, keyword1: string, ... }
-    const exact = async () => {
-      try {
-        loading.value = true
-        const res = await api.exact(exactData.value)
-        const payload = unwrapResponse(res)
-        searchResults.value = pickArray(payload)
-      } finally {
-        loading.value = false
-      }
-    }
+
     // 过滤后的表格数据
     const filteredList = computed(() =>
       pagedList.value.filter((item) => {
@@ -258,34 +258,71 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       pageSize.value = val
       fetchPage()
     }
-    // 处理表格搜索-单个条件
-    const handleSearch = async (column: string, keyword: string) => {
-      const trimmed = keyword.trim()
-      if (!trimmed) {
+    // 处理表格搜索
+    const handleSearch = async (conditions: Record<string, string>) => {
+      const filteredConditions: Record<string, string> = {}
+      Object.keys(conditions).forEach((key) => {
+        const val = conditions[key]?.trim()
+        if (val) {
+          filteredConditions[key] = val
+        }
+      })
+      if (Object.keys(filteredConditions).length === 0) {
         await fetchPage()
         return
       }
-      searchData.value = { column: column, keyword: keyword }
+      searchData.value = filteredConditions
       await search()
       pagedList.value = searchResults.value as T[]
       total.value = searchResults.value.length
     }
-    // 处理表格搜索-单个条件-不刷新分页数据
-    const handleSearchN = async (column: string, keyword: string) => {
-      const trimmed = keyword.trim()
-      if (!trimmed) {
+    // 处理表格搜索-不刷新分页数据
+    const handleSearchN = async (conditions: Record<string, string>) => {
+      const filteredConditions: Record<string, string> = {}
+      Object.keys(conditions).forEach((key) => {
+        const val = conditions[key]?.trim()
+        if (val) {
+          filteredConditions[key] = val
+        }
+      })
+      if (Object.keys(filteredConditions).length === 0) {
         return
       }
-      searchData.value = { column: column, keyword: keyword }
+      searchData.value = filteredConditions
       await search()
       pagedList.value = searchResults.value as T[]
       total.value = searchResults.value.length
     }
-    // 处理表格搜索-多个条件-不刷新分页数据
-    const handleSearchByParams = async () => {
-      await search()
-      pagedList.value = searchResults.value as T[]
-      total.value = searchResults.value.length
+    // 处理精确查询
+    const handleExact = async (conditions: Record<string, string>) => {
+      const filteredConditions: Record<string, string> = {}
+      Object.keys(conditions).forEach((key) => {
+        const val = conditions[key]?.trim()
+        if (val) {
+          filteredConditions[key] = val
+        }
+      })
+      if (Object.keys(filteredConditions).length === 0) {
+        await fetchPage()
+        return
+      }
+      exactData.value = filteredConditions
+      await exact()
+    }
+    // 处理精确查询-不刷新分页数据
+    const handleExactN = async (conditions: Record<string, string>) => {
+      const filteredConditions: Record<string, string> = {}
+      Object.keys(conditions).forEach((key) => {
+        const val = conditions[key]?.trim()
+        if (val) {
+          filteredConditions[key] = val
+        }
+      })
+      if (Object.keys(filteredConditions).length === 0) {
+        return
+      }
+      exactData.value = filteredConditions
+      await exact()
     }
     // 处理表格单个删除
     const handleRowDelete = async (id: string | number) => {
@@ -348,9 +385,10 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
       handleRowDelete,
       handleRowDeleteN,
       handleSearch,
-      handleSearchByParams,
       handleSearchN,
       fetchPageByConditions,
+      handleExact,
+      handleExactN,
     }
   })
 }

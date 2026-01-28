@@ -229,7 +229,7 @@ const props = withDefaults(
     loading?: boolean
     // 搜索选择项
     searchSelectOptions?: { label: string; value: string }[]
-    
+
   }>(),
   {
     dataSource: () => [],
@@ -255,12 +255,14 @@ const props = withDefaults(
     searchSelectOptions: () => [],
   },
 )
+// 搜索框值
+const searchValue = ref('')
 // 组件事件
 const emit = defineEmits<{
   // 更新数据源
   (e: 'update:dataSource', value: RecordType[]): void
   // 搜索
-  (e: 'search', column: string, key: string): void
+  (e: 'search', payload: Record<string, string>): void
   // 添加
   (e: 'add'): void
   // 批量删除
@@ -285,8 +287,7 @@ const emit = defineEmits<{
   (e: 'update:pageSize', value: number): void
 }>()
 // 组件内部状态
-// 搜索框值
-const searchValue = ref('')
+
 const searchSelectValue = ref()
 // 解析行主键字段
 const resolvedRowKey = computed(() => props.rowKey ?? 'key')
@@ -648,7 +649,11 @@ const onSearch = () => {
     emit('update:currentPage', 1)
     return
   }
-  emit('search', searchSelectValue.value.trim(), searchValue.value.trim())
+  const payload: Record<string, string> = {}
+  if (searchSelectValue.value) {
+    payload[searchSelectValue.value.trim()] = searchValue.value.trim()
+  }
+  emit('search', payload)
 }
 // 新增：触发添加事件
 const handleAdd = () => {

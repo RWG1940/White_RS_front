@@ -22,7 +22,7 @@
       v-model:pageSize="store.pageSize"
       v-model:loading="store.loading"
       search-placeholder="搜索"
-      @search="handleSearch"
+      @search="store.handleSearch"
       @add="handleAdd"
       @save="handleSave"
       @row-delete="handleRowDelete"
@@ -69,11 +69,7 @@
           </div>
         </template>
         <template v-else>
-          <a-select
-            v-model:value="editableData[getInternalKey(record)]!.washPriority"
-            size="small"
-            
-          >
+          <a-select v-model:value="editableData[getInternalKey(record)]!.washPriority" size="small">
             <a-select-option :value="0">正常做</a-select-option>
             <a-select-option :value="1">有点着急</a-select-option>
             <a-select-option :value="2">非常着急安排优先</a-select-option>
@@ -118,11 +114,7 @@
           </div>
         </template>
         <template v-else>
-          <a-select
-            v-model:value="editableData[getInternalKey(record)]!.tagPriority"
-            size="small"
-            
-          >
+          <a-select v-model:value="editableData[getInternalKey(record)]!.tagPriority" size="small">
             <a-select-option :value="0">正常做</a-select-option>
             <a-select-option :value="1">有点着急</a-select-option>
             <a-select-option :value="2">非常着急安排优先</a-select-option>
@@ -408,7 +400,7 @@
       </a-form>
     </a-modal>
     <!-- 客户弹窗 -->
-    <YDGuestModal v-model:visible="guestTableVisible" />
+    <YDGuestModal v-model:open="guestTableVisible" />
   </div>
 </template>
 
@@ -476,8 +468,7 @@ const handleCustomerChange = async (customerKey: number) => {
     currentGuestId.value = selectedGuest.id
     // 使用exact方法根据客户ID获取批次数据
     try {
-      guestTableStore.exactData = { column: 'guest_id', keyword: selectedGuest!.id.toString() }
-      await guestTableStore.exact().then(() => {
+      await guestTableStore.handleExact({ guest_id: selectedGuest!.id.toString() }).then(() => {
         // 清空选中的批次，重新加载数据
         selectedBatchId.value = null
         if (guestTableStore.searchResults.length <= 0) {
@@ -665,18 +656,6 @@ watch(
     deep: false,
   },
 )
-// 搜索
-const handleSearch = async (column: string, keyword: string) => {
-  if (!keyword) {
-    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize)
-    return
-  }
-  store.searchData = {
-    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
-    keyword: keyword,
-  } as any
-  await store.handleSearchByParams()
-}
 
 // 添加
 const handleAdd = async () => {
@@ -1012,8 +991,7 @@ onMounted(async () => {
     currentGuestId.value = firstGuest.id || null
     // 加载该客户的批次数据
     if (firstGuest.id) {
-      guestTableStore.exactData = { column: 'guest_id', keyword: firstGuest.id.toString() }
-      await guestTableStore.exact()
+      await guestTableStore.handleExact({ guest_id: firstGuest.id.toString() })
     }
   }
   // 加载该客户的所有数据
@@ -1022,7 +1000,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-
 /* 工具按钮样式 */
 .custom-tool-btn {
   margin-left: 5px;
@@ -1065,7 +1042,6 @@ onMounted(async () => {
   background-color: gold;
   box-shadow: 1px 1px 15px gold;
 }
-
 
 /* 图片相关样式 */
 .image-preview {

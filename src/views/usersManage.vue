@@ -15,7 +15,7 @@
       v-model:currentPage="store.currentPage"
       v-model:pageSize="store.pageSize"
       v-model:loading="store.loading"
-      @search="handleSearch"
+      @search="store.handleSearch"
       @add="handleAddUser"
       @save="handleSave"
       @row-delete="store.handleRowDelete"
@@ -104,6 +104,7 @@ import dayjs from 'dayjs'
 import { batchCheckUsersOnline } from '@/api/services/websocket-api'
 import { roleStore } from '@/stores/role-store'
 import { message } from 'ant-design-vue'
+import { generateName } from '@/utils/randomStr'
 
 const store = userStore
 
@@ -330,32 +331,12 @@ const setTableRows = (rows: (userType | userListType)[] = []) => {
   applyOnlineStatus()
   refreshOnlineStatus()
 }
-// 搜索用户
-const handleSearch = async (column: string, keyword: string) => {
-  if(!keyword) {
-    await store.fetchPage()
-    return
-  }
-  store.searchData = {
-    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
-    keyword: keyword,
-  } as any
-  await store.handleSearchByParams()
-}
 
-// 生成一个类似 UUID 的 6 位用户名。优先使用浏览器的 crypto.randomUUID，失败时回退到 Math.random。
-const generateUsername = (): string => {
-  try {
-    return crypto.randomUUID().replace(/-/g, '').slice(0, 6)
-  } catch (e) {
-    return Math.random().toString(36).slice(2, 8)
-  }
-}
 // 新增用户
 const handleAddUser = async () => {
   try {
     // 新增用户默认赋予角色 id = 2
-    const payload: any = { username: generateUsername(), status: 1, roles: [{ id: 2 }] }
+    const payload: any = { username: generateName(), status: 1, roles: [{ id: 2 }] }
     await createUserWithRoles(payload)
     await store.fetchPage()
     message.success('添加用户成功')
@@ -404,5 +385,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

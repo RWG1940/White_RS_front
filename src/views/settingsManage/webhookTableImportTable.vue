@@ -13,7 +13,7 @@
       v-model:currentPage="store.currentPage"
       v-model:pageSize="store.pageSize"
       search-placeholder="搜索批次"
-      @search="handleSearch"
+      @search="store.handleSearch"
       @add="store.create({ webhookId: '', importId: '', remark: '' })"
       @save="store.update"
       @row-delete="store.handleRowDelete"
@@ -43,7 +43,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import type { TableColumnType } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
 import { webhookTableImportStore, searchOptions } from '../../stores/webhookTableImport-store'
@@ -61,14 +61,6 @@ const columns: TableColumnType<WebhookTableImportType>[] = [
 // 可编辑字段
 const editableFields = ['webhookId', 'importId', 'remark']
 
-// 搜索
-const handleSearch = async (column: string, keyword: string) => {
-  store.searchData = {
-    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
-    keyword: keyword,
-  } as any
-  await store.handleSearchByParams()
-}
 
 // 获取数据
 onMounted(async () => {

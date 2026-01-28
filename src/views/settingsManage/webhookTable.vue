@@ -14,7 +14,7 @@
       v-model:currentPage="store.currentPage"
       v-model:pageSize="store.pageSize"
       search-placeholder="搜索webhook"
-      @search="handleSearch"
+      @search="store.handleSearch"
       @add="store.create({ name: `新webhook-${generateName()}`, status: 1, code: generateName() })"
       @save="store.update"
       @row-delete="store.remove"
@@ -86,14 +86,6 @@ const columns: TableColumnType<WebhookType>[] = [
 // 可编辑字段
 const editableFields = ['name', 'url', 'status', 'remark']
 
-// 搜索
-const handleSearch = async (column: string, keyword: string) => {
-  store.searchData = {
-    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
-    keyword: keyword,
-  } as any
-  await store.handleSearchByParams()
-}
 
 // 获取数据
 onMounted(async () => {

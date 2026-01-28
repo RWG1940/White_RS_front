@@ -40,6 +40,16 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/ai-prompts-front',
+    name: 'ai-prompts-front',
+    component: () =>
+      import('@/views/ai-prompts-front/aiPromptsFront.vue').catch(() => import('@/views/NotFound.vue')),
+    meta: {
+      title: 'Next Prompts',
+      requiresAuth: false, // 不需要登录
+    },
+  },
+  {
     path: '/',
     component: () => import('@/layout/index.vue'),
     meta: {

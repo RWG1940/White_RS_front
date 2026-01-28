@@ -1,7 +1,7 @@
 <template>
   <a-modal
     title="客户管理"
-    :visible="guestTableVisible"
+    :open="guestTableVisible"
     width="1200px"
     :footer="null"
     @cancel="handleClose"
