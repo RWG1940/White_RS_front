@@ -395,7 +395,7 @@ const handleBackToCategory = () => {
   } else if (selectedCategory.value === '产品主体' || selectedCategory.value === '构图与视角(产品)' || 
              selectedCategory.value === '镜头与拍摄参数' || selectedCategory.value === '灯光系统' ||
              selectedCategory.value === '背景与场景' || selectedCategory.value === '材质与质感' ||
-             selectedCategory.value === '色彩与风格(产品)' || selectedCategory.value === '使用场景 / 氛围' ||
+             selectedCategory.value === '色彩与风格(产品)' || selectedCategory.value === '使用场景/氛围' ||
              selectedCategory.value === '后期与商业风格') {
     selectedPhotoType.value = 'product';
   } else if (selectedCategory.value === '场景主体' || selectedCategory.value === '地理环境' || 

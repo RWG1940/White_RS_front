@@ -8,7 +8,7 @@
         <a-layout-content class="layout-content">
           <AiContent :active-button="activeButton" />
         </a-layout-content>
-        <a-layout-sider class="layout-sider" :width="300">
+        <a-layout-sider v-if="activeButton === 'prompt'" class="layout-sider" :width="300">
           <AiRightPanel />
         </a-layout-sider>
       </a-layout>

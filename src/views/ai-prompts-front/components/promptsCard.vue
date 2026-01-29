@@ -25,15 +25,15 @@
       <div class="selected-count">已选择: {{ selectedPrompts.length }} 个提示词</div>
       <div class="action-buttons">
         <button class="clear-btn" @click="clearSelection">清空</button>
-        <button class="apply-btn" @click="handleApply">应用</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import type { AiPromptsType } from '@/types/aiPrompts-type'
+import { aiPromptsSelectedStore } from '@/stores/aiPromptsSelected-store'
 // 大类定义
 interface Subcategory {
   id: number
@@ -57,6 +57,19 @@ const emit = defineEmits<{
 }>()
 // 选中的提示词
 const selectedPrompts = ref<number[]>([])
+const promptsStore = aiPromptsSelectedStore()
+const previousSelection = ref<number[]>([])
+
+// 监听 store 中的 selectedPromptIds 变化，同步本地状态
+watch(
+  () => promptsStore.selectedPromptIds,
+  (newIds) => {
+    selectedPrompts.value = [...newIds]
+    previousSelection.value = [...newIds]
+  },
+  { deep: true }
+)
+
 // 切换提示词
 const togglePrompt = (promptId: number) => {
   const index = selectedPrompts.value.indexOf(promptId)
@@ -65,15 +78,48 @@ const togglePrompt = (promptId: number) => {
   } else {
     selectedPrompts.value.push(promptId)
   }
+
+  // 计算当前卡片的变化（添加或移除的 ID）
+  const globalIds = [...promptsStore.selectedPromptIds]
+
+  // 比较前后变化
+  const currentSelection = new Set(selectedPrompts.value)
+  const prevSelection = new Set(previousSelection.value)
+
+  // 找出新添加的项
+  const added = Array.from(currentSelection).filter((id) => !prevSelection.has(id))
+  // 找出被移除的项
+  const removed = Array.from(prevSelection).filter((id) => !currentSelection.has(id))
+
+  // 更新全局状态：添加新项，移除已删除的项
+  let newGlobalIds = [...globalIds]
+
+  // 添加新选项
+  added.forEach((id) => {
+    if (!newGlobalIds.includes(id)) {
+      newGlobalIds.push(id)
+    }
+  })
+
+  // 移除取消选项
+  removed.forEach((id) => {
+    const idx = newGlobalIds.indexOf(id)
+    if (idx > -1) {
+      newGlobalIds.splice(idx, 1)
+    }
+  })
+
+  // 更新全局 store
+  promptsStore.setSelectedPrompts(newGlobalIds)
+  // 更新本卡片的前一状态
+  previousSelection.value = [...selectedPrompts.value]
 }
 // 清空选中
 const clearSelection = () => {
   selectedPrompts.value = []
   emit('clear')
-}
-// 应用
-const handleApply = () => {
-  emit('apply', selectedPrompts.value)
+  // 清空全局 store
+  promptsStore.clearSelectedPrompts()
 }
 </script>
 
