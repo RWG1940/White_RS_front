@@ -32,6 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
           return { success: true, code: res.data.code }
         }
       }
+      
       return { success: false, code: res.data.code }
     } catch (error) {
       return { success: false, code: 0 }
@@ -75,6 +76,10 @@ export const useAuthStore = defineStore('auth', () => {
           }
           isLoaded.value = true
         }
+      }
+      if (res.data.code == 404 || res.data.code == 401 || res.data.code == 500) {
+        localStorage.removeItem('token')
+        return { success: false, code: res.data.code }
       }
     } catch (error) {
       // 获取用户信息失败，清除 token

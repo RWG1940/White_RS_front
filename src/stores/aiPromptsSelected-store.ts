@@ -25,7 +25,16 @@ export const aiPromptsSelectedStore = defineStore('aiPromptsSelected', () => {
   
   // 是否显示加载状态
   const isLoading = ref(false)
-  
+
+  // 是否显示提示词连线
+  const showConnectionLines = ref(true)
+
+  // 是否启用自动配置提示词
+  const autoConfigPrompts = ref(false)
+
+  // 存储选中的输出配置（图片尺寸）
+  const selectedOutputConfig = ref<string>('1024*1024')
+
   // 存储预览时的快照（只在点击生成时更新）
   const previewPromptIds = ref<number[]>([])
   const previewPromptWeights = ref<Map<number, WeightLevel>>(new Map())
@@ -147,7 +156,7 @@ export const aiPromptsSelectedStore = defineStore('aiPromptsSelected', () => {
     isLoading.value = true
     
     // 等待 2 秒后显示预览
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise(resolve => setTimeout(resolve, 1000))
     
     previewPromptIds.value = [...selectedPromptIds.value]
     previewPromptWeights.value = new Map(promptWeights.value)
@@ -171,6 +180,66 @@ export const aiPromptsSelectedStore = defineStore('aiPromptsSelected', () => {
     showPreview.value = !showPreview.value
   }
 
+  // 切换提示词连线显示状态
+  const toggleConnectionLines = () => {
+    showConnectionLines.value = !showConnectionLines.value
+  }
+
+  // 切换自动配置提示词状态
+  const toggleAutoConfigPrompts = () => {
+    autoConfigPrompts.value = !autoConfigPrompts.value
+  }
+
+  // 自动配置提示词：从每个subcategory中随机选择一个
+  const autoConfigurePrompts = () => {
+    if (!autoConfigPrompts.value) return
+    
+    // 获取所有提示词数据
+    const allPrompts = aiPromptsStore.list
+    
+    // 检查是否有数据
+    if (!allPrompts || allPrompts.length === 0) {
+      console.warn('没有可用的提示词数据，无法自动配置')
+      return
+    }
+    
+    // 按subcategory分组
+    const subcategoryGroups: Record<string, any[]> = {}
+    allPrompts.forEach(prompt => {
+      if (prompt.subcategory) {
+        if (!subcategoryGroups[prompt.subcategory]) {
+          subcategoryGroups[prompt.subcategory] = []
+        }
+        subcategoryGroups[prompt.subcategory].push(prompt)
+      }
+    })
+    
+    // 从每个subcategory中随机选择一个提示词
+    const selectedIds: number[] = []
+    Object.values(subcategoryGroups).forEach(prompts => {
+      if (prompts.length > 0) {
+        const randomIndex = Math.floor(Math.random() * prompts.length)
+        const randomPrompt = prompts[randomIndex]
+        if (randomPrompt.id) {
+          selectedIds.push(randomPrompt.id)
+        }
+      }
+    })
+    
+    // 设置选中的提示词
+    if (selectedIds.length > 0) {
+      setSelectedPrompts(selectedIds)
+      console.log('自动配置成功，选择了', selectedIds.length, '个提示词')
+    } else {
+      console.warn('没有找到可用的提示词进行自动配置')
+    }
+  }
+
+  // 设置输出配置
+  const setOutputConfig = (config: string) => {
+    selectedOutputConfig.value = config
+  }
+
   // 清空预览（清空所有选中的提示词和 textarea 值，隐藏预览）
   const clearPreview = () => {
     selectedPromptIds.value = []
@@ -188,6 +257,9 @@ export const aiPromptsSelectedStore = defineStore('aiPromptsSelected', () => {
     textareaValue,
     showPreview,
     isLoading,
+    showConnectionLines,
+    autoConfigPrompts,
+    selectedOutputConfig,
     previewPromptIds,
     previewPromptWeights,
     previewTextareaValue,
@@ -201,11 +273,15 @@ export const aiPromptsSelectedStore = defineStore('aiPromptsSelected', () => {
     setPromptWeight,
     getPromptWeight,
     setTextareaValue,
+    setOutputConfig,
     clearSelectedPrompts,
     generatePreview,
     displayPreview,
     hidePreview,
     togglePreview,
+    toggleConnectionLines,
+    toggleAutoConfigPrompts,
+    autoConfigurePrompts,
     clearPreview,
   }
 })

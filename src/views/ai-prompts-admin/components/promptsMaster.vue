@@ -3,13 +3,25 @@
     <div class="layout-container">
       <div class="photo-type-btns">
         <div class="photo-type-btn" :class="{ active: selectedPhotoType === 'common' }"
-          @click="selectPhotoType('common')">通用</div>
+          @click="selectPhotoType('common')">
+          <CameraOutlined class="btn-icon" />
+          <span>通用</span>
+        </div>
         <div class="photo-type-btn" :class="{ active: selectedPhotoType === 'person' }"
-          @click="selectPhotoType('person')">人像</div>
+          @click="selectPhotoType('person')">
+          <UserOutlined class="btn-icon" />
+          <span>人像</span>
+        </div>
         <div class="photo-type-btn" :class="{ active: selectedPhotoType === 'product' }"
-          @click="selectPhotoType('product')">产品</div>
+          @click="selectPhotoType('product')">
+          <ShopOutlined class="btn-icon" />
+          <span>产品</span>
+        </div>
         <div class="photo-type-btn" :class="{ active: selectedPhotoType === 'landscape' }"
-          @click="selectPhotoType('landscape')">风景</div>
+          @click="selectPhotoType('landscape')">
+          <EnvironmentOutlined class="btn-icon" />
+          <span>风景</span>
+        </div>
       </div>
       <div class="content-area">
         <Transition name="slide-in-left">
@@ -352,12 +364,9 @@
         </Transition>
 
         <Transition name="slide-in-right">
-          <div v-if="showControlCard" class="back-button" @click="handleBackToCategory">
-              <LeftOutlined />返回
+          <div v-if="showControlCard">
+          <PromptsControlCard :category="selectedCategory" @back="handleBackToCategory" />
           </div>
-        </Transition>
-        <Transition name="slide-in-right">
-          <PromptsControlCard v-if="showControlCard" :category="selectedCategory" />
         </Transition>
       </div>
     </div>
@@ -365,7 +374,7 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
-import { LeftOutlined, RightOutlined, UserOutlined, EyeOutlined, CameraOutlined, BulbOutlined, EnvironmentOutlined, EditOutlined, ExportOutlined, BgColorsOutlined } from '@ant-design/icons-vue';
+import { LeftOutlined, RightOutlined, UserOutlined, EyeOutlined, CameraOutlined, BulbOutlined, EnvironmentOutlined, EditOutlined, ExportOutlined, BgColorsOutlined, ShopOutlined } from '@ant-design/icons-vue';
 import PromptsControlCard from './promptsControlCard.vue';
 
 const selectedPhotoType = ref('common');
@@ -419,30 +428,58 @@ const handleBackToCategory = () => {
 
 .layout-container {
   display: flex;
+  flex-direction: column;
   height: 100%;
 }
 
 .photo-type-btns {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 10px;
-  width: 10%;
-  height: 100%;
-  background-color: #e8e8e8;
-  border-radius: 15px;
-  padding: 10px;
-  border-right: 1px solid #e9ecef;
+  width: 100%;
+  height: 70px;
+  background-color: rgba(232, 232, 232, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 15px 15px 0 0;
+  padding: 10px 20px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
 }
 
 .photo-type-btn {
-  width: 100%;
-  padding: 15px 20px;
+  width: auto;
+  min-width: 90px;
+  padding: 5px 5px;
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-icon {
+  font-size: 20px;
+  color: #666;
+}
+
+.photo-type-btn:hover .btn-icon {
+  color: white;
+}
+
+.photo-type-btn.active .btn-icon {
+  color: white;
 }
 
 .photo-type-btn:hover {
@@ -457,9 +494,10 @@ const handleBackToCategory = () => {
 
 .content-area {
   flex: 1;
-  padding: 0 20px;
+  padding: 0 20px 80px 20px;
   overflow-y: auto;
-  margin-left: 6px;
+  overflow-x: hidden;
+  margin-bottom: 70px;
 }
 
 .person-photo-categories {

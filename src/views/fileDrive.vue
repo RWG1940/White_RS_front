@@ -35,7 +35,7 @@
           :columns="columns"
           row-key="id"
           :is-bordered="isbordered"
-          :search-select-options="[{ label: '文件名', value: 'fileName' }]"
+          :search-select-options="[{ label: '文件名', value: 'file_name' }]"
           v-model:total="store.total"
           v-model:currentPage="store.currentPage"
           v-model:pageSize="store.pageSize"
@@ -242,17 +242,16 @@ const handleUploadSuccess = () => {
   message.success('文件上传成功')
 }
 
-// 搜索功能
-const handleSearch = async (column: string, keyword: string) => {
-  store.searchData = {
-    column: column.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase(),
-    keyword: keyword,
-    column1: 'biz_type',
-    keyword1: 'drive_file',
-  } as any
-  await store.handleSearchByParams()
-}
 
+
+// 搜索
+const handleSearch = async (payload: Record<string, string>) => {
+  const searchConditions = {
+    ...payload,
+    biz_type: 'drive_file',
+  }
+  await store.handleSearch(searchConditions)
+}
 // 删除文件
 const handleDelete = async (fileId: string | number) => {
   try {

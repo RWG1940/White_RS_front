@@ -47,6 +47,8 @@ export const responseInterceptorError = async (error: any) => {
   } else if (ERROR_MESSAGE.includes('401')) {
     errMsg += '登录状态失效，请重新登录'
     localStorage.removeItem('token')
+  } else if (ERROR_MESSAGE.includes('403')) {
+    errMsg += 'sorry，你貌似没登陆，或者没有权限'
   } else {
     errMsg += ERROR_MESSAGE
   }

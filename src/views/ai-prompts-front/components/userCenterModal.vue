@@ -54,6 +54,9 @@
                 <LogoutOutlined />
                 <span>退出登录</span>
               </button>
+              <button v-if="user!.roles![0] == 3294" class="adm-btn" @click="handleGoToAdmin">
+                <span>进入管理员后台</span>
+              </button>
             </div>
           </div>
 
@@ -66,11 +69,19 @@
                 <div class="tab-content">
                   <div class="form-item">
                     <label class="form-label">用户名</label>
-                    <a-input v-model:value="profileForm.username" placeholder="请输入用户名" disabled />
+                    <a-input
+                      v-model:value="profileForm.username"
+                      placeholder="请输入用户名"
+                      disabled
+                    />
                   </div>
                   <div class="form-item">
                     <label class="form-label">邮箱</label>
-                    <a-input v-model:value="profileForm.email" type="email" placeholder="请输入邮箱" />
+                    <a-input
+                      v-model:value="profileForm.email"
+                      type="email"
+                      placeholder="请输入邮箱"
+                    />
                   </div>
                   <div class="form-item">
                     <label class="form-label">手机号</label>
@@ -84,15 +95,24 @@
                 <div class="tab-content">
                   <div class="form-item">
                     <label class="form-label">原密码</label>
-                    <a-input-password v-model:value="passwordForm.oldPassword" placeholder="请输入原密码" />
+                    <a-input-password
+                      v-model:value="passwordForm.oldPassword"
+                      placeholder="请输入原密码"
+                    />
                   </div>
                   <div class="form-item">
                     <label class="form-label">新密码</label>
-                    <a-input-password v-model:value="passwordForm.newPassword" placeholder="请输入新密码" />
+                    <a-input-password
+                      v-model:value="passwordForm.newPassword"
+                      placeholder="请输入新密码"
+                    />
                   </div>
                   <div class="form-item">
                     <label class="form-label">确认密码</label>
-                    <a-input-password v-model:value="passwordForm.confirmPassword" placeholder="请确认新密码" />
+                    <a-input-password
+                      v-model:value="passwordForm.confirmPassword"
+                      placeholder="请确认新密码"
+                    />
                   </div>
                 </div>
               </a-tab-pane>
@@ -107,9 +127,7 @@
                 </template>
                 {{ activeTab === 'info' ? '保存信息' : '修改密码' }}
               </a-button>
-              <a-button block @click="cancelEditing">
-                取消
-              </a-button>
+              <a-button block @click="cancelEditing"> 取消 </a-button>
             </div>
           </div>
         </div>
@@ -123,7 +141,13 @@ import { ref, watch, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { message } from 'ant-design-vue'
-import { CloseOutlined, UserOutlined, EditOutlined, LogoutOutlined, LockOutlined } from '@ant-design/icons-vue'
+import {
+  CloseOutlined,
+  UserOutlined,
+  EditOutlined,
+  LogoutOutlined,
+  LockOutlined,
+} from '@ant-design/icons-vue'
 import { getBackendUrl } from '@/utils/getApiUrl'
 import { changePassword } from '@/api/services/auth-api'
 import { userStore } from '@/stores/user-store'
@@ -310,6 +334,10 @@ const handleLogout = async () => {
       duration: 2,
     })
   }
+}
+// 跳转到管理员后台
+const handleGoToAdmin = () => {
+  router.push('/aiPromptsManage')
 }
 </script>
 
@@ -529,7 +557,29 @@ const handleLogout = async () => {
   transition: all 0.3s ease;
   font-family: inherit;
 }
-
+.adm-btn {
+  width: 100%;
+  padding: 6px 12px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #b4b4b4;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+.adm-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #56ffa5;
+}
 .logout-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.3);
@@ -665,7 +715,6 @@ const handleLogout = async () => {
     transform: translateY(-10px) scale(0.96);
   }
 }
-
 
 /* 响应式设计 */
 @media (max-width: 480px) {

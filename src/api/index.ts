@@ -5,7 +5,7 @@ import { responseInterceptor, responseInterceptorError } from './interceptors/re
 import { getBackendUrl } from '../utils/getApiUrl'
 const instance: AxiosInstance = axios.create({
   baseURL: getBackendUrl(),
-  timeout: 5000,
+  timeout: 120000,
 })
 
 instance.interceptors.request.use(requestInterceptor, (error) => Promise.reject(error))

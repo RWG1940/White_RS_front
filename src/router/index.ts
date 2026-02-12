@@ -124,7 +124,8 @@ router.beforeEach(async (to, from, next) => {
 
   // 需要登录的路由
   if (requiresAuth) {
-    if (!authStore.isAuthenticated) {
+    console.log('需要登陆')
+    if (!authStore.isAuthenticated || localStorage.getItem('token') === null) {
       // 未登录，跳转到登录页
       message.warning('请先登录')
       NProgress.done()

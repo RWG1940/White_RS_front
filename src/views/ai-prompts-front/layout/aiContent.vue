@@ -31,6 +31,7 @@ defineProps<{
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  padding: 20px 15px;
 }
 
 h2 {
@@ -63,5 +64,24 @@ p {
 .fade-scale-leave-from {
   opacity: 1;
   transform: scale(1) translateY(0);
+}
+
+/* 滚动条样式 */
+.content-wrapper::-webkit-scrollbar {
+  width: 10px;
+}
+
+.content-wrapper::-webkit-scrollbar-track {
+  background: #202020;
+  border-radius: 3px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background: #2c2c2c;
+  border-radius: 3px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #1cacb9;
 }
 </style>

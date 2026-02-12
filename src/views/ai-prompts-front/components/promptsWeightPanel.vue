@@ -1,26 +1,40 @@
 <template>
   <div class="weight-panel" v-if="promptsStore.showPreview">
-    <p class="weight-header">权重调整</p>
-    <div class="weight-list">
-      <div class="weight-card" v-for="promptId in promptsStore.previewPromptIds" :key="promptId">
-        <div class="card-content">
-          <div class="weight-info">
-            <span class="weight-title">{{ getPromptLabel(promptId) }}</span>
-          </div>
-          <div class="weight-control">
-            <a-select
-              v-model:value="weightValues[promptId]"
-              @change="(value: any) => handleWeightChange(promptId, value)"
-              class="weight-select"
-              size="small"
-            >
-              <a-select-option value="core">核心</a-select-option>
-              <a-select-option value="important">重要</a-select-option>
-              <a-select-option value="auxiliary">辅助</a-select-option>
-            </a-select>
-          </div>
-          <div class="weight-close">
-            <CloseCircleOutlined @click="removePrompt(promptId)" />
+    <div class="panel-header">
+      <p class="weight-header">权重调整</p>
+      <div class="header-buttons">
+        <a-button type="primary" @click="handleApply" class="apply-btn">
+          应用
+        </a-button>
+        <a-button type="primary" class="collapse-btn" @click="toggleCollapse">
+          {{ isCollapsed ? '展开' : '收起' }}
+        </a-button>
+      </div>
+    </div>
+    
+    <!-- 权重内容区域，通过CSS控制高度 -->
+    <div class="panel-content" :class="{ collapsed: isCollapsed }">
+      <div class="weight-list">
+        <div class="weight-card" v-for="promptId in promptsStore.previewPromptIds" :key="promptId">
+          <div class="card-content">
+            <div class="weight-info">
+              <span class="weight-title">{{ getPromptLabel(promptId) }}</span>
+            </div>
+            <div class="weight-control">
+              <a-select
+                v-model:value="weightValues[promptId]"
+                @change="(value: any) => handleWeightChange(promptId, value)"
+                class="weight-select"
+                size="small"
+              >
+                <a-select-option value="core">核心</a-select-option>
+                <a-select-option value="important">重要</a-select-option>
+                <a-select-option value="auxiliary">辅助</a-select-option>
+              </a-select>
+            </div>
+            <div class="weight-close">
+              <CloseCircleOutlined @click="removePrompt(promptId)" />
+            </div>
           </div>
         </div>
       </div>
@@ -35,6 +49,14 @@ import { aiPromptsSelectedStore, type WeightLevel } from '@/stores/aiPromptsSele
 import { aiPromptsStore } from '@/stores/aiPrompts-store'
 
 const promptsStore = aiPromptsSelectedStore()
+
+// 收起/展开状态
+const isCollapsed = ref(false)
+
+// 切换收起/展开
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+}
 
 // 存储权重选择值
 const weightValues = ref<Record<number, WeightLevel>>({})
@@ -57,7 +79,10 @@ const getPromptLabel = (id: number): string => {
 const handleWeightChange = (promptId: number, value: WeightLevel) => {
   promptsStore.setPromptWeight(promptId, value)
 }
-
+// 应用按钮
+const handleApply = () => {
+   promptsStore.generatePreview() 
+}
 // 移除提示词
 const removePrompt = (promptId: number) => {
   const index = promptsStore.previewPromptIds.indexOf(promptId)
@@ -81,23 +106,51 @@ watch(() => promptsStore.previewPromptIds, () => {
   border-radius: 10px;
   border: solid 1px #555555;
   background-color: #222222;
-  height: 220px;
+  min-height: 60px;
+  height: auto;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 8px;
 }
 
 .weight-header {
   font-size: 15px;
   font-weight: 600;
-  margin-bottom: 12px;
-  margin-top: 0;
+  margin: 0;
   color: #bdbdbd;
+}
+
+/* 面板内容区域样式 */
+.panel-content {
+  flex: 1;
+  max-height: 180px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.panel-content.collapsed {
+  max-height: 0;
+  min-height: 0;
 }
 
 .weight-list {
   flex: 1;
   overflow-y: auto;
   padding-right: 4px;
+  max-height: 180px;
+  min-height: 60px;
 }
 
 .weight-list::-webkit-scrollbar {
@@ -180,7 +233,49 @@ watch(() => promptsStore.previewPromptIds, () => {
   font-size: 18px;
 }
 
+.weight-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .weight-close:hover {
   color: rgb(254, 90, 90);
+}
+
+.apply-btn {
+  background: rgb(53, 53, 53);
+  border: solid 1px #696969;
+  color: #c8c8c8;
+  font-weight: bold;
+  border-radius: 4px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.apply-btn:hover {
+  color: rgb(255, 255, 255);
+  background: rgb(53, 53, 53);
+  border: solid 1px #00eaff;
+}
+
+.collapse-btn {
+  background: rgb(53, 53, 53);
+  border: solid 1px #696969;
+  color: #c8c8c8;
+  font-weight: bold;
+  border-radius: 4px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.collapse-btn:hover {
+  color: rgb(255, 255, 255);
+  background: rgb(53, 53, 53);
+  border: solid 1px #00eaff;
 }
 </style>

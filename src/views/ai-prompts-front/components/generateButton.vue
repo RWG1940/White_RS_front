@@ -212,8 +212,7 @@
   </button>
 </template>
 <script setup lang="ts">
-  import { aiPromptsSelectedStore } from "@/stores/aiPromptsSelected-store";
+import { aiPromptsSelectedStore } from '@/stores/aiPromptsSelected-store'
 
-  const promptsStore = aiPromptsSelectedStore();
-
+const promptsStore = aiPromptsSelectedStore()
 </script>

@@ -25,5 +25,4 @@ export const searchOptions = [
   { label: '名称', value: 'label' },
   { label: '值', value: 'value' },
   { label: '描述', value: 'describtion' }
-
 ]

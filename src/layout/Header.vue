@@ -405,7 +405,7 @@ const refreshOnlineCount = async () => {
       onlineCount.value = 1
     }
   } catch (error) {
-    console.error('获取在线人数失败:', error)
+    router.push('/login')
   }
 }
 // 刷新用户在线状态

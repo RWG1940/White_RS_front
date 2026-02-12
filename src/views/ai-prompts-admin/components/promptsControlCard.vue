@@ -1,6 +1,9 @@
 <template>
   <div class="prompts-control-card">
     <div class="header">
+      <div class="back-button" @click="$emit('back')">
+        <LeftOutlined />返回
+      </div>
       <span class="title">{{ category }}设置</span>
     </div>
     <div class="content">
@@ -22,7 +25,7 @@
         @add="handleAddPrompt"
         @save="handleUpdate"
         @row-delete="handleRemove"
-        @batch-delete="store.removeSelected"
+        @batch-delete="handleRemoveSelected"
         @selection-change="store.onSelectionChange"
         @update:currentPage="handlePageChange"
         @update:pageSize="handlePageSizeChange"
@@ -37,10 +40,16 @@ import ManagePage from '@/components/ManagePage.vue'
 import { aiPromptsStore, columns, editableFields, searchOptions } from '@/stores/aiPrompts-store'
 import { generateName } from '@/utils/randomStr'
 import { watch, ref,onMounted } from 'vue'
+import { LeftOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 
 const store = aiPromptsStore
 const props = defineProps<{
   category: string
+}>()
+
+const emit = defineEmits<{
+  back: []
 }>()
 
 
@@ -58,7 +67,13 @@ const handleUpdate = async (row: any) => {
 }
 // 删除提示词
 const handleRemove = async (row: any) => {
-  await store.removeN(row.id)
+  await store.handleRowDeleteN(row)
+  store.conditionsData = { category: props.category }
+  store.fetchPageByConditions()
+}
+// 批量删除
+const handleRemoveSelected = async () => {
+  await store.removeSelectedN()
   store.conditionsData = { category: props.category }
   store.fetchPageByConditions()
 }
@@ -105,9 +120,26 @@ onMounted(async () => {
 
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.back-button {
+  cursor: pointer;
+  font-size: 12px;
+  background-color: #e8e8e8;
+  border-radius: 10px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition-duration: 0.2s;
+}
+
+.back-button:hover {
+  background-color: #252525;
+  color: white;
 }
 
 .title {

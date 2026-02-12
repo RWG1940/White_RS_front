@@ -1,6 +1,6 @@
 <template>
   <transition name="modal-fade">
-    <div v-if="isVisible" class="login-modal-overlay">
+    <div v-if="isVisible" class="register-modal-overlay">
       <div class="modal-blur-bg"></div>
       <div class="modal-container">
         <button class="close-btn" @click="closeModal">
@@ -9,11 +9,11 @@
 
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title">欢迎回来</h1>
-            <p class="modal-subtitle">登录您的账户以继续</p>
+            <h1 class="modal-title">创建账户</h1>
+            <p class="modal-subtitle">注册新账户以开始使用</p>
           </div>
 
-          <form class="login-form" @submit.prevent="handleLogin">
+          <form class="register-form" @submit.prevent="handleRegister">
             <!-- 用户名输入 -->
             <div class="form-group">
               <label for="username" class="form-label">
@@ -26,6 +26,38 @@
                 type="text"
                 class="form-input"
                 placeholder="请输入用户名"
+                required
+              />
+            </div>
+
+            <!-- 邮箱输入 -->
+            <div class="form-group">
+              <label for="email" class="form-label">
+                <UserOutlined />
+                邮箱地址
+              </label>
+              <input
+                id="email"
+                v-model="formData.email"
+                type="email"
+                class="form-input"
+                placeholder="请输入邮箱地址"
+                required
+              />
+            </div>
+
+            <!-- 手机号输入 -->
+            <div class="form-group">
+              <label for="phone" class="form-label">
+                <UserOutlined />
+                手机号码
+              </label>
+              <input
+                id="phone"
+                v-model="formData.phone"
+                type="tel"
+                class="form-input"
+                placeholder="请输入手机号码"
                 required
               />
             </div>
@@ -56,43 +88,71 @@
               </div>
             </div>
 
-            <!-- 记住我和忘记密码 -->
-            <div class="form-footer">
-              <label class="remember-me">
-                <input v-model="formData.rememberMe" type="checkbox" />
-                <span>记住我</span>
+            <!-- 确认密码输入 -->
+            <div class="form-group">
+              <label for="confirmPassword" class="form-label">
+                <LockOutlined />
+                确认密码
               </label>
-              <a class="forgot-password">忘记密码？</a>
+              <div class="password-input-wrapper">
+                <input
+                  id="confirmPassword"
+                  v-model="formData.confirmPassword"
+                  :type="showConfirmPassword ? 'text' : 'password'"
+                  class="form-input"
+                  placeholder="请再次输入密码"
+                  required
+                />
+                <button
+                  type="button"
+                  class="toggle-password-btn"
+                  @click="showConfirmPassword = !showConfirmPassword"
+                >
+                  <EyeOutlined v-if="showConfirmPassword" />
+                  <EyeInvisibleOutlined v-else />
+                </button>
+              </div>
             </div>
 
-            <!-- 登录按钮 -->
-            <button type="submit" class="login-btn" :disabled="isLoading">
-              <span v-if="!isLoading">登录</span>
+            <!-- 用户协议 -->
+            <div class="form-footer">
+              <label class="agreement">
+                <input v-model="formData.agreed" type="checkbox" />
+                <span>我已阅读并同意</span>
+                <a class="agreement-link" @click="showAgreement">用户协议</a>
+                <span>和</span>
+                <a class="agreement-link" @click="showPrivacy">隐私政策</a>
+              </label>
+            </div>
+
+            <!-- 注册按钮 -->
+            <button type="submit" class="register-btn" :disabled="isLoading">
+              <span v-if="!isLoading">注册</span>
               <span v-else class="loading-spinner">
                 <LoadingOutlined />
               </span>
             </button>
           </form>
 
-          <!-- 第三方登录 -->
+          <!-- 第三方注册 -->
           <div class="divider">
-            <span>或使用以下方式登录</span>
+            <span>或使用以下方式注册</span>
           </div>
 
-          <div class="social-login">
-            <button class="social-btn wechat" title="微信登录">
+          <div class="social-register">
+            <button class="social-btn wechat" title="微信注册">
               <WechatOutlined />
             </button>
-            <button class="social-btn alipay" title="支付宝登录">
+            <button class="social-btn alipay" title="支付宝注册">
               <AlipayOutlined />
             </button>
-            <button class="social-btn qq" title="QQ登录">
+            <button class="social-btn qq" title="QQ注册">
               <QqOutlined />
             </button>
           </div>
 
-          <!-- 注册链接 -->
-          <div class="signup-link">还没有账户？<a @click="goToSignup">立即注册</a></div>
+          <!-- 登录链接 -->
+          <div class="login-link">已有账户？<a @click.prevent="goToLogin">立即登录</a></div>
         </div>
       </div>
     </div>
@@ -122,7 +182,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:visible', value: boolean): void
-  (e: 'signup'): void
+  (e: 'login'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -136,12 +196,16 @@ const authStore = useAuthStore()
 
 const isVisible = ref(props.visible)
 const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 const isLoading = ref(false)
 
 const formData = ref({
   username: '',
+  email: '',
+  phone: '',
   password: '',
-  rememberMe: false,
+  confirmPassword: '',
+  agreed: false,
 })
 
 // 监听 props.visible 的变化
@@ -157,52 +221,139 @@ const closeModal = () => {
   emit('update:visible', false)
 }
 
-const handleLogin = async () => {
-  if (!formData.value.username.trim() || !formData.value.password.trim()) {
-    message.warning('请输入用户名和密码')
+const validateForm = () => {
+  if (!formData.value.username.trim()) {
+    message.warning('请输入用户名')
+    return false
+  }
+  
+  if (!formData.value.email.trim()) {
+    message.warning('请输入邮箱地址')
+    return false
+  }
+  
+  // 简单的邮箱格式验证
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.value.email)) {
+    message.warning('请输入有效的邮箱地址')
+    return false
+  }
+  
+  if (!formData.value.phone.trim()) {
+    message.warning('请输入手机号码')
+    return false
+  }
+  
+  // 简单的手机号格式验证
+  const phoneRegex = /^1[3-9]\d{9}$/
+  if (!phoneRegex.test(formData.value.phone)) {
+    message.warning('请输入有效的手机号码')
+    return false
+  }
+  
+  if (!formData.value.password) {
+    message.warning('请输入密码')
+    return false
+  }
+  
+  if (formData.value.password.length < 6) {
+    message.warning('密码长度不能少于6位')
+    return false
+  }
+  
+  if (formData.value.password !== formData.value.confirmPassword) {
+    message.warning('两次输入的密码不一致')
+    return false
+  }
+  
+  if (!formData.value.agreed) {
+    message.warning('请同意用户协议和隐私政策')
+    return false
+  }
+  
+  return true
+}
+
+const handleRegister = async () => {
+  if (!validateForm()) {
     return
   }
 
   isLoading.value = true
 
   try {
-    const result = await authStore.login({
+    // 调用注册API
+    const result = await authStore.register({
       username: formData.value.username,
+      email: formData.value.email,
+      phone: formData.value.phone,
       password: formData.value.password,
     })
 
     if (result && result.success) {
-      // 登录成功提示
-      message.success({
-        content: '登录成功',
-        duration: 2,
+      // 注册成功后自动登录
+      const loginResult = await authStore.login({
+        username: formData.value.username,
+        password: formData.value.password,
       })
 
-      // 登录成功后关闭弹窗
-      closeModal()
-      // 重置表单
-      formData.value = {
-        username: '',
-        password: '',
-        rememberMe: false,
-      }
-
-      // 延迟后跳转到首页
-      setTimeout(() => {
-        router.push('/ai-prompts-front').catch((err) => {
-          console.error('路由跳转失败:', err)
+      if (loginResult && loginResult.success) {
+        // 登录成功提示
+        message.success({
+          content: '注册成功，已自动登录',
+          duration: 2,
         })
-      }, 500)
+
+        // 注册登录成功后关闭弹窗
+        closeModal()
+        // 重置表单
+        formData.value = {
+          username: '',
+          email: '',
+          phone: '',
+          password: '',
+          confirmPassword: '',
+          agreed: false,
+        }
+
+        // 延迟后刷新页面或跳转到首页
+        setTimeout(() => {
+          window.location.reload()
+        }, 500)
+      } else {
+        // 登录失败，提示用户手动登录
+        message.success({
+          content: '注册成功，请手动登录',
+          duration: 2,
+        })
+
+        closeModal()
+        // 重置表单
+        formData.value = {
+          username: '',
+          email: '',
+          phone: '',
+          password: '',
+          confirmPassword: '',
+          agreed: false,
+        }
+
+        // 延迟后触发登录弹窗
+        setTimeout(() => {
+          emit('login')
+        }, 500)
+      }
     } else {
-      // 登录失败提示
+      // 注册失败提示
       message.error({
-        content: '登录失败',
+        content: '注册失败，请检查输入信息',
         duration: 2,
       })
     }
   } catch (error) {
+    console.error('注册请求失败:', error)
     message.error({
-      content: '登录请求失败，请稍后重试',
+      content: '注册请求失败，请稍后重试',
       duration: 2,
     })
   } finally {
@@ -210,14 +361,22 @@ const handleLogin = async () => {
   }
 }
 
-const goToSignup = () => {
+const goToLogin = () => {
   closeModal()
-  emit('signup')
+  emit('login')
+}
+
+const showAgreement = () => {
+  message.info('用户协议页面正在开发中')
+}
+
+const showPrivacy = () => {
+  message.info('隐私政策页面正在开发中')
 }
 </script>
 
 <style scoped>
-.login-modal-overlay {
+.register-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -243,7 +402,7 @@ const goToSignup = () => {
 .modal-container {
   position: relative;
   width: 90%;
-  max-width: 420px;
+  max-width: 450px;
   background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
@@ -326,12 +485,12 @@ const goToSignup = () => {
   font-weight: 400;
 }
 
-.login-form {
+.register-form {
   margin-bottom: 24px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-label {
@@ -404,48 +563,47 @@ const goToSignup = () => {
 }
 
 .form-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 20px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
-.remember-me {
+.agreement {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   color: #aaa;
   transition: color 0.3s ease;
+  flex-wrap: wrap;
 }
 
-.remember-me input {
-  width: 16px;
-  height: 16px;
+.agreement input {
+  width: 14px;
+  height: 14px;
   cursor: pointer;
   accent-color: #18d5ff;
 }
 
-.remember-me:hover {
+.agreement:hover {
   color: #dcdcdc;
 }
 
-.forgot-password {
+.agreement-link {
   color: #18d5ff;
   text-decoration: none;
   transition: color 0.3s ease;
+  cursor: pointer;
 }
 
-.forgot-password:hover {
+.agreement-link:hover {
   color: #40d5ff;
   text-decoration: underline;
 }
 
-.login-btn {
+.register-btn {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #1890ff, #1ac49f);
+  background: linear-gradient(135deg, #1ac49f, #1890ff);
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -459,17 +617,17 @@ const goToSignup = () => {
   gap: 6px;
 }
 
-.login-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #40a9ff, #3dd1b1);
+.register-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3dd1b1, #40a9ff);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(24, 144, 255, 0.3);
 }
 
-.login-btn:active:not(:disabled) {
+.register-btn:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.login-btn:disabled {
+.register-btn:disabled {
   background: #555;
   color: #888;
   cursor: not-allowed;
@@ -516,7 +674,7 @@ const goToSignup = () => {
   padding: 0 12px;
 }
 
-.social-login {
+.social-register {
   display: flex;
   gap: 12px;
   justify-content: center;
@@ -562,20 +720,21 @@ const goToSignup = () => {
   box-shadow: 0 0 12px rgba(0, 102, 204, 0.2);
 }
 
-.signup-link {
+.login-link {
   text-align: center;
   font-size: 13px;
   color: #888;
 }
 
-.signup-link a {
+.login-link a {
   color: #18d5ff;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
+  cursor: pointer;
 }
 
-.signup-link a:hover {
+.login-link a:hover {
   color: #40d5ff;
   text-decoration: underline;
 }
@@ -611,7 +770,7 @@ const goToSignup = () => {
     margin-bottom: 24px;
   }
 
-  .social-login {
+  .social-register {
     gap: 8px;
   }
 

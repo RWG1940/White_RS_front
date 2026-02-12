@@ -36,24 +36,29 @@ const developConfig: AppConfig = {
   siteTitle: '开发测试系统',
   browserTitle: '开发测试系统',
   frontendPort: 8888,
-  backendUrl: 'http://192.168.24.77:8080',
+  backendUrl: 'http://192.168.24.77:8777',
   enableDebug: true,
   bottomText: 'Copyright © 2025 数字技术部 All Rights Reserved.',
   frontendUrl: 'http://192.168.24.77:8888',
 }
 
+// ai项目配置
+const aiConfig: AppConfig = {
+  siteTitle: 'Ai多功能系统',
+  browserTitle: 'Ai多功能系统',
+  frontendPort: 8888,
+  backendUrl: '/api',
+  enableDebug: true,
+  bottomText: 'Copyright © 2025 AIRWG All Rights Reserved.',
+  frontendUrl: 'http://123.157.20.70:28888',
+}
 // 根据环境选择配置
 const getConfig = (): AppConfig => {
-  const isDev = 0
-  if (isDev == 0) {
     return {
+      //...productConfig,
       ...developConfig,
+      //...aiConfig,
     }
-  } else {
-    return {
-      ...productConfig,
-    }
-  }
 }
 
 // 导出配置实例

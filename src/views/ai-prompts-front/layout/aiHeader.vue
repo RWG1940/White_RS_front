@@ -52,8 +52,8 @@ const setActiveButton = (button: string) => {
 <style scoped>
 .ai-header {
   color: #fff;
-  background-color: #2a2a2a;
-  border-bottom: 1px solid #333;
+  background-color: #222222;
+  border-bottom: 1px solid #333333;
   height: 80px;
   display: flex;
   align-items: center;

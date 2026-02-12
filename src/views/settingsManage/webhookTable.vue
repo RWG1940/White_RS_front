@@ -17,7 +17,7 @@
       @search="store.handleSearch"
       @add="store.create({ name: `新webhook-${generateName()}`, status: 1, code: generateName() })"
       @save="store.update"
-      @row-delete="store.remove"
+      @row-delete="store.handleRowDelete"
       @batch-delete="store.removeSelected"
       @selection-change="store.onSelectionChange"
       @update:currentPage="store.pageChange"
