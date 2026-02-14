@@ -56,8 +56,8 @@ const aiConfig: AppConfig = {
 const getConfig = (): AppConfig => {
     return {
       //...productConfig,
-      ...developConfig,
-      //...aiConfig,
+      //...developConfig,
+      ...aiConfig,
     }
 }
 

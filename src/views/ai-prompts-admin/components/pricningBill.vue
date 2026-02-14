@@ -18,7 +18,7 @@
       @add="store.create({ status: 1, name: '新订阅' + generateName() })"
       @save="store.update"
       @row-delete="store.handleRowDelete"
-      @batch-delete="store.removeSelected"
+      @batch-delete="handleBatchDelete"
       @selection-change="handleSelectionChange"
       @update:currentPage="store.pageChange"
       @update:pageSize="store.pageSizeChange"
@@ -37,10 +37,23 @@
           </a-select>
         </template>
       </template>
+
+      <template #cell-type="{ record, isEditing, editableData, getInternalKey }">
+        <template v-if="!isEditing">
+          <span>{{ record.type == 1 ? '订阅' : record.type == 2 ? 'api调用' : record.type }}</span>
+        </template>
+        <template v-else>
+          <a-select v-model:value="editableData[getInternalKey(record)]!.type" size="small">
+            <a-select-option :value="1">订阅</a-select-option>
+            <a-select-option :value="2">api调用</a-select-option>
+          </a-select>
+        </template>
+      </template>
       <template #custom-tool>
         <a-button class="edit-btn" @click="handleEditClick" :disabled="isEditButtonDisabled"
           >编辑</a-button
         >
+     
       </template>
     </ManagePage>
 
@@ -100,6 +113,7 @@ const editForm = reactive<Record<string, any>>({})
 const openEditModal = ref(false)
 const editUploadLoading = ref(false)
 
+
 // 选择的行数据
 const selectedRow = ref<any>()
 const selectedRows = ref<any[]>([])
@@ -145,7 +159,15 @@ const handleEditCancelBtn = () => {
   // 重置表单
   Object.keys(editForm).forEach((k) => delete editForm[k])
 }
-
+// 批量删除
+const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
+  try {
+    const ids = keys.map((k) => Number(k))
+    await store.remove(ids)
+  } catch (e) {
+    console.error('批量删除失败', e)
+  }
+}
 onMounted(async () => {
   await store.fetchPage()
 })

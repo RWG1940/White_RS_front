@@ -1,7 +1,7 @@
 export interface AiPlansType {
     id?: number
     name?: string //订阅名
-    price?: string //价格
+    price?: number //价格
     durationDays?: number //天数
     maxSize?: number //最大图片尺寸
     status?: number //状态

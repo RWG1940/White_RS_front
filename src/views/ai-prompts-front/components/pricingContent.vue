@@ -14,21 +14,32 @@
         @click="handlePlanSelect(plan)"
       />
     </div>
+    
+    <!-- 收银台弹窗 -->
+    <CheckoutModal 
+      v-model:visible="showCheckoutModal" 
+      :selected-plan="selectedPlan"
+      @payment-success="handlePaymentSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import PricingCard from './pricingCard.vue'
+import CheckoutModal from './checkoutModal.vue'
 import type { AiPlansType } from '@/types/aiPlans-type'
 import { aiPlansStore } from '@/stores/aiPlans-store';
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import { message } from 'ant-design-vue';
 
 const store = aiPlansStore
+const showCheckoutModal = ref(false)
+const selectedPlan = ref<AiPlansType | null>(null)
 
 // 根据计划状态获取按钮文本
 const getButtonText = (plan: AiPlansType) => {
   if (plan.status === 0) return '已停用'
-  if (plan.price === '0') return '免费试用'
+  if (plan.price === 0) return '免费试用'
   return '立即订阅'
 }
 
@@ -41,15 +52,20 @@ const handlePlanSelect = (plan: AiPlansType) => {
     return
   }
   
-  if (plan.price === '0') {
+  if (plan.price == 0) {
     // 免费试用逻辑
-    alert(`开始免费试用 ${plan.name} 计划`)
+    message.success(`您已在免费计划中`)
   } else {
-    // 付费订阅逻辑
-    alert(`订阅 ${plan.name} 计划 - 价格: ¥${plan.price}`)
+    // 付费订阅逻辑 - 显示收银台弹窗
+    selectedPlan.value = plan
+    showCheckoutModal.value = true
   }
-  
-  // 这里可以添加实际的订阅逻辑，比如调用API接口等
+}
+
+// 支付成功处理
+const handlePaymentSuccess = () => {
+  message.success('订阅成功！')
+  // 这里可以添加订阅成功后的逻辑，比如刷新用户信息等
 }
 
 onMounted(() => {

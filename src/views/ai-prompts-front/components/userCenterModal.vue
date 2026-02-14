@@ -50,6 +50,10 @@
                 </template>
                 编辑个人信息
               </a-button>
+              <button class="generate-record-btn" @click="showGenerateRecords">
+                <PictureOutlined />
+                <span>图片生成记录</span>
+              </button>
               <button class="logout-btn" @click="handleLogout">
                 <LogoutOutlined />
                 <span>退出登录</span>
@@ -130,10 +134,15 @@
               <a-button block @click="cancelEditing"> 取消 </a-button>
             </div>
           </div>
+
+
         </div>
       </div>
     </div>
   </transition>
+  
+  <!-- 独立的图片生成记录弹窗 -->
+  <GenerateRecordModal v-model:visible="showRecordModal" />
 </template>
 
 <script setup lang="ts">
@@ -147,10 +156,12 @@ import {
   EditOutlined,
   LogoutOutlined,
   LockOutlined,
+  PictureOutlined,
 } from '@ant-design/icons-vue'
 import { getBackendUrl } from '@/utils/getApiUrl'
 import { changePassword } from '@/api/services/auth-api'
 import { userStore } from '@/stores/user-store'
+import GenerateRecordModal from './generateRecordModal.vue'
 
 interface Props {
   visible?: boolean
@@ -175,6 +186,7 @@ const user = ref(authStore.user)
 const activeTab = ref('info')
 const loading = ref(false)
 const isEditing = ref(false)
+const showRecordModal = ref(false)
 
 const profileForm = reactive({
   username: '',
@@ -338,6 +350,11 @@ const handleLogout = async () => {
 // 跳转到管理员后台
 const handleGoToAdmin = () => {
   router.push('/aiPromptsManage')
+}
+
+// 显示图片生成记录弹窗
+const showGenerateRecords = () => {
+  showRecordModal.value = true
 }
 </script>
 
@@ -730,5 +747,31 @@ const handleGoToAdmin = () => {
   .detail-value {
     max-width: 150px;
   }
+}
+
+/* 图片生成记录按钮样式 */
+.generate-record-btn {
+  width: 100%;
+  padding: 6px 12px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.generate-record-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffa940;
 }
 </style>

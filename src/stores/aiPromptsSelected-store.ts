@@ -205,12 +205,12 @@ export const aiPromptsSelectedStore = defineStore('aiPromptsSelected', () => {
     
     // 按subcategory分组
     const subcategoryGroups: Record<string, any[]> = {}
-    allPrompts.forEach(prompt => {
+    allPrompts.forEach((prompt: any) => {
       if (prompt.subcategory) {
         if (!subcategoryGroups[prompt.subcategory]) {
           subcategoryGroups[prompt.subcategory] = []
         }
-        subcategoryGroups[prompt.subcategory].push(prompt)
+        subcategoryGroups[prompt.subcategory]!.push(prompt)
       }
     })
     

@@ -56,6 +56,7 @@ import { DownloadOutlined, CloseOutlined, ExclamationCircleOutlined, PictureOutl
 import { message } from 'ant-design-vue'
 import { generateImgByText } from '@/api/services/qwen-api'
 import { aiPromptsSelectedStore } from '@/stores/aiPromptsSelected-store'
+import { useAuthStore } from '@/stores/auth-store'
 
 interface Props {
     visible: boolean
@@ -107,7 +108,8 @@ const handleGenerate = async () => {
         const response = await generateImgByText({
             prompt: props.prompt,
             n: 1,
-            size: promptsStore.selectedOutputConfig || '1024*1024'
+            size: promptsStore.selectedOutputConfig || '1024*1024',
+            uid: useAuthStore().user?.id
         })
 
         if (response.data.code == 200) {

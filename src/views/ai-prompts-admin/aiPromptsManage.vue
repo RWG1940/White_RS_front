@@ -7,7 +7,7 @@
       <a-tab-pane key="3" tab="Ai学院"><Academy /></a-tab-pane>
       <a-tab-pane key="4" tab="订阅与账目本"><Pricing /></a-tab-pane>
       <a-tab-pane key="5" tab="Api与用量统计"></a-tab-pane>
-      <a-tab-pane key="6" tab="记录与统计图表"></a-tab-pane>
+      <a-tab-pane key="6" tab="生图记录"><GenerateRecord /></a-tab-pane>
       <a-tab-pane key="7" tab="转到前台">
         <a-button @click="goToFront()">点我跳转</a-button>
       </a-tab-pane>
@@ -23,6 +23,7 @@ import Inspiration from './components/inspiration.vue';
 import Academy from './components/academy.vue';
 import Pricing from './components/pricing.vue';
 import { useRouter } from 'vue-router';
+import GenerateRecord from './components/generateRecord.vue';
 
 const router = useRouter();
 const activeKey = ref('1');

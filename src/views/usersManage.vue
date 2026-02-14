@@ -74,6 +74,7 @@
             <a-select
               mode="multiple"
               size="small"
+              style="width: 100%"
               :value="(editableData[getInternalKey(record)]?.roles || []).map((r: any) => r.id)"
               @change="(vals: any) => onRolesChange(editableData, getInternalKey(record), vals)"
             >

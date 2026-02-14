@@ -4,6 +4,7 @@ interface GenerateImageParams {
   prompt: string
   n?: number
   size?: string
+  uid?:number
 }
 
 export const generateImgByText = (params: GenerateImageParams) => {

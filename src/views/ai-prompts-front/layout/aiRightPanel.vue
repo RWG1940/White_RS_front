@@ -10,6 +10,10 @@
             @update:visible="showGeneratedImgModal = $event" 
             @close="handleImageModalClose" 
         />
+        <UserSubscriptionModal 
+            :visible="showSubscriptionModal" 
+            @update:visible="showSubscriptionModal = $event" 
+        />
         <div class="panel-header">
             <h3>
                 <SettingOutlined />&ensp;控制中心
@@ -62,6 +66,15 @@
                     />
                 </div>
 
+                <div class="connection-switch-container" @click="showSubscriptionInfo">
+                    <!-- 用户角色信息 -->
+                    <div class="switch-label">
+                        <CrownOutlined style="margin-right: 8px;" />
+                        当前套餐：
+                        {{ getRoleName(authStore.user?.roles?.[0] as any) || '普通用户' }}
+                    </div>
+                </div>
+
                 <!-- 清空所有提示词按钮 -->
                 <div class="connection-switch-container"  v-if="promptsStore.selectedPromptIds.length > 0">
                      
@@ -84,7 +97,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { UserOutlined, SettingOutlined, LinkOutlined, RobotOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, SettingOutlined, LinkOutlined, RobotOutlined, DeleteOutlined,CrownOutlined } from '@ant-design/icons-vue'
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth-store'
 import RightPanelPromptsPreview from '../components/rightPanelPromptsPreview.vue'
@@ -95,10 +108,13 @@ import RegisterModal from '../components/registerModal.vue'
 import UserCenterModal from '../components/userCenterModal.vue'
 import PromptWeightPanel from '../components/promptsWeightPanel.vue'
 import GeneratedImgModal from '../components/generatedImgModal.vue'
+import UserSubscriptionModal from '../components/userSubscriptionModal.vue'
 import { aiPromptsSelectedStore } from '@/stores/aiPromptsSelected-store'
 import WelcomCard from '../components/welcomCard.vue'
 import { message } from 'ant-design-vue'
 import OutputConfigPanel from '../components/OutputConfigPanel.vue'
+import { roleStore } from '@/stores/role-store'
+import type { roleType } from '@/types/role-type'
 
 const promptsStore = aiPromptsSelectedStore()
 const authStore = useAuthStore()
@@ -106,9 +122,23 @@ const showLoginModal = ref(false)
 const showRegisterModal = ref(false)
 const showUserCenterModal = ref(false)
 const showGeneratedImgModal = ref(false)
+const showSubscriptionModal = ref(false)
 const showBottomComponents = ref(false)
 const generatedPrompt = ref('')
 let animationTimer: number | null = null
+
+// 获取角色名称
+const getRoleName = (roleCode?: number): string => {
+  if (!roleCode) return '游客'
+  
+  // 直接从角色store的list中查找对应的角色名称
+  if (roleStore.list && Array.isArray(roleStore.list)) {
+    const role = (roleStore.list as roleType[]).find((r: roleType) => r.code === roleCode)
+    return role?.name || '未知角色'
+  }
+  
+  return '未知角色'
+}
 
 const handleLoginBtnClick = () => {
     if (authStore.isAuthenticated) {
@@ -160,6 +190,10 @@ const handleImageModalClose = () => {
 
 // 处理连线开关变化
 const handleConnectionSwitchChange = (checked: boolean) => {
+    if (checked && promptsStore.autoConfigPrompts) {
+        // 如果开启连线，自动关闭自动配置
+        promptsStore.autoConfigPrompts = false
+    }
     // 触发所有提示词卡片重新绘制连接线
     const event = new CustomEvent('connectionLinesToggled', { detail: { show: checked } })
     window.dispatchEvent(event)
@@ -167,6 +201,13 @@ const handleConnectionSwitchChange = (checked: boolean) => {
 
 // 处理自动配置开关变化
 const handleAutoConfigSwitchChange = (checked: boolean) => {
+    if (checked && promptsStore.showConnectionLines) {
+        // 如果开启自动配置，自动关闭连线
+        promptsStore.showConnectionLines = false
+        // 触发连接线关闭事件
+        const event = new CustomEvent('connectionLinesToggled', { detail: { show: false } })
+        window.dispatchEvent(event)
+    }
     // 开关状态变化处理
     console.log('自动配置提示词开关状态:', checked)
 }
@@ -175,6 +216,15 @@ const handleAutoConfigSwitchChange = (checked: boolean) => {
 const handleClearAllPrompts = () => {
     promptsStore.clearSelectedPrompts()
     message.success('已清空所有提示词')
+}
+
+// 显示订阅信息
+const showSubscriptionInfo = () => {
+    if (!authStore.isAuthenticated) {
+        message.warning('请先登录查看订阅信息')
+        return
+    }
+    showSubscriptionModal.value = true
 }
 
 // 监听加载状态变化
@@ -204,6 +254,16 @@ watch(() => promptsStore.isLoading, (newVal, oldVal) => {
         }
     }
 }, { immediate: true })
+
+// 组件挂载时加载角色数据
+onMounted(() => {
+  // 如果角色数据未加载，则加载角色数据
+  if (!roleStore.list || roleStore.list.length === 0) {
+    if(useAuthStore().token.length > 1) {
+      roleStore.fetchAll()
+    }
+  }
+})
 
 // 组件卸载时清理定时器
 onUnmounted(() => {

@@ -50,7 +50,7 @@ const getStatusColor = (status: number | undefined) => {
     <div class="card_title__container">
       <span class="card_title">{{ plan.name || '订阅计划' }}</span>
       <p class="card_paragraph">{{ plan.description || 'AI提示词订阅计划' }}</p>
-      <div class="price">{{ formatPrice(plan.price) }}</div>
+      <div class="price">{{ formatPrice(plan.price as any) }}</div>
     </div>
     <hr class="line" />
     <div class="plan-details">

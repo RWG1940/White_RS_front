@@ -23,75 +23,75 @@ export interface MenuItem {
 
 // 定义所有菜单项
 export const menuConfig: MenuItem[] = [
-  {
-    key: '/',
-    path: '',
-    name: 'Home',
-    icon: HomeOutlined,
-    label: '首页',
-    title: '首页',
-    component: () => import('@/views/Home.vue').catch(() => import('@/views/NotFound.vue')),
-    requiresAuth: true,
-    // 首页所有角色都可访问
-  },
-  {
-    key: '/youding-workbench',
-    path: 'youding-workbench',
-    name: 'youding-workbench',
-    icon: DesktopOutlined,
-    label: '优鼎工作台',
-    title: '优鼎工作台',
-    component: () =>
-      import('@/views/accessories-work/YoudingWork.vue').catch(
-        () => import('@/views/NotFound.vue'),
-      ),
-    requiresAuth: true,
-    // 只有优鼎角色(5293)和管理员(3294)可以访问
-    allowedRoles: ['5293', '3294'],
-  },
-  {
-    key: '/gendan-workbench',
-    path: 'gendan-workbench',
-    name: 'gendan-workbench',
-    icon: DesktopOutlined,
-    label: '跟单工作台',
-    title: '跟单工作台',
-    component: () =>
-      import('@/views/accessories-work/GendanWork.vue').catch(() => import('@/views/NotFound.vue')),
-    requiresAuth: true,
-    // 只有跟单角色(5555)和管理员(3294)可以访问
-    allowedRoles: ['5555', '3294'],
-  },
-  {
-    key: '/factory-workbench',
-    path: 'factory-workbench',
-    name: 'factory-workbench',
-    icon: DesktopOutlined,
-    label: '工厂工作台',
-    title: '工厂工作台',
-    component: () =>
-      import('@/views/accessories-work/FactoryWork.vue').catch(
-        () => import('@/views/NotFound.vue'),
-      ),
-    requiresAuth: true,
-    // 只有工厂角色(7777)和管理员(3294)可以访问
-    allowedRoles: ['7777', '3294'],
-  },
-  {
-    key: '/accessories-factory-workbench',
-    path: 'accessories-factory-workbench',
-    name: 'accessories-factory-workbench',
-    icon: DesktopOutlined,
-    label: '辅料工厂工作台',
-    title: '辅料工厂工作台',
-    component: () =>
-      import('@/views/accessories-work/AccessoriesFactoryWork.vue').catch(
-        () => import('@/views/NotFound.vue'),
-      ),
-    requiresAuth: true,
-    // 只有辅料工厂角色(6666)和管理员(3294)可以访问
-    allowedRoles: ['6666', '3294'],
-  },
+  // {
+  //   key: '/',
+  //   path: '',
+  //   name: 'Home',
+  //   icon: HomeOutlined,
+  //   label: '首页',
+  //   title: '首页',
+  //   component: () => import('@/views/Home.vue').catch(() => import('@/views/NotFound.vue')),
+  //   requiresAuth: true,
+  //   // 首页所有角色都可访问
+  // },
+  // {
+  //   key: '/youding-workbench',
+  //   path: 'youding-workbench',
+  //   name: 'youding-workbench',
+  //   icon: DesktopOutlined,
+  //   label: '优鼎工作台',
+  //   title: '优鼎工作台',
+  //   component: () =>
+  //     import('@/views/accessories-work/YoudingWork.vue').catch(
+  //       () => import('@/views/NotFound.vue'),
+  //     ),
+  //   requiresAuth: true,
+  //   // 只有优鼎角色(5293)和管理员(3294)可以访问
+  //   allowedRoles: ['5293', '3294'],
+  // },
+  // {
+  //   key: '/gendan-workbench',
+  //   path: 'gendan-workbench',
+  //   name: 'gendan-workbench',
+  //   icon: DesktopOutlined,
+  //   label: '跟单工作台',
+  //   title: '跟单工作台',
+  //   component: () =>
+  //     import('@/views/accessories-work/GendanWork.vue').catch(() => import('@/views/NotFound.vue')),
+  //   requiresAuth: true,
+  //   // 只有跟单角色(5555)和管理员(3294)可以访问
+  //   allowedRoles: ['5555', '3294'],
+  // },
+  // {
+  //   key: '/factory-workbench',
+  //   path: 'factory-workbench',
+  //   name: 'factory-workbench',
+  //   icon: DesktopOutlined,
+  //   label: '工厂工作台',
+  //   title: '工厂工作台',
+  //   component: () =>
+  //     import('@/views/accessories-work/FactoryWork.vue').catch(
+  //       () => import('@/views/NotFound.vue'),
+  //     ),
+  //   requiresAuth: true,
+  //   // 只有工厂角色(7777)和管理员(3294)可以访问
+  //   allowedRoles: ['7777', '3294'],
+  // },
+  // {
+  //   key: '/accessories-factory-workbench',
+  //   path: 'accessories-factory-workbench',
+  //   name: 'accessories-factory-workbench',
+  //   icon: DesktopOutlined,
+  //   label: '辅料工厂工作台',
+  //   title: '辅料工厂工作台',
+  //   component: () =>
+  //     import('@/views/accessories-work/AccessoriesFactoryWork.vue').catch(
+  //       () => import('@/views/NotFound.vue'),
+  //     ),
+  //   requiresAuth: true,
+  //   // 只有辅料工厂角色(6666)和管理员(3294)可以访问
+  //   allowedRoles: ['6666', '3294'],
+  // },
 
   {
     key: '/usersManage',
@@ -116,17 +116,17 @@ export const menuConfig: MenuItem[] = [
     requiresAuth: false,
   },
 
-  {
-    key: '/rsDrive',
-    path: 'rsDrive',
-    name: 'rsDrive',
-    icon: CloudOutlined,
-    label: '优鼎云盘',
-    title: '优鼎云盘',
-    component: () => import('@/views/fileDrive.vue').catch(() => import('@/views/NotFound.vue')),
-    requiresAuth: true,
-    allowedRoles: ['3294', '5293'],
-  },
+  // {
+  //   key: '/rsDrive',
+  //   path: 'rsDrive',
+  //   name: 'rsDrive',
+  //   icon: CloudOutlined,
+  //   label: '优鼎云盘',
+  //   title: '优鼎云盘',
+  //   component: () => import('@/views/fileDrive.vue').catch(() => import('@/views/NotFound.vue')),
+  //   requiresAuth: true,
+  //   allowedRoles: ['3294', '5293'],
+  // },
   {
     key: '/settingsManage',
     path: 'settingsManage',
