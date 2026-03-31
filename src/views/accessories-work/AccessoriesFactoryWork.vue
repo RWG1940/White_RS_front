@@ -87,7 +87,7 @@
     </a-modal>
 
     <!-- 订单管理弹窗 -->
-    <Modal :visible="openHistory" @update:visible="openHistory = $event" title="订单管理">
+    <Modal :visible="openHistory" @update:visible="openHistory = $event" :show-footer="false" title="订单管理">
       <div class="batch-header">
         <div class="batch-controls">
           <a-input-search

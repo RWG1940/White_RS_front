@@ -35,19 +35,19 @@
         @selection-change="handleSelectionChange"
       >
         <template #custom-tool>
-          <a-button class="edit-btn" @click="handleEditClick" :disabled="isEditButtonDisabled"
+          <a-button @click="handleEditClick" :disabled="isEditButtonDisabled"
             ><FormOutlined
           /></a-button>
-          <a-button class="custom-tool-btn" type="primary" @click="onImportClick"
+          <a-button type="primary" @click="onImportClick"
             ><ImportOutlined />导入</a-button
           >
-          <a-button class="custom-tool-btn" type="primary" @click="onExportClick"
+          <a-button type="primary" @click="onExportClick"
             ><ExportOutlined />导出</a-button
           >
-          <a-button class="custom-tool-btn" type="primary" @click="onHistoryClick"
+          <a-button type="primary" @click="onHistoryClick"
             ><FundProjectionScreenOutlined />订单管理</a-button
           >
-          <a-button class="custom-tool-btn" type="primary" @click="onStoreClick"
+          <a-button type="primary" @click="onStoreClick"
             ><ShoppingCartOutlined /> 商城</a-button
           >
           <div class="batch-select">
@@ -1129,25 +1129,18 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* 工具按钮样式 */
-.custom-tool-btn {
-  margin-left: 5px;
-}
+
 
 .batch-select {
   padding: 5px;
   background-color: rgb(225, 225, 225);
   border-radius: 10px;
-  margin-left: 5px;
   display: flex;
   gap: 5px;
   justify-content: center;
   align-items: center;
 }
 
-.edit-btn {
-  margin-left: 8px;
-}
 
 /* 优先级指示器样式 */
 .priority-container {
@@ -1294,17 +1287,16 @@ onMounted(async () => {
 }
 
 .selected-total {
-  margin-left: 10px;
+
   background: linear-gradient(to bottom, rgba(166, 255, 246, 0.572), rgba(174, 228, 232, 0.566));
   padding: 6px;
-  border-radius: 5px;
+  border-radius: 8px;
 }
 
 .customer {
-  margin-left: 10px;
   background: linear-gradient(to bottom, rgb(2, 0, 101), rgb(0, 139, 164));
   padding: 6px;
-  border-radius: 5px;
+  border-radius: 8px;
   transition-duration: 0.3s;
   cursor: pointer;
 }

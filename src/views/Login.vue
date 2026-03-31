@@ -3,6 +3,7 @@
     <a-row justify="center" align="middle" class="login-row">
       <a-col :xs="22" :sm="18" :md="14" :lg="10" :xl="8" :xxl="6">
         <a-card class="login-card" :bordered="false">
+          <div class="card-glare"></div>
           <template #title>
             <h2 class="login-title">登录</h2>
           </template>
@@ -61,7 +62,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { message } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
-import LoginLoading from '@/components/LoginLoading.vue'
+import LoginLoading from '@/components/LoginLoadingSpinner.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -129,9 +130,9 @@ const handleLogin = async () => {
             router.push('/')
           }
         })
-      }, 500)
+        loading.value = false
+      }, 1000)
     } else {
-      // 登录失败提示
       message.error({
         content: '登录失败',
         duration: 2,
@@ -139,7 +140,11 @@ const handleLogin = async () => {
       loading.value = false
     }
   } catch (error) {
-  } finally {
+    console.error('登录异常:', error)
+    message.error({
+      content: '登录失败',
+      duration: 2,
+    })
     loading.value = false
   }
 }
@@ -158,14 +163,30 @@ const handleLogin = async () => {
 }
 
 .login-card {
-  padding: 20px;
-  background-color: rgba(255, 255, 255, 0.66);
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  padding: 30px 25px;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 35px;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  transition:
+    transform 0.5s ease,
+    box-shadow 0.3s ease;
+}
+.login-card .card-glare {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 60%);
+  pointer-events: none;
+  transform: rotate(25deg);
+  mix-blend-mode: screen;
 }
 
 .login-title {
@@ -182,7 +203,7 @@ const handleLogin = async () => {
   }
 
   .login-card {
-    border-radius: 12px;
+    border-radius: 35px;
   }
 
   .login-title {

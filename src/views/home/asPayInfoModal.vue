@@ -3,6 +3,7 @@
     v-model:visible="visible"
     title="支付信息管理"
     :closeOnClickOverlay="false"
+    :show-footer="false"
     @close="handleClose"
   >
     <ManagePage
@@ -95,7 +96,12 @@
                 class="image-upload"
               >
                 <a-button size="small" type="link">
-                  {{ (editableData[getInternalKey(record)]?.wechatQr || (wechatQrFileList[getInternalKey(record)]?.length || 0) > 0) ? '重新上传' : '上传图片' }}
+                  {{
+                    editableData[getInternalKey(record)]?.wechatQr ||
+                    (wechatQrFileList[getInternalKey(record)]?.length || 0) > 0
+                      ? '重新上传'
+                      : '上传图片'
+                  }}
                 </a-button>
               </a-upload>
             </div>
@@ -135,7 +141,10 @@
                 <div class="image-tip">微信收款码</div>
                 <div class="pending-save-text">待保存</div>
               </div>
-              <div v-else-if="editableData[getInternalKey(record)]?.wechatPay" class="image-preview">
+              <div
+                v-else-if="editableData[getInternalKey(record)]?.wechatPay"
+                class="image-preview"
+              >
                 <a-image
                   :src="getImageUrl(editableData[getInternalKey(record)]?.wechatPay)"
                   :width="60"
@@ -154,7 +163,12 @@
                 class="image-upload"
               >
                 <a-button size="small" type="link">
-                  {{ (editableData[getInternalKey(record)]?.wechatPay || (wechatPayFileList[getInternalKey(record)]?.length || 0) > 0) ? '重新上传' : '上传图片' }}
+                  {{
+                    editableData[getInternalKey(record)]?.wechatPay ||
+                    (wechatPayFileList[getInternalKey(record)]?.length || 0) > 0
+                      ? '重新上传'
+                      : '上传图片'
+                  }}
                 </a-button>
               </a-upload>
             </div>
@@ -213,7 +227,13 @@
                 class="image-upload"
               >
                 <a-button size="small" type="link">
-                  {{ (editableData[getInternalKey(record)]?.aliPay || (aliPayFileList[getInternalKey(record)] && aliPayFileList[getInternalKey(record)]!.length > 0)) ? '重新上传' : '上传图片' }}
+                  {{
+                    editableData[getInternalKey(record)]?.aliPay ||
+                    (aliPayFileList[getInternalKey(record)] &&
+                      aliPayFileList[getInternalKey(record)]!.length > 0)
+                      ? '重新上传'
+                      : '上传图片'
+                  }}
                 </a-button>
               </a-upload>
             </div>
@@ -254,8 +274,8 @@
       :bodyStyle="{ maxHeight: '70vh', overflowY: 'auto', overflowX: 'hidden' }"
       @cancel="handleFormCancel"
     >
-      <a-form  ref="formRef" :model="formData" :rules="formRules" layout="vertical">
-        <a-row  :gutter="[16, 16]">
+      <a-form ref="formRef" :model="formData" :rules="formRules" layout="vertical">
+        <a-row :gutter="[16, 16]">
           <a-col :span="12">
             <a-form-item label="银行卡号" name="bankNum">
               <a-input v-model:value="formData.bankNum" placeholder="请输入银行卡号" allow-clear />
@@ -480,7 +500,11 @@ const getImageUrl = (imageUrl: string | undefined) => {
   if (!imageUrl) return ''
   const baseUrl = getBackendUrl()
   // 检查是否是完整的URL
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:')) {
+  if (
+    imageUrl.startsWith('http://') ||
+    imageUrl.startsWith('https://') ||
+    imageUrl.startsWith('data:')
+  ) {
     return imageUrl
   }
   return `${baseUrl}${imageUrl}`
@@ -574,56 +598,61 @@ const handleBeforeUpload = async (
 ) => {
   const actualFile = file as File
   const recordKey = getRowKeyValue(record)
-  
+
   try {
     // 创建FileReader来读取图片并预览
     const reader = new FileReader()
-    
+
     reader.onload = (e) => {
       // 创建预览图片的URL
       const previewUrl = e.target?.result as string
-      
+
       console.log(`图片预览创建成功: ${imageType}, 文件名: ${actualFile.name}`)
-      
+
       // 根据图片类型存储到对应的文件列表
       if (imageType === 'wechatQr') {
-        wechatQrFileList.value[recordKey] = [{
-          uid: String(Date.now()),
-          name: actualFile.name,
-          status: 'done' as const,
-          url: previewUrl,
-          originFileObj: actualFile as any,
-        }]
+        wechatQrFileList.value[recordKey] = [
+          {
+            uid: String(Date.now()),
+            name: actualFile.name,
+            status: 'done' as const,
+            url: previewUrl,
+            originFileObj: actualFile as any,
+          },
+        ]
       } else if (imageType === 'wechatPay') {
-        wechatPayFileList.value[recordKey] = [{
-          uid: String(Date.now()),
-          name: actualFile.name,
-          status: 'done' as const,
-          url: previewUrl,
-          originFileObj: actualFile as any,
-        }]
+        wechatPayFileList.value[recordKey] = [
+          {
+            uid: String(Date.now()),
+            name: actualFile.name,
+            status: 'done' as const,
+            url: previewUrl,
+            originFileObj: actualFile as any,
+          },
+        ]
       } else if (imageType === 'aliPay') {
-        aliPayFileList.value[recordKey] = [{
-          uid: String(Date.now()),
-          name: actualFile.name,
-          status: 'done' as const,
-          url: previewUrl,
-          originFileObj: actualFile as any,
-        }]
+        aliPayFileList.value[recordKey] = [
+          {
+            uid: String(Date.now()),
+            name: actualFile.name,
+            status: 'done' as const,
+            url: previewUrl,
+            originFileObj: actualFile as any,
+          },
+        ]
       }
-      
+
       // 显示成功消息
       message.success('图片已选择，请点击保存按钮上传')
     }
-    
+
     reader.onerror = (error) => {
       console.error('图片预览失败:', error)
       message.error('图片预览失败')
     }
-    
+
     // 读取文件为DataURL用于预览
     reader.readAsDataURL(actualFile)
-    
   } catch (error) {
     console.error('图片处理失败:', error)
     message.error('图片处理失败')
@@ -647,11 +676,11 @@ watch(
 // 保存数据（包含图片）
 const handleSave = async (record: AsPayInfoType) => {
   const recordKey = getRowKeyValue(record)
-  
+
   try {
     // 创建FormData对象，包含所有数据和图片
     const formDataToSend = new FormData()
-    
+
     // 添加基本信息
     if (record.bankNum) formDataToSend.append('bankNum', record.bankNum)
     if (record.bankName) formDataToSend.append('bankName', record.bankName)
@@ -659,12 +688,12 @@ const handleSave = async (record: AsPayInfoType) => {
     if (record.asName) formDataToSend.append('asName', record.asName)
     if (record.status) formDataToSend.append('status', record.status.toString())
     if (record.remark) formDataToSend.append('remark', record.remark)
-    
+
     // 如果有ID，说明是编辑操作
     if (record.id) {
       formDataToSend.append('id', record.id.toString())
     }
-    
+
     // 检查是否有微信好友二维码图片需要上传
     const wechatQrFiles = wechatQrFileList.value[recordKey]
     if (wechatQrFiles && wechatQrFiles.length > 0) {
@@ -673,7 +702,7 @@ const handleSave = async (record: AsPayInfoType) => {
         formDataToSend.append('wechatQrFile', fileObj.originFileObj)
       }
     }
-    
+
     // 检查是否有微信收款码图片需要上传
     const wechatPayFiles = wechatPayFileList.value[recordKey]
     if (wechatPayFiles && wechatPayFiles.length > 0) {
@@ -682,7 +711,7 @@ const handleSave = async (record: AsPayInfoType) => {
         formDataToSend.append('wechatPayFile', fileObj.originFileObj)
       }
     }
-    
+
     // 检查是否有支付宝收款码图片需要上传
     const aliPayFiles = aliPayFileList.value[recordKey]
     if (aliPayFiles && aliPayFiles.length > 0) {
@@ -691,13 +720,16 @@ const handleSave = async (record: AsPayInfoType) => {
         formDataToSend.append('aliPayFile', fileObj.originFileObj)
       }
     }
-    
-    console.log('开始保存数据，记录ID:', record.id, '包含图片数量:', 
-      (wechatQrFiles && wechatQrFiles.length > 0 ? 1 : 0) + 
-      (wechatPayFiles && wechatPayFiles.length > 0 ? 1 : 0) + 
-      (aliPayFiles && aliPayFiles.length > 0 ? 1 : 0)
+
+    console.log(
+      '开始保存数据，记录ID:',
+      record.id,
+      '包含图片数量:',
+      (wechatQrFiles && wechatQrFiles.length > 0 ? 1 : 0) +
+        (wechatPayFiles && wechatPayFiles.length > 0 ? 1 : 0) +
+        (aliPayFiles && aliPayFiles.length > 0 ? 1 : 0),
     )
-    
+
     // 一次性上传所有数据
     let response
     if (record.id) {
@@ -707,16 +739,16 @@ const handleSave = async (record: AsPayInfoType) => {
       // 创建新记录
       response = await createAsPayInfoWithImages(formDataToSend)
     }
-    
+
     if (response.data) {
       // 重新加载数据
       await store.fetchPage()
-      
+
       // 清空文件列表
       wechatQrFileList.value[recordKey] = []
       wechatPayFileList.value[recordKey] = []
       aliPayFileList.value[recordKey] = []
-      
+
       message.success('数据保存成功')
     }
   } catch (error) {
@@ -798,7 +830,7 @@ const handleFormSubmit = async () => {
     if (formData.asName) formDataToSend.append('asName', formData.asName)
     if (formData.status) formDataToSend.append('status', formData.status.toString())
     if (formData.remark) formDataToSend.append('remark', formData.remark)
-    
+
     // 如果有ID，说明是编辑操作
     if (formData.id) {
       formDataToSend.append('id', formData.id.toString())
@@ -816,10 +848,11 @@ const handleFormSubmit = async () => {
     }
 
     console.log('开始上传数据，包含字段数:', Array.from(formDataToSend.keys()).length)
-    console.log('包含图片数量:', 
-      (wechatQrUploadFile.value ? 1 : 0) + 
-      (wechatPayUploadFile.value ? 1 : 0) + 
-      (aliPayUploadFile.value ? 1 : 0)
+    console.log(
+      '包含图片数量:',
+      (wechatQrUploadFile.value ? 1 : 0) +
+        (wechatPayUploadFile.value ? 1 : 0) +
+        (aliPayUploadFile.value ? 1 : 0),
     )
 
     try {

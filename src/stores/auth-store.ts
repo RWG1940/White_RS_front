@@ -10,8 +10,6 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string>(localStorage.getItem('token') || '')
   // 是否已加载用户信息
   const isLoaded = ref(false)
-  // 加载状态
-  const loading = ref(false)
 
   // 是否已登录
   const isAuthenticated = computed(() => !!token.value)
@@ -19,7 +17,6 @@ export const useAuthStore = defineStore('auth', () => {
   // 登录
   const login = async (loginData: { username: string; password: string }) => {
     try {
-      loading.value = true
       const res = await userLogin(loginData)
       // code 为 200 表示成功
       if (res.data.code == 200) {
@@ -32,25 +29,27 @@ export const useAuthStore = defineStore('auth', () => {
           return { success: true, code: res.data.code }
         }
       }
-      
+
       return { success: false, code: res.data.code }
     } catch (error) {
       return { success: false, code: 0 }
     } finally {
-      loading.value = false
     }
   }
   // 注册
-  const register = async (registerData: { username: string; password: string; email: string; phone: string }) => {
+  const register = async (registerData: {
+    username: string
+    password: string
+    email: string
+    phone: string
+  }) => {
     try {
-      loading.value = true
       const res = await userRegister(registerData)
       // code 为 200 表示成功
       return { success: res.data.code === 200, code: res.data.code }
     } catch (error) {
       return { success: false, code: 0 }
     } finally {
-      loading.value = false
     }
   }
   // 获取用户信息
@@ -117,11 +116,11 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     isAuthenticated,
     isLoaded,
-    loading,
+
     login,
     logout,
     fetchUserInfo,
     init,
-    register
+    register,
   }
 })

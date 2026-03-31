@@ -9,5 +9,11 @@ export const requestInterceptor = async (config: any) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  
+  // 添加请求时间戳，用于计算响应时间
+  config.metadata = {
+    startTime: Date.now()
+  }
+  
   return config
 }

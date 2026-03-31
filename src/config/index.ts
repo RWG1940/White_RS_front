@@ -67,8 +67,8 @@ const dhConfig: AppConfig = {
 const getConfig = (): AppConfig => {
   return {
     //...productConfig,
-    //...developConfig,
-    ...dhConfig,
+    ...developConfig,
+    //...dhConfig,
     //...aiConfig,
   }
 }

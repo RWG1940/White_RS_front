@@ -120,7 +120,7 @@
       </a-modal>
 
       <!-- 历史弹窗：使用 Modal 组件 -->
-      <Modal :visible="openHistory" @update:visible="openHistory = $event" title="订单管理">
+      <Modal :visible="openHistory" :show-footer="false" @update:visible="openHistory = $event" title="订单管理">
         <div class="batch-header">
           <div class="batch-controls">
             <a-input-search

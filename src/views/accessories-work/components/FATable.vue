@@ -3,179 +3,177 @@
     <LoadingYD v-if="store.loading" />
     <div v-else class="table-container">
       <ManagePage
-      v-model:data-source="dataSource"
-      :columns="columns"
-      :editable-fields="editableFields"
-      :show-add="false"
-      :show-batch-delete="false"
-      :show-delete="false"
-      :search-select-options="searchSelectOptions"
-      row-key="id"
-      v-model:total="store.total"
-      v-model:currentPage="store.currentPage"
-      v-model:pageSize="store.pageSize"
-      search-placeholder="搜索"
-      @search="handleSearch"
-      @save="handleSave"
-      @selection-change="handleSelectionChange"
-      @update:currentPage="pageChange"
-      @update:pageSize="pageSizeChange"
-    >
-      <template #custom-tool>
-  
-        <a-button class="custom-tool-btn" type="primary" @click="onHistoryClick"
-          ><FundProjectionScreenOutlined />订单管理</a-button
-        >
-        <div class="batch-select">
-          <span style="color: gray">&ensp;查看方式：</span>
-          <a-select
-          style="min-width: 200px;"
-          size="small"
-            v-model="selectedBatchId"
-            :options="batchOptions"
-
-            placeholder="选择批次"
-            @change="handleBatchChange"
-          />
-          <a-select
-            size="small"
-            v-model="selectedQuarterId"
-            :options="quarterOptions"
-            placeholder="选择季度"
-            @change="handleQuarterChange"
-          />
-          <a-button size="small" @click="handleTotalDataClick"><TableOutlined />所有</a-button>
-        </div>
-        <div v-if="selectedRows.length > 0" class="selected-total">
-          洗标总金额：{{ selectedWashTotalAmount.toFixed(2) }}
-        </div>
-        <div v-if="selectedRows.length > 0" class="selected-total">
-          吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}
-        </div>
-      </template>
-      <template #cell-__index__="{ index }">
-        <span>{{ (index ?? 0) + 1 }}</span>
-      </template>
-      <template #cell-washStatus="{ record }">
-        <a-tag
-          :color="
-            record.washStatus == 0
-              ? 'lightgrey'
-              : record.washStatus == 1
-                ? 'orange'
-                : record.washStatus == 2
-                  ? 'pink'
-                  : record.washStatus == 3
-                    ? 'green'
-                    : ''
-          "
-        >
-          {{
-            record.washStatus == 0
-              ? '未下单'
-              : record.washStatus == 1
-                ? '做货中'
-                : record.washStatus == 2
-                  ? '货好等付款'
-                  : record.washStatus == 3
-                    ? '已出货'
-                    : ''
-          }}
-        </a-tag>
-      </template>
-      <template #cell-tagStatus="{ record }">
-        <a-tag
-          :color="
-            record.tagStatus == 0
-              ? 'lightgrey'
-              : record.tagStatus == 1
-                ? 'orange'
-                : record.tagStatus == 2
-                  ? 'pink'
-                  : record.tagStatus == 3
-                    ? 'green'
-                    : ''
-          "
-        >
-          {{
-            record.tagStatus == 0
-              ? '未下单'
-              : record.tagStatus == 1
-                ? '做货中'
-                : record.tagStatus == 2
-                  ? '货好等付款'
-                  : record.tagStatus == 3
-                    ? '已出货'
-                    : ''
-          }}
-        </a-tag>
-      </template>
-      <template #cell-imageUrl="{ record }">
-        <Transition name="fade">
-          <a-row>
-            <template v-if="record.imageUrl">
-              <a-image
-                :width="60"
-                :height="60"
-                :src="getImageUrl(record.imageUrl, record.updatedAt)"
-                alt=""
-                style="border-radius: 5px"
+        v-model:data-source="dataSource"
+        :columns="columns"
+        :editable-fields="editableFields"
+        :show-add="false"
+        :show-batch-delete="false"
+        :show-delete="false"
+        :search-select-options="searchSelectOptions"
+        row-key="id"
+        v-model:total="store.total"
+        v-model:currentPage="store.currentPage"
+        v-model:pageSize="store.pageSize"
+        search-placeholder="搜索"
+        @search="handleSearch"
+        @save="handleSave"
+        @selection-change="handleSelectionChange"
+        @update:currentPage="pageChange"
+        @update:pageSize="pageSizeChange"
+      >
+        <template #custom-tool>
+          <a-button type="primary" @click="onHistoryClick"
+            ><FundProjectionScreenOutlined />订单管理</a-button
+          >
+          <div class="batch-select">
+            <span style="color: gray">&ensp;查看方式：</span>
+            <a-select
+              style="min-width: 200px"
+              size="small"
+              v-model="selectedBatchId"
+              :options="batchOptions"
+              placeholder="选择批次"
+              @change="handleBatchChange"
+            />
+            <a-select
+              size="small"
+              v-model="selectedQuarterId"
+              :options="quarterOptions"
+              placeholder="选择季度"
+              @change="handleQuarterChange"
+            />
+            <a-button size="small" @click="handleTotalDataClick"><TableOutlined />所有</a-button>
+          </div>
+          <div v-if="selectedRows.length > 0" class="selected-total">
+            洗标总金额：{{ selectedWashTotalAmount.toFixed(2) }}
+          </div>
+          <div v-if="selectedRows.length > 0" class="selected-total">
+            吊牌总金额：{{ selectedTagTotalAmount.toFixed(2) }}
+          </div>
+        </template>
+        <template #cell-__index__="{ index }">
+          <span>{{ (index ?? 0) + 1 }}</span>
+        </template>
+        <template #cell-washStatus="{ record }">
+          <a-tag
+            :color="
+              record.washStatus == 0
+                ? 'lightgrey'
+                : record.washStatus == 1
+                  ? 'orange'
+                  : record.washStatus == 2
+                    ? 'pink'
+                    : record.washStatus == 3
+                      ? 'green'
+                      : ''
+            "
+          >
+            {{
+              record.washStatus == 0
+                ? '未下单'
+                : record.washStatus == 1
+                  ? '做货中'
+                  : record.washStatus == 2
+                    ? '货好等付款'
+                    : record.washStatus == 3
+                      ? '已出货'
+                      : ''
+            }}
+          </a-tag>
+        </template>
+        <template #cell-tagStatus="{ record }">
+          <a-tag
+            :color="
+              record.tagStatus == 0
+                ? 'lightgrey'
+                : record.tagStatus == 1
+                  ? 'orange'
+                  : record.tagStatus == 2
+                    ? 'pink'
+                    : record.tagStatus == 3
+                      ? 'green'
+                      : ''
+            "
+          >
+            {{
+              record.tagStatus == 0
+                ? '未下单'
+                : record.tagStatus == 1
+                  ? '做货中'
+                  : record.tagStatus == 2
+                    ? '货好等付款'
+                    : record.tagStatus == 3
+                      ? '已出货'
+                      : ''
+            }}
+          </a-tag>
+        </template>
+        <template #cell-imageUrl="{ record }">
+          <Transition name="fade">
+            <a-row>
+              <template v-if="record.imageUrl">
+                <a-image
+                  :width="60"
+                  :height="60"
+                  :src="getImageUrl(record.imageUrl, record.updatedAt)"
+                  alt=""
+                  style="border-radius: 5px"
+                >
+                  <template #previewMask>
+                    <EyeOutlined />
+                  </template>
+                </a-image>
+              </template>
+              <template v-else>
+                <div
+                  style="
+                    width: 60px;
+                    height: 60px;
+                    border-radius: 5px;
+                    background: #f5f5f5;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px dashed #d9d9d9;
+                  "
+                >
+                  <span style="color: #999; font-size: 12px">暂无图片</span>
+                </div>
+              </template>
+            </a-row>
+          </Transition>
+        </template>
+        <!-- 自定义操作列 -->
+        <template #operation="{ record, isEditing, save, cancel, edit, remove }">
+          <div class="editable-row-operations">
+            <span v-if="isEditing">
+              <a-typography-link @click="save(record.id)">保存</a-typography-link>
+              <a style="margin-left: 8px" @click="cancel(record.id)">取消</a>
+              <a-popconfirm
+                title="确认删除?"
+                ok-text="是"
+                cancel-text="否"
+                @confirm="remove(record.id)"
               >
-                <template #previewMask>
-                  <EyeOutlined />
-                </template>
-              </a-image>
-            </template>
-            <template v-else>
-              <div
-                style="
-                  width: 60px;
-                  height: 60px;
-                  border-radius: 5px;
-                  background: #f5f5f5;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  border: 1px dashed #d9d9d9;
-                "
-              >
-                <span style="color: #999; font-size: 12px">暂无图片</span>
+                <a style="margin-left: 8px">删除</a>
+              </a-popconfirm>
+            </span>
+            <span v-else>
+              <div style="display: flex; align-items: center; justify-content: center">
+                <a-button
+                  size="small"
+                  :disabled="record.status === 3"
+                  :title="record.status === 3 ? '已出货的记录不能修改' : ''"
+                  @click="
+                    canEditRow(record) ? edit(record.id) : message.warning('已出货的记录不能修改')
+                  "
+                >
+                  <EditOutlined />编辑
+                </a-button>
               </div>
-            </template>
-          </a-row>
-        </Transition>
-      </template>
-      <!-- 自定义操作列 -->
-      <template #operation="{ record, isEditing, save, cancel, edit, remove }">
-        <div class="editable-row-operations">
-          <span v-if="isEditing">
-            <a-typography-link @click="save(record.id)">保存</a-typography-link>
-            <a style="margin-left: 8px" @click="cancel(record.id)">取消</a>
-            <a-popconfirm
-              title="确认删除?"
-              ok-text="是"
-              cancel-text="否"
-              @confirm="remove(record.id)"
-            >
-              <a style="margin-left: 8px">删除</a>
-            </a-popconfirm>
-          </span>
-          <span v-else>
-            <div style="display: flex; align-items: center; justify-content: center">
-              <a-button
-                size="small"
-                :disabled="record.status === 3"
-                :title="record.status === 3 ? '已出货的记录不能修改' : ''"
-                @click="
-                  canEditRow(record) ? edit(record.id) : message.warning('已出货的记录不能修改')
-                "
-              >
-                <EditOutlined />编辑
-              </a-button>
-            </div>
-          </span>
-        </div>
-      </template>
+            </span>
+          </div>
+        </template>
       </ManagePage>
     </div>
   </div>
@@ -185,7 +183,14 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { message, type TableColumnType } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData, fetchPageByImportId, selectedBatchId, visibleBatches, visibleQuarters } from '@/stores/acc-store'
+import {
+  accStore,
+  editFormData,
+  fetchPageByImportId,
+  selectedBatchId,
+  visibleBatches,
+  visibleQuarters,
+} from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { getBackendUrl } from '@/utils/getApiUrl'
@@ -362,13 +367,16 @@ const handleSave = async (record: any) => {
       await noticeGroup(record.importId, record.sku)
     }
     // 无论如何都刷新数据
-    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize, selectedQuarterId.value || '')
+    await fetchPageByImportId(
+      selectedBatchId.value || 0,
+      store.currentPage,
+      store.pageSize,
+      selectedQuarterId.value || '',
+    )
   } catch (e) {
     console.error('保存失败', e)
   }
 }
-
-
 
 const batchOptions = computed(() => {
   return visibleBatches.value.map((batch: any) => ({
@@ -401,11 +409,21 @@ const handleTotalDataClick = () => {
 }
 const pageChange = (val: number) => {
   store.currentPage = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize, selectedQuarterId.value || '')
+  fetchPageByImportId(
+    selectedBatchId.value || 0,
+    store.currentPage,
+    store.pageSize,
+    selectedQuarterId.value || '',
+  )
 }
 const pageSizeChange = (val: number) => {
   store.pageSize = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize, selectedQuarterId.value || '')
+  fetchPageByImportId(
+    selectedBatchId.value || 0,
+    store.currentPage,
+    store.pageSize,
+    selectedQuarterId.value || '',
+  )
 }
 watch(
   () => store.pagedList,
@@ -417,7 +435,12 @@ watch(
 
 onMounted(async () => {
   store.loading = true
-  await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize, selectedQuarterId.value || '')
+  await fetchPageByImportId(
+    selectedBatchId.value || 0,
+    store.currentPage,
+    store.pageSize,
+    selectedQuarterId.value || '',
+  )
   // 等待1秒
   await new Promise((resolve) => setTimeout(resolve, 500))
   store.loading = false
@@ -469,20 +492,15 @@ onMounted(async () => {
 }
 
 .selected-total {
-  margin-left: 10px;
   background: linear-gradient(to bottom, rgba(166, 255, 246, 0.572), rgba(174, 228, 232, 0.566));
   padding: 6px;
-  border-radius: 5px;
-}
-.custom-tool-btn{
-  margin-left: 5px;
+  border-radius: 8px;
 }
 
 .batch-select {
   padding: 5px;
   background-color: rgb(225, 225, 225);
   border-radius: 10px;
-  margin-left: 5px;
   display: flex;
   gap: 5px;
   justify-content: center;

@@ -3,6 +3,7 @@
     <a-row justify="center" align="middle" class="register-row">
       <a-col :xs="22" :sm="20" :md="16" :lg="14" :xl="12" :xxl="10">
         <a-card class="register-card" :bordered="false">
+          <div class="card-glare"></div>
           <template #title>
             <h2 class="register-title">注册账号</h2>
           </template>
@@ -126,7 +127,7 @@ import {
   SafetyOutlined,
 } from '@ant-design/icons-vue'
 import type { Rule } from 'ant-design-vue/es/form'
-import LoginLoading from '@/components/LoginLoading.vue'
+import LoginLoading from '@/components/LoginLoadingSpinner.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -254,17 +255,35 @@ const handleRegister = async () => {
 }
 
 .register-card {
-  padding: 20px;
-  background-color: rgba(255, 255, 255, 0.678);
-  width: 100%;
-  max-width: 700px;
-  margin: 0 auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  position: relative;
+  padding: 30px 25px;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 35px;
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  transition:
+    transform 0.5s ease,
+    box-shadow 0.3s ease;
 }
-
+.register-card .card-glare {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  pointer-events: none;
+  transform: rotate(25deg);
+  mix-blend-mode: screen;
+}
 .register-title {
   text-align: left;
   margin: 0;
@@ -334,7 +353,7 @@ const handleRegister = async () => {
   }
 
   .register-card {
-    border-radius: 12px;
+    border-radius: 35px;
     max-width: 100%;
   }
 

@@ -110,7 +110,7 @@ const iconMap: Record<string, any> = {
 function getIconComponent(iconName: string) {
   // 如果传入的是字符串（如"HomeOutlined"），直接查找映射
   if (typeof iconName === 'string') {
-    console.log('Getting icon component:', iconName)
+    //console.log('Getting icon component:', iconName)
     return iconMap[iconName] || HomeOutlined
   }
   return iconName

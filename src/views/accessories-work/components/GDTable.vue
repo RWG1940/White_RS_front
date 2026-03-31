@@ -22,13 +22,11 @@
         @update:pageSize="pageSizeChange"
       >
         <template #custom-tool>
-          <a-button type="primary" style="margin-left: 8px" @click="handleFilterClick"
-            ><FilterOutlined />筛选工厂</a-button
-          >
-          <a-button type="primary" style="margin-left: 8px" @click="handleFollowerDataClick"
+          <a-button type="primary" @click="handleFilterClick"><FilterOutlined />筛选工厂</a-button>
+          <a-button type="primary" @click="handleFollowerDataClick"
             ><PieChartOutlined />跟单数据</a-button
           >
-          <a-button class="custom-tool-btn" type="primary" @click="onHistoryClick"
+          <a-button type="primary" @click="onHistoryClick"
             ><FundProjectionScreenOutlined />订单管理</a-button
           >
           <div class="batch-select">
@@ -235,7 +233,7 @@
       </ManagePage>
 
       <!-- 筛选工厂 Modal -->
-      <Modal v-model:visible="showFilterModal" title="筛选工厂">
+      <Modal v-model:visible="showFilterModal" :show-footer="false" title="筛选工厂">
         <div style="margin-bottom: 16px">
           <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap">
             <div>
@@ -514,7 +512,7 @@
       </Modal>
 
       <!-- 跟单数据 Modal -->
-      <Modal v-model:visible="showFollowerDataModal" title="跟单数据统计">
+      <Modal v-model:visible="showFollowerDataModal" :show-footer="false" title="跟单数据统计">
         <div style="margin-bottom: 20px; overflow-y: auto; max-height: 500px">
           <div style="display: flex; gap: 20px; margin-bottom: 16px">
             <div
@@ -1526,13 +1524,9 @@ onMounted(async () => {
   padding: 5px;
   background-color: rgb(225, 225, 225);
   border-radius: 10px;
-  margin-left: 5px;
   display: flex;
   gap: 5px;
   justify-content: center;
   align-items: center;
-}
-.custom-tool-btn {
-  margin-left: 5px;
 }
 </style>

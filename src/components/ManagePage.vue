@@ -10,7 +10,7 @@
               <a-select
                 v-model:value="searchSelectValue"
                 :options="searchSelectOptions"
-                placeholder="☘筛选"
+                placeholder="筛选"
                 style="width: 100%"
               >
               </a-select>
@@ -60,7 +60,9 @@
               </a-button>
             </a-col>
             <!-- 自定义工具插槽 -->
-            <slot name="custom-tool"></slot>
+            <div class="custom-tool-container">
+              <slot name="custom-tool"></slot>
+            </div>
           </a-row>
         </slot>
       </div>
@@ -229,7 +231,6 @@ const props = withDefaults(
     loading?: boolean
     // 搜索选择项
     searchSelectOptions?: { label: string; value: string }[]
-
   }>(),
   {
     dataSource: () => [],
@@ -486,12 +487,10 @@ const paginationConfig = computed(() => {
     //  切换页码
     onChange: (page: number, pageSize: number) => {
       emit('update:currentPage', page)
-     
     },
 
     //  切换 pageSize
     onShowSizeChange: (page: number, pageSize: number) => {
-    
       emit('update:pageSize', pageSize)
     },
   }
@@ -655,12 +654,12 @@ const onSearch = () => {
   }
   emit('search', payload)
 }
-// 新增：触发添加事件
+// 触发添加事件
 const handleAdd = () => {
   emit('add')
 }
 
-// 新增：重置搜索，清空搜索框并触发搜索事件
+// 重置搜索，清空搜索框并触发搜索事件
 const resetSearch = () => {
   loading.value = true
   searchValue.value = ''
@@ -723,7 +722,12 @@ onUnmounted(() => {
 .header {
   margin-bottom: 10px;
 }
-
+.custom-tool-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
 .mobile-toolbar {
   margin-bottom: 8px;
 }

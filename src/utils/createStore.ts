@@ -78,140 +78,83 @@ export function createCRUDStore<T>(storeName: string, api: any, options: CRUDSto
      */
     // 获取所有数据
     const fetchAll = async () => {
-      try {
-        loading.value = true
-        const res = await api.getAll()
-        const payload = unwrapResponse(res)
-        list.value = pickArray(payload)
-      } finally {
-        loading.value = false
-      }
+      const res = await api.getAll()
+      const payload = unwrapResponse(res)
+      list.value = pickArray(payload)
     }
 
     // 获取分页数据
     const fetchPage = async () => {
-      try {
-        loading.value = true
-        const res = await api.getPages(currentPage.value, pageSize.value)
-        const payload = unwrapResponse(res)
-        const rows = payload.records
-        pagedList.value = rows
-        total.value = payload.total
-      } finally {
-        loading.value = false
-      }
+      const res = await api.getPages(currentPage.value, pageSize.value)
+      const payload = unwrapResponse(res)
+      const rows = payload.records
+      pagedList.value = rows
+      total.value = payload.total
     }
     // 获取有条件的分页数据
     const fetchPageByConditions = async () => {
-      try {
-        loading.value = true
-        const res = await api.getPagesByCondition(
-          currentPage.value,
-          pageSize.value,
-          conditionsData.value,
-        )
-        const payload = unwrapResponse(res)
-        const rows = payload.records
-        pagedList.value = rows
-        total.value = payload.total
-      } finally {
-        loading.value = false
-      }
+      const res = await api.getPagesByCondition(
+        currentPage.value,
+        pageSize.value,
+        conditionsData.value,
+      )
+      const payload = unwrapResponse(res)
+      const rows = payload.records
+      pagedList.value = rows
+      total.value = payload.total
     }
 
     // 创建数据
     const create = async (newData: T) => {
-      try {
-        loading.value = true
-        await api.add(newData)
-        await fetchPage()
-        message.success(successMessage.create || '创建成功')
-      } finally {
-        loading.value = false
-      }
+      await api.add(newData)
+      await fetchPage()
+      message.success(successMessage.create || '创建成功')
     }
     // 创建数据 - 不刷新分页数据，便于有条件分页时调用
     const createN = async (newData: T) => {
-      try {
-        loading.value = true
-        await api.add(newData)
-        message.success(successMessage.create || '创建成功')
-      } finally {
-        loading.value = false
-      }
+      await api.add(newData)
+      message.success(successMessage.create || '创建成功')
     }
     // 更新数据
     const update = async (updatedData: T) => {
-      try {
-        loading.value = true
-        await api.update(updatedData)
-        await fetchPage()
-        message.success(successMessage.update || '更新成功')
-      } finally {
-        loading.value = false
-      }
+      await api.update(updatedData)
+      await fetchPage()
+      message.success(successMessage.update || '更新成功')
     }
     // 更新数据 - 不刷新分页数据，便于有条件分页时调用
     const updateN = async (updatedData: T) => {
-      try {
-        loading.value = true
-        await api.update(updatedData)
-        message.success(successMessage.update || '更新成功')
-      } catch (error) {
-        // 错误已在拦截器中处理
-      } finally {
-        loading.value = false
-      }
+      await api.update(updatedData)
+      message.success(successMessage.update || '更新成功')
     }
     // 删除数据
     const remove = async (ids: number[]) => {
-      try {
-        loading.value = true
-        await api.delete(ids)
-        if (currentPage.value == 1) {
-          await fetchPage()
-        } else {
-          currentPage.value = currentPage.value - 1
-          await fetchPage()
-        }
-        message.success(successMessage.delete || '删除成功')
-      } finally {
-        loading.value = false
+      await api.delete(ids)
+      if (currentPage.value == 1) {
+        await fetchPage()
+      } else {
+        currentPage.value = currentPage.value - 1
+        await fetchPage()
       }
+      message.success(successMessage.delete || '删除成功')
     }
     // 删除数据 - 不刷新分页数据，便于有条件分页时调用
     const removeN = async (ids: number[]) => {
-      try {
-        loading.value = true
-        await api.delete(ids)
-        message.success(successMessage.delete || '删除成功')
-      } finally {
-        loading.value = false
-      }
+      await api.delete(ids)
+      message.success(successMessage.delete || '删除成功')
     }
 
     // 搜索数据（模糊查询）
     const search = async () => {
-      try {
-        loading.value = true
-        const res = await api.queryLike(searchData.value)
-        const payload = unwrapResponse(res)
-        searchResults.value = pickArray(payload)
-        message.success(successMessage.search || '搜索完成')
-      } finally {
-        loading.value = false
-      }
+      const res = await api.queryLike(searchData.value)
+      const payload = unwrapResponse(res)
+      searchResults.value = pickArray(payload)
+      message.success(successMessage.search || '搜索完成')
     }
     // 搜索数据（精确查询）
     const exact = async () => {
-      try {
-        loading.value = true
-        const res = await api.queryEq(exactData.value)
-        const payload = unwrapResponse(res)
-        searchResults.value = pickArray(payload)
-      } finally {
-        loading.value = false
-      }
+      const res = await api.queryEq(exactData.value)
+      const payload = unwrapResponse(res)
+      searchResults.value = pickArray(payload)
     }
     /**
      * 表格操作方法

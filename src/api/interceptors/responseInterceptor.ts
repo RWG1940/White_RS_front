@@ -3,33 +3,51 @@ import { appConfig } from '@/config/index'
 
 // 响应拦截器
 export const responseInterceptor = async (response: any) => {
-  // 判断响应头的 Content-Type 是否为文件类型
-  const contentType = response.headers['content-type']
-  if (contentType && contentType.startsWith('application/')) {
-    // 如果是文件类型响应（如Excel），则直接处理文件下载
-    if (response.data instanceof Blob) {
-      // 处理文件下载，生成下载链接
-      return Promise.resolve(response)
+  // 获取请求信息
+  const requestUrl = response.config?.url || 'unknown'
+  const requestMethod = response.config?.method || 'unknown'
+  const responseStatus = response.status
+  const responseData = response.data
+  
+  // 计算响应时间（需要请求拦截器设置metadata）
+  let responseTime = 'unknown'
+  if (response.config?.metadata?.startTime) {
+    const startTime = response.config.metadata.startTime
+    if (typeof startTime === 'number') {
+      responseTime = `${Date.now() - startTime}ms`
     }
-  } else {
-    // 获取响应数据
-    const data = response.data
-    // 调试输出（根据配置开关控制）
-    if (appConfig.enableDebug) {
-      console.log('响应数据:', data)
+  }
+
+  // 判断是否是文件下载类型（Blob）
+  const isFileDownload = response.data instanceof Blob
+
+  // 调试输出（根据配置开关控制）
+  if (appConfig.enableDebug) {
+    if (isFileDownload) {
+      console.log(`📥 [${requestMethod.toUpperCase()}] ${requestUrl} - 文件下载响应 (${responseTime})`)
+    } else {
+      console.log('📊 API响应信息:', {
+        url: requestUrl,
+        method: requestMethod.toUpperCase(),
+        status: responseStatus,
+        responseTime: responseTime,
+        data: responseData
+      })
     }
-    // 获取响应状态码
-    const code = data.code
-    const messageText = data.message || '后台未知错误'
+  }
+
+  // 对于非文件下载的响应，进行状态码检查
+  if (!isFileDownload) {
+    const code = responseData.code
+    const messageText = responseData.message || '后台未知错误'
     // code 为 200 表示成功
     if (code !== 200) {
       message.error(messageText)
       return Promise.reject(messageText)
     }
   }
-  if (appConfig.enableDebug) {
-    console.log('响应数据:', response.data)
-  }
+
+  
 
   return response
 }
@@ -38,6 +56,21 @@ export const responseInterceptor = async (response: any) => {
 export const responseInterceptorError = async (error: any) => {
   let errMsg = ''
   const ERROR_MESSAGE = error.message
+  
+  // 获取请求信息
+  const requestUrl = error.config?.url || 'unknown'
+  const requestMethod = error.config?.method || 'unknown'
+  
+  if (appConfig.enableDebug) {
+    console.log(`❌ API错误信息:`, {
+      url: requestUrl,
+      method: requestMethod.toUpperCase(),
+      error: ERROR_MESSAGE,
+      status: error.response?.status,
+      data: error.response?.data
+    })
+  }
+  
   if (ERROR_MESSAGE == 'Network Error') {
     errMsg += '网络错误，请检查网络连接'
   } else if (ERROR_MESSAGE.includes('timeout')) {

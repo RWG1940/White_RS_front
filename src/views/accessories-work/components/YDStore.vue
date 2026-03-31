@@ -132,7 +132,7 @@
     <Modal
       v-model:visible="showSelectModal"
       :title="`选购：${selectedProduct?.sku}`"
-      @close="closeSelectModal"
+      @confirm="confirmSelection"
     >
       <div class="product-preview">
         <img :src="getImageUrl(selectedProduct?.imageUrl || '', selectedProduct?.updatedAt)" />
@@ -217,15 +217,16 @@
           </svg>
         </button>
       </div>
-
-      <template #footer>
-        <button class="modal-button secondary" @click="closeSelectModal">取消</button>
-        <button class="modal-button primary" @click="confirmSelection">确定</button>
-      </template>
     </Modal>
 
     <!-- 选购清单弹窗 -->
-    <Modal v-model:visible="showCartModal" title="购物车" @close="closeCartModal">
+    <Modal
+      v-model:visible="showCartModal"
+      title="购物车"
+      confirm-text="确认下单"
+      :loading="orderSubmitting"
+      @confirm="confirmOrder"
+    >
       <!-- 表单信息 -->
       <div class="cart-form">
         <p style="font-weight: bold; font-family: 黑体">请填写下单信息：</p>
@@ -259,6 +260,10 @@
             <input type="text" v-model="cartCustomer" placeholder="请输入客户" />
           </div>
         </div>
+      </div>
+
+      <div class="cart-summary">
+        <div class="summary-text">共 {{ cartCount }} 件商品</div>
       </div>
 
       <div class="cart-list">
@@ -317,19 +322,10 @@
           </div>
         </div>
       </div>
-
-      <template #footer>
-        <div class="cart-summary">
-          <div class="summary-text">共 {{ cartCount }} 件商品</div>
-        </div>
-        <button class="modal-button primary" @click="confirmOrder" :disabled="orderSubmitting">
-          {{ orderSubmitting ? '提交中...' : '确认下单' }}
-        </button>
-      </template>
     </Modal>
 
     <!-- 手动添加弹窗 -->
-    <Modal v-model:visible="showManualAddModal" title="库存表" :width="1000">
+    <Modal v-model:visible="showManualAddModal" title="库存表">
       <ManagePage
         v-model:data-source="restockDataSource"
         row-key="id"
@@ -583,6 +579,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
+import { EyeOutlined } from '@ant-design/icons-vue'
 import { apcsFixedStore } from '@/stores/apcsFixed-store'
 import {
   uploadApcsFixedInfoImage,
@@ -818,16 +815,6 @@ const handleSelectProduct = (product: ApcsFixedType) => {
   showSelectModal.value = true
 }
 
-// 关闭选购弹窗
-const closeSelectModal = () => {
-  showSelectModal.value = false
-  // 定时器
-  setTimeout(() => {
-    selectedProduct.value = null
-    selectQuantity.value = 1
-  }, 500)
-}
-
 // 验证数量
 const validateQuantity = () => {
   const maxStock = selectedProduct.value?.inventory || 0
@@ -858,12 +845,12 @@ const confirmSelection = () => {
     })
   }
 
-  closeSelectModal()
-}
-
-// 关闭购物车弹窗
-const closeCartModal = () => {
-  showCartModal.value = false
+  showSelectModal.value = false
+  // 定时器
+  setTimeout(() => {
+    selectedProduct.value = null
+    selectQuantity.value = 1
+  }, 500)
 }
 
 // 从购物车移除
@@ -959,7 +946,7 @@ const confirmOrder = async () => {
     cartCustomer.value = ''
 
     // 关闭弹窗
-    closeCartModal()
+    showCartModal.value = false
   } catch (error: any) {
     console.error('下单失败:', error)
     message.error(error?.response?.data?.message || '下单失败，请重试')
@@ -1042,7 +1029,7 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+  background: black;
   border: none;
   border-radius: 20px;
   color: white;
@@ -1050,12 +1037,12 @@ onMounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3);
+  box-shadow: 0 2px 20px rgba(58, 58, 58, 0.601);
 }
 
 .restock-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4);
 }
 
 .cart-badge {
@@ -1224,7 +1211,7 @@ onMounted(() => {
 .select-button {
   margin: 0 14px 14px;
   padding: 12px;
-  background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+  background: #007aff;
   color: white;
   border: none;
   border-radius: 12px;
@@ -1302,7 +1289,7 @@ onMounted(() => {
   justify-content: center;
   gap: 8px;
   padding: 14px 32px;
-  background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+  background: #007aff;
   color: white;
   border: none;
   border-radius: 14px;
@@ -1731,37 +1718,6 @@ onMounted(() => {
 .summary-text span {
   color: #007aff;
   font-weight: 600;
-}
-
-.modal-button {
-  padding: 14px 28px;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.modal-button.secondary {
-  background: #f5f5f7;
-  color: #1d1d1f;
-  margin-right: 12px;
-}
-
-.modal-button.secondary:hover {
-  background: #e5e5e5;
-}
-
-.modal-button.primary {
-  background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);
-}
-
-.modal-button.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.3);
 }
 
 /* 响应式设计 */

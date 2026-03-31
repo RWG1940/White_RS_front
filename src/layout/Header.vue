@@ -37,7 +37,12 @@
   </div>
 
   <!-- 个人中心弹窗 -->
-  <Modal v-model:visible="showProfileModal" title="个人中心">
+  <Modal
+    v-model:visible="showProfileModal"
+    title="个人中心"
+    :loading="profileLoading"
+    @confirm="handleProfileSave"
+  >
     <a-tabs v-model:activeKey="activeTab">
       <!-- 基本信息标签 -->
       <a-tab-pane key="info" tab="基本信息">
@@ -55,20 +60,6 @@
             <a-textarea v-model:value="profileForm.address" placeholder="请输入地址" />
           </a-form-item>
         </a-form>
-        <div
-          style="
-            text-align: right;
-            margin-top: 20px;
-            gap: 8px;
-            display: flex;
-            justify-content: flex-end;
-          "
-        >
-          <a-button @click="showProfileModal = false">取消</a-button>
-          <a-button type="primary" :loading="profileLoading" @click="handleProfileSave"
-            >确定</a-button
-          >
-        </div>
       </a-tab-pane>
 
       <!-- 修改密码标签 -->
@@ -87,32 +78,18 @@
             />
           </a-form-item>
         </a-form>
-        <div
-          style="
-            text-align: right;
-            margin-top: 20px;
-            gap: 8px;
-            display: flex;
-            justify-content: flex-end;
-          "
-        >
-          <a-button @click="showProfileModal = false">取消</a-button>
-          <a-button type="primary" :loading="profileLoading" @click="handleProfileSave"
-            >确定</a-button
-          >
-        </div>
       </a-tab-pane>
     </a-tabs>
   </Modal>
 
   <!-- 退出登录确认弹窗 -->
-  <Modal v-model:visible="showLogoutConfirm" title="确认退出">
+  <Modal
+    v-model:visible="showLogoutConfirm"
+    title="确认退出"
+    @confirm="confirmLogout"
+  >
     <div style="text-align: center; padding: 20px 0">
-      <p style="font-size: 16px; color: #262626; margin-bottom: 24px">确定要退出登录吗？</p>
-      <div style="display: flex; justify-content: center; gap: 12px">
-        <a-button @click="showLogoutConfirm = false">取消</a-button>
-        <a-button type="primary" danger @click="confirmLogout">退出登录</a-button>
-      </div>
+      <p style="font-size: 16px; color: #262626">确定要退出登录吗？</p>
     </div>
   </Modal>
 </template>
@@ -224,6 +201,7 @@ const handleProfileSave = async () => {
       }
       // 如果地址变化了，刷新所有辅料数据的地址信息
       await refreshAllSupplyDataAddress(profileForm.username, profileForm.address)
+      message.success('保存成功')
     } else if (activeTab.value === 'password') {
       // 修改密码
       if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -245,13 +223,10 @@ const handleProfileSave = async () => {
       passwordForm.oldPassword = ''
       passwordForm.newPassword = ''
       passwordForm.confirmPassword = ''
-      // 关闭弹窗并退出登录
-      showProfileModal.value = false
+      // 退出登录
       await authStore.logout()
       router.push('/login')
     }
-
-    showProfileModal.value = false
   } catch (error: any) {
     message.error(error.response?.data?.message || '操作失败，请重试')
   } finally {

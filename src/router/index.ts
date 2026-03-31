@@ -1,7 +1,6 @@
 import {
   createRouter,
   createWebHashHistory,
-  createWebHistory,
   type RouteRecordRaw,
 } from 'vue-router'
 import { useAuthStore } from '@/stores/auth-store'
@@ -14,7 +13,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/dh-manage/index.vue').catch(() => import('@/views/NotFound.vue')),
+    component: () => import('@/views/Login.vue').catch(() => import('@/views/NotFound.vue')),
     meta: {
       title: '登录',
       requiresAuth: false, // 不需要登录
@@ -43,7 +42,9 @@ const routes: RouteRecordRaw[] = [
     path: '/ai-prompts-front',
     name: 'ai-prompts-front',
     component: () =>
-      import('@/views/ai-prompts-front/aiPromptsFront.vue').catch(() => import('@/views/NotFound.vue')),
+      import('@/views/ai-prompts-front/aiPromptsFront.vue').catch(
+        () => import('@/views/NotFound.vue'),
+      ),
     meta: {
       title: 'Next Prompts',
       requiresAuth: false, // 不需要登录
@@ -124,10 +125,9 @@ router.beforeEach(async (to, from, next) => {
 
   // 需要登录的路由
   if (requiresAuth) {
-    console.log('需要登陆')
+    console.log('🔒该页面需要登陆：' + to.fullPath)
     if (!authStore.isAuthenticated || localStorage.getItem('token') === null) {
       // 未登录，跳转到登录页
-      //message.warning('请先登录')
       NProgress.done()
       next({
         path: '/login',
@@ -144,7 +144,7 @@ router.beforeEach(async (to, from, next) => {
 
       if (!hasPermission) {
         // 无权限访问，跳转到首页并提示
-        message.error('您没有权限访问此页面')
+        message.info('将自动跳转至首页')
         NProgress.done()
         next({ path: '/' })
         return
