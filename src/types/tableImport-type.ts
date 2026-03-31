@@ -4,4 +4,8 @@ export interface tableImportType {
   period?: string
   importUser?: string
   createdAt?: string
+  status?: number
+  remark?: string
+  asId?: number // 辅料工厂ID
 }
+

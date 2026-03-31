@@ -72,6 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
             phone: userData.phone,
             status: userData.status,
             avatarUrl: userData.avatarUrl,
+            profile: userData.profile,
             roles: userData.roles || [],
           }
           isLoaded.value = true

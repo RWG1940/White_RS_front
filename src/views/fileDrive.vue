@@ -372,7 +372,7 @@ const isPdfFile = (fileType: string, fileName: string): boolean => {
 const showImagePreview = (record: FileResourceType) => {
   // 构建完整的图片URL
   const fullImageUrl = `${appConfig.backendUrl}/api/files/download/${record.fileKey}`
-
+  message.info(`图片预览 - ${fullImageUrl}`) 
   Modal.info({
     title: `图片预览 - ${record.fileName}`,
     width: '80%',

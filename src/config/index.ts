@@ -20,7 +20,7 @@ export interface AppConfig {
   frontendUrl: string
 }
 
-// 生产配置
+// 生产配置(辅料进度系统)
 const productConfig: AppConfig = {
   siteTitle: '利拉辅料系统',
   browserTitle: '利拉辅料系统',
@@ -52,19 +52,26 @@ const aiConfig: AppConfig = {
   bottomText: 'Copyright © 2025 AIRWG All Rights Reserved.',
   frontendUrl: 'http://123.157.20.70:28888',
 }
+
+// 大华项目配置
+const dhConfig: AppConfig = {
+  siteTitle: '智能考勤管理系统',
+  browserTitle: '智能考勤管理系统',
+  frontendPort: 8888,
+  backendUrl: '/api',
+  enableDebug: true,
+  bottomText: 'Copyright © 2025 AIRWG All Rights Reserved.',
+  frontendUrl: 'http://123.157.20.70:28888',
+}
 // 根据环境选择配置
 const getConfig = (): AppConfig => {
-    return {
-      //...productConfig,
-      //...developConfig,
-      ...aiConfig,
-    }
+  return {
+    //...productConfig,
+    //...developConfig,
+    ...dhConfig,
+    //...aiConfig,
+  }
 }
 
 // 导出配置实例
 export const appConfig = getConfig()
-
-// 导出配置更新函数（如果需要动态更新）
-export const updateConfig = (newConfig: Partial<AppConfig>) => {
-  Object.assign(appConfig, newConfig)
-}

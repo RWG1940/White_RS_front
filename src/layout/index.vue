@@ -1,108 +1,125 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Header from './Header.vue'
-import Sidebar from './Sidebar.vue'
-import Breadcrumb from './Breadcrumb.vue'
-import { appConfig } from '@/config'
+import Docker from './docker.vue'
+import { menuConfig, filterMenuByRole } from '@/config/menu'
+import { useAuthStore } from '@/stores/auth-store'
 
-const collapsed = ref(true)
-const bottomText = computed(() => {
-  return appConfig.bottomText
+
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
+
+// 将后端返回的角色统一成字符串数组，方便比较
+const roleValues = computed(() => (authStore.user?.roles || []).map((r: any) => String(r)))
+
+// 根据角色过滤菜单项
+const filteredMenuItems = computed(() => {
+  const items = filterMenuByRole(menuConfig, roleValues.value)
+  // 将菜单项转换为 docker 组件所需的格式
+  return items.map((item) => ({
+    label: item.label,
+    value: item.key,
+    icon: item.icon?.name?.toLowerCase() || 'home',
+  }))
 })
-const toggleCollapse = () => {
-  collapsed.value = !collapsed.value
+
+// 当前选中的菜单项
+const selectedValue = ref('/')
+
+// 处理菜单项选择
+const handleMenuChange = (value: string) => {
+  if (value !== route.path) {
+    router.push(value)
+  }
 }
+
+// 监听路由变化，同步选中的菜单项
+import { watch } from 'vue'
+watch(
+  () => route.path,
+  (newPath) => {
+    selectedValue.value = newPath
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <a-layout class="layout-container">
-    <!-- 侧边栏 -->
-    <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible :width="150" :collapsed-width="60"
-      :class="['layout-sider', { 'layout-sider-collapsed': collapsed }]">
-      <Sidebar :collapsed="collapsed" />
-    </a-layout-sider>
-
     <!-- 主内容区 -->
-    <a-layout :class="['layout-main', { 'layout-main-collapsed': collapsed }]">
+    <a-layout class="layout-main">
       <!-- 头部 -->
       <a-layout-header class="layout-header">
-        <Header :collapsed="collapsed" @toggle-collapse="toggleCollapse" />
+        <Header />
       </a-layout-header>
 
       <!-- 内容区 -->
       <a-layout-content class="layout-content">
-        <Breadcrumb />
-
         <!-- 页面内容：使用 router-view 插槽配合 transition 实现页面切换动画 -->
-        <div class="content-wrapper">
-          <router-view v-slot="{ Component, route }">
-            <transition name="m-trans" mode="out-in">
-              <component :is="Component" :key="route.fullPath" />
-            </transition>
-          </router-view>
-        </div>
+
+        <router-view v-slot="{ Component, route }">
+          <transition name="m-trans" mode="out-in">
+          
+              <component class="content-wrapper" :is="Component" :key="route.fullPath" />
+         
+          </transition>
+        </router-view>
       </a-layout-content>
-      <a-layout-footer class="layout-footer"> {{ bottomText }}</a-layout-footer>
     </a-layout>
+
+    <!-- 底部 Docker 菜单 -->
+    <transition name="toggle-bar" appear>
+      <div class="toggle-container">
+        <Docker v-model="selectedValue" :items="filteredMenuItems" @change="handleMenuChange" />
+      </div>
+    </transition>
   </a-layout>
 </template>
 
 <style scoped>
 .layout-container {
   min-height: 100vh;
-}
-
-.layout-sider {
-  overflow: auto;
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  box-shadow: 2px 0 8px 0 rgba(49, 51, 53, 0.157);
+  position: relative;
 }
 
 .layout-main {
-  margin-left: 150px;
-  transition: margin-left 0.2s;
-}
-
-.layout-main-collapsed {
-  margin-left: 60px;
+  min-height: 100vh; /* 为底部菜单留出空间 */
+  background-color: #ededed;
 }
 
 .layout-header {
-  background: #fff;
+  background: #ffffff00;
   padding: 0;
-  box-shadow: 0 2px 8px 0 rgba(29, 35, 41, 0.05);
+  border-radius: 20px;
+  margin: 8px;
   position: fixed;
   top: 0;
   right: 0;
-  left: 150px;
+  left: 0;
   z-index: 100;
-  transition: left 0.2s;
-}
-
-.layout-main-collapsed .layout-header {
-  left: 60px;
 }
 
 .layout-content {
-  margin: 64px 0 0 0;
-  padding:9px;
-  background: #f0f2f5;
+  margin: 64px 0 0 0; /* 顶部为头部留空间，底部为菜单留空间 */
+  background: #f0f2f500;
 }
 
 .content-wrapper {
-  background: #fff;
-  padding: 0.5%;
-  border-radius: 10px;
-  /* 减小 footer 后调整内容区高度 */
-  height: calc(100vh - 126px);
-  /* overflow-y: auto;
-  overflow-x: hidden; */
+  background: #ffffff;
+  padding: 1%;
+  margin: 15px;
+  border-radius: 25px;
+  height: calc(100vh - 100px); /* 调整高度适应新布局 */
   position: relative;
-  /* 为可能的绝对定位保留上下文 */
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    /* 微弱的底部阴影 */ 0 4px 10px rgba(134, 134, 134, 0.1),
+    /* 更强的阴影 */ 0 8px 24px rgba(225, 225, 225, 0.1); /* 扩展阴影 */
+ 
+
+  
 }
 
 .m-trans-enter-active,
@@ -122,52 +139,78 @@ const toggleCollapse = () => {
   transform: translateX(10px) scale(0.94);
 }
 
-
-.content-wrapper::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.content-wrapper::-webkit-scrollbar-thumb {
-  background: #c1c1c12d;
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.content-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a847;
-}
-
-/* Firefox 滚动条样式 */
 .content-wrapper {
   scrollbar-color: #d6d6d6 #ffffff;
 }
 
-.layout-main-collapsed {
-  left: 60px;
-}
-
-/* Footer 样式，减小高度和字体 */
-.layout-footer {
-  text-align: center;
-  color: rgb(146, 146, 146);
-  padding: 3px 0;
-  font-size: 11px;
-}
-
-/* 移动端适配 */
 @media (max-width: 768px) {
-  .layout-sider {
-    position: fixed;
-    z-index: 1000;
-  }
-
   .layout-content {
-    margin-left: 0 !important;
+    margin: 64px 0 80px 0;
   }
 
   .content-wrapper {
     padding: 10px;
+    height: calc(100vh - 168px);
+  }
+}
+
+.toggle-container {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 8px;
+  overflow-x:auto;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+/* 切换栏动画 */
+/* ================= Toggle Bar · Vision Pro 弹性动画 ================= */
+
+.toggle-bar-enter-active {
+  animation: toggleBarIn 1s forwards;
+  will-change: transform, opacity;
+}
+
+/* 初始状态 */
+.toggle-bar-enter-from {
+  opacity: 0;
+  transform: translateY(40px) translateX(-50%) scale(0.96);
+}
+
+.toggle-bar-enter-to {
+  opacity: 1;
+  transform: translateY(0) translateX(-50%) scale(1);
+}
+
+/* 🎯 核心弹性动画 */
+@keyframes toggleBarIn {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) translateX(-50%) scale(0.96);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translateY(-6px) translateX(-50%) scale(1.02);
+  }
+
+  75% {
+    transform: translateY(3px) translateX(-50%) scale(0.995);
+  }
+
+  100% {
+    transform: translateY(0) translateX(-50%) scale(1);
   }
 }
 </style>

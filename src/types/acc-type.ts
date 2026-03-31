@@ -11,6 +11,8 @@ export interface AccPurchaseContractType {
   materialLining?: string        // 里衬材质
   washLabelColor?: string        // 洗标颜色
   washLabelType?: string         // 洗标种类
+  threadPellets?: string          // 线粒
+  tagQuantity?: number            // 吊牌数量 
   factory?: string               // 工厂
   address?: string               // 地址
   follower?: string              // 跟单

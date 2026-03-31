@@ -457,6 +457,10 @@
           <!-- 其他信息 -->
           <a-divider>其他信息</a-divider>
           <div class="detail-item">
+            <div class="detail-label">绳子吊粒</div>
+            <div class="detail-content">{{ selectedItem.threadPellets }}</div>
+          </div>
+          <div class="detail-item">
             <div class="detail-label">工厂</div>
             <div class="detail-content">{{ selectedItem.factory }}</div>
           </div>
@@ -577,15 +581,15 @@ const handleBatchChange = (value: number) => {
   selectedBatchId.value = value
   store.currentPage = 1
   store.pageSize = 10
-  fetchPageByImportId(selectedBatchId.value, 0, 0)
+  fetchPageByImportId(selectedBatchId.value, 0, 0,'')
 }
 const handlePageChange = (val: number) => {
   store.currentPage = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize,'')
 }
 const handleSizeChange = (val: number) => {
   store.pageSize = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize,'')
 }
 
 const batchOptions = computed(() => {

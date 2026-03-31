@@ -1,303 +1,332 @@
 <template>
   <div>
-    <ManagePage
-      row-key="id"
-      v-model:data-source="dataSource"
-      v-model:total="store.total"
-      v-model:currentPage="store.currentPage"
-      v-model:pageSize="store.pageSize"
-      :columns="columns"
-      :editable-fields="editableFields"
-      :show-add="false"
-      :show-batch-delete="false"
-      :show-delete="false"
-      :search-select-options="searchSelectOptions"
-      search-placeholder="搜索"
-      @search="store.handleSearch"
-      @save="handleSave"
-      @selection-change="handleSelectionChange"
-      @update:currentPage="pageChange"
-      @update:pageSize="pageSizeChange"
-    >
-      <template #custom-tool>
-        <a-button style="margin-left: 5px" type="primary" @click="onImportClick">导入</a-button>
-        <a-button style="margin-left: 5px" type="primary" @click="onExportClick">导出</a-button>
-        <a-select
-          v-model="selectedBatchId"
-          :options="batchOptions"
-          style="margin-left: 5px; width: 150px"
-          placeholder="选择批次"
-          @change="handleBatchChange"
-        />
-        <a-button style="margin-left: 8px" @click="handleEditClick" :disabled="isEditButtonDisabled"
-          >编辑
-        </a-button>
-        <div v-if="selectedBatchId! > 0" class="the-total">
-          （所有）洗标总金额：{{ washTotal }}&ensp;吊牌总金额：{{ tagTotal }}
-        </div>
-        <div v-if="selectedRows.length > 0" class="selected-total">
-          洗标总金额：{{ selectedWashTotalAmount.toFixed(4) }}
-        </div>
-        <div v-if="selectedRows.length > 0" class="selected-total">
-          吊牌总金额：{{ selectedTagTotalAmount.toFixed(4) }}
-        </div>
-      </template>
-      <template #cell-__index__="{ index }">
-        <span>{{ (index ?? 0) + 1 }}</span>
-      </template>
-      <template #cell-washPriority="{ record }">
-        <div style="display: flex; justify-content: center; align-items: center">
-          <div
-            v-show="record.tagPriority == 2"
-            style="
-              border-radius: 15px;
-              background-color: red;
-              width: 15px;
-              height: 15px;
-              box-shadow: 1px 1px 15px red;
-            "
-          ></div>
-          <div
-            v-show="record.tagPriority == 0"
-            style="
-              border-radius: 15px;
-              background-color: lightgreen;
-              width: 15px;
-              height: 15px;
-              box-shadow: 1px 1px 15px lightgreen;
-            "
-          ></div>
-          <div
-            v-show="record.tagPriority == 1"
-            style="
-              border-radius: 15px;
-              background-color: gold;
-              width: 15px;
-              height: 15px;
-              box-shadow: 1px 1px 15px gold;
-            "
-          ></div>
-        </div>
-      </template>
-
-      <template #cell-washStatus="{ record, isEditing, editableData, getInternalKey }">
-        <!-- 显示状态 -->
-        <template v-if="!isEditing">
-          <a-tag
-            :color="
-              record.washStatus == 0
-                ? 'lightgrey'
-                : record.washStatus == 1
-                  ? 'orange'
-                  : record.washStatus == 2
-                    ? 'pink'
-                    : record.washStatus == 3
-                      ? 'green'
-                      : ''
-            "
+    <LoadingYD v-if="store.loading" />
+    <div v-else class="table-container">
+      <ManagePage
+        row-key="id"
+        v-model:data-source="dataSource"
+        v-model:total="store.total"
+        v-model:currentPage="store.currentPage"
+        v-model:pageSize="store.pageSize"
+        :columns="columns"
+        :editable-fields="editableFields"
+        :show-add="false"
+        :show-batch-delete="false"
+        :show-delete="false"
+        :search-select-options="searchSelectOptions"
+        search-placeholder="搜索"
+        @search="store.handleSearch"
+        @save="handleSave"
+        @selection-change="handleSelectionChange"
+        @update:currentPage="pageChange"
+        @update:pageSize="pageSizeChange"
+      >
+        <template #custom-tool>
+          <a-button class="edit-btn" @click="handleEditClick" :disabled="isEditButtonDisabled"
+            ><FormOutlined
+          /></a-button>
+          <a-button class="custom-tool-btn" type="primary" @click="onImportClick"
+            ><ImportOutlined />导入</a-button
           >
-            {{
-              record.washStatus == 0
-                ? '未下单'
-                : record.washStatus == 1
-                  ? '做货中'
-                  : record.washStatus == 2
-                    ? '货好等付款'
-                    : record.washStatus == 3
-                      ? '已出货'
-                      : ''
-            }}
-          </a-tag>
-        </template>
-        <!-- 编辑状态 -->
-        <template v-else>
-          <a-select v-model:value="editableData[getInternalKey(record)]!.washStatus" style="width: 100px" size="small">
-            <a-select-option :value="0">未下单</a-select-option>
-            <a-select-option :value="1">做货中</a-select-option>
-            <a-select-option :value="2">货好等付款</a-select-option>
-            <a-select-option :value="3">已出货</a-select-option>
-          </a-select>
-        </template>
-      </template>
-
-      <template #cell-tagPriority="{ record }">
-        <div style="display: flex; justify-content: center; align-items: center">
-          <div
-            v-show="record.tagPriority == 2"
-            style="
-              border-radius: 15px;
-              background-color: red;
-              width: 15px;
-              height: 15px;
-              box-shadow: 1px 1px 15px red;
-            "
-          ></div>
-          <div
-            v-show="record.tagPriority == 0"
-            style="
-              border-radius: 15px;
-              background-color: lightgreen;
-              width: 15px;
-              height: 15px;
-              box-shadow: 1px 1px 15px lightgreen;
-            "
-          ></div>
-          <div
-            v-show="record.tagPriority == 1"
-            style="
-              border-radius: 15px;
-              background-color: gold;
-              width: 15px;
-              height: 15px;
-              box-shadow: 1px 1px 15px gold;
-            "
-          ></div>
-        </div>
-      </template>
-
-      <template #cell-tagStatus="{ record, isEditing, editableData, getInternalKey }">
-        <template v-if="!isEditing">
-          <a-tag
-            :color="
-              record.tagStatus == 0
-                ? 'lightgrey'
-                : record.tagStatus == 1
-                  ? 'orange'
-                  : record.tagStatus == 2
-                    ? 'pink'
-                    : record.tagStatus == 3
-                      ? 'green'
-                      : ''
-            "
+          <a-button class="custom-tool-btn" type="primary" @click="onExportClick"
+            ><ExportOutlined />导出</a-button
           >
-            {{
-              record.tagStatus == 0
-                ? '未下单'
-                : record.tagStatus == 1
-                  ? '做货中'
-                  : record.tagStatus == 2
-                    ? '货好等付款'
-                    : record.tagStatus == 3
-                      ? '已出货'
-                      : ''
-            }}
-          </a-tag>
+          <a-button class="custom-tool-btn" type="primary" @click="onHistoryClick"
+            ><FundProjectionScreenOutlined />订单管理</a-button
+          >
+          <div class="batch-select">
+            <span style="color: gray">&ensp;批次：</span>
+            <a-select
+              size="small"
+              style="min-width: 200px;"
+              v-model="selectedBatchId"
+              :options="batchOptions"
+              placeholder="选择批次"
+              @change="handleBatchChange"
+            />
+          </div>
+          <div v-if="selectedBatchId! > 0" class="the-total">
+            洗标总金额：{{ washTotal }}&ensp;吊牌总金额：{{ tagTotal }}
+          </div>
+          <div v-if="selectedRows.length > 0" class="selected-total">
+            洗标总金额：{{ selectedWashTotalAmount.toFixed(4) }}
+          </div>
+          <div v-if="selectedRows.length > 0" class="selected-total">
+            吊牌金额：{{ selectedTagTotalAmount.toFixed(4) }}
+          </div>
+          <div v-if="selectedRows.length > 0" class="selected-total">
+            吊牌数量：{{ selectedTagTotalCount }}
+          </div>
         </template>
-        <template v-else>
-          <a-select v-model:value="editableData[getInternalKey(record)]!.tagStatus" style="width: 100px" size="small">
-            <a-select-option :value="0">未下单</a-select-option>
-            <a-select-option :value="1">做货中</a-select-option>
-            <a-select-option :value="2">货好等付款</a-select-option>
-            <a-select-option :value="3">已出货</a-select-option>
-          </a-select>
+        <template #cell-__index__="{ index }">
+          <span>{{ (index ?? 0) + 1 }}</span>
         </template>
-      </template>
+        <template #cell-washPriority="{ record }">
+          <div style="display: flex; justify-content: center; align-items: center">
+            <div
+              v-show="record.tagPriority == 2"
+              style="
+                border-radius: 15px;
+                background-color: red;
+                width: 15px;
+                height: 15px;
+                box-shadow: 1px 1px 15px red;
+              "
+            ></div>
+            <div
+              v-show="record.tagPriority == 0"
+              style="
+                border-radius: 15px;
+                background-color: lightgreen;
+                width: 15px;
+                height: 15px;
+                box-shadow: 1px 1px 15px lightgreen;
+              "
+            ></div>
+            <div
+              v-show="record.tagPriority == 1"
+              style="
+                border-radius: 15px;
+                background-color: gold;
+                width: 15px;
+                height: 15px;
+                box-shadow: 1px 1px 15px gold;
+              "
+            ></div>
+          </div>
+        </template>
 
-      <!-- 洗标出货时间选择器 -->
-      <template #cell-washShipTime="{ record, isEditing, editableData, getInternalKey }">
-        <template v-if="isEditing">
-          <a-date-picker
-            show-time
-            style="width: 100%"
-            placeholder="Select Time"
-            :value="
-              editableData[getInternalKey(record)]!.washShipTime
-                ? dayjs(editableData[getInternalKey(record)]!.washShipTime)
-                : null
-            "
-            @change="
-              (val: any) =>
-                (editableData[getInternalKey(record)]!.washShipTime = val
-                  ? val.toISOString()
-                  : null)
-            "
-            @ok="
-              (val: any) =>
-                (editableData[getInternalKey(record)]!.washShipTime = val
-                  ? val.toISOString()
-                  : null)
-            "
-          />
+        <template #cell-washStatus="{ record, isEditing, editableData, getInternalKey }">
+          <!-- 显示状态 -->
+          <template v-if="!isEditing">
+            <a-tag
+              :color="
+                record.washStatus == 0
+                  ? 'lightgrey'
+                  : record.washStatus == 1
+                    ? 'orange'
+                    : record.washStatus == 2
+                      ? 'pink'
+                      : record.washStatus == 3
+                        ? 'green'
+                        : ''
+              "
+            >
+              {{
+                record.washStatus == 0
+                  ? '未下单'
+                  : record.washStatus == 1
+                    ? '做货中'
+                    : record.washStatus == 2
+                      ? '货好等付款'
+                      : record.washStatus == 3
+                        ? '已出货'
+                        : ''
+              }}
+            </a-tag>
+          </template>
+          <!-- 编辑状态 -->
+          <template v-else>
+            <a-select
+              v-model:value="editableData[getInternalKey(record)]!.washStatus"
+              style="width: 100px"
+              size="small"
+            >
+              <a-select-option :value="0">未下单</a-select-option>
+              <a-select-option :value="1">做货中</a-select-option>
+              <a-select-option :value="2">货好等付款</a-select-option>
+              <a-select-option :value="3">已出货</a-select-option>
+            </a-select>
+          </template>
         </template>
-      </template>
-      <!-- 吊牌出货时间选择器 -->
-      <template #cell-tagShipTime="{ record, isEditing, editableData, getInternalKey }">
-        <template v-if="isEditing">
-          <a-date-picker
-            show-time
-            style="width: 100%"
-            placeholder="Select Time"
-            :value="
-              editableData[getInternalKey(record)]!.tagShipTime
-                ? dayjs(editableData[getInternalKey(record)]!.tagShipTime)
-                : null
-            "
-            @change="
-              (val: any) =>
-                (editableData[getInternalKey(record)]!.tagShipTime = val ? val.toISOString() : null)
-            "
-            @ok="
-              (val: any) =>
-                (editableData[getInternalKey(record)]!.tagShipTime = val ? val.toISOString() : null)
-            "
-          />
+
+        <template #cell-tagPriority="{ record }">
+          <div style="display: flex; justify-content: center; align-items: center">
+            <div
+              v-show="record.tagPriority == 2"
+              style="
+                border-radius: 15px;
+                background-color: red;
+                width: 15px;
+                height: 15px;
+                box-shadow: 1px 1px 15px red;
+              "
+            ></div>
+            <div
+              v-show="record.tagPriority == 0"
+              style="
+                border-radius: 15px;
+                background-color: lightgreen;
+                width: 15px;
+                height: 15px;
+                box-shadow: 1px 1px 15px lightgreen;
+              "
+            ></div>
+            <div
+              v-show="record.tagPriority == 1"
+              style="
+                border-radius: 15px;
+                background-color: gold;
+                width: 15px;
+                height: 15px;
+                box-shadow: 1px 1px 15px gold;
+              "
+            ></div>
+          </div>
         </template>
-      </template>
-      <!-- 洗标确认时间选择器 -->
-      <template #cell-washConfirmTime="{ record, isEditing, editableData, getInternalKey }">
-        <template v-if="isEditing">
-          <a-date-picker
-            show-time
-            style="width: 100%"
-            placeholder="Select Time"
-            :value="
-              editableData[getInternalKey(record)]!.washConfirmTime
-                ? dayjs(editableData[getInternalKey(record)]!.washConfirmTime)
-                : null
-            "
-            @change="
-              (val: any) =>
-                (editableData[getInternalKey(record)]!.washConfirmTime = val
-                  ? val.toISOString()
-                  : null)
-            "
-            @ok="
-              (val: any) =>
-                (editableData[getInternalKey(record)]!.washConfirmTime = val
-                  ? val.toISOString()
-                  : null)
-            "
-          />
+
+        <template #cell-tagStatus="{ record, isEditing, editableData, getInternalKey }">
+          <template v-if="!isEditing">
+            <a-tag
+              :color="
+                record.tagStatus == 0
+                  ? 'lightgrey'
+                  : record.tagStatus == 1
+                    ? 'orange'
+                    : record.tagStatus == 2
+                      ? 'pink'
+                      : record.tagStatus == 3
+                        ? 'green'
+                        : ''
+              "
+            >
+              {{
+                record.tagStatus == 0
+                  ? '未下单'
+                  : record.tagStatus == 1
+                    ? '做货中'
+                    : record.tagStatus == 2
+                      ? '货好等付款'
+                      : record.tagStatus == 3
+                        ? '已出货'
+                        : ''
+              }}
+            </a-tag>
+          </template>
+          <template v-else>
+            <a-select
+              v-model:value="editableData[getInternalKey(record)]!.tagStatus"
+              style="width: 100px"
+              size="small"
+            >
+              <a-select-option :value="0">未下单</a-select-option>
+              <a-select-option :value="1">做货中</a-select-option>
+              <a-select-option :value="2">货好等付款</a-select-option>
+              <a-select-option :value="3">已出货</a-select-option>
+            </a-select>
+          </template>
         </template>
-      </template>
-      <!-- 吊牌确认时间选择器 -->
-      <template #cell-tagConfirmTime="{ record, isEditing, editableData, getInternalKey }">
-        <template v-if="isEditing">
-          <a-date-picker
-            show-time
-            style="width: 100%"
-            placeholder="Select Time"
-            :value="
-              editableData[getInternalKey(record)]!.tagConfirmTime
-                ? dayjs(editableData[getInternalKey(record)]!.tagConfirmTime)
-                : null
-            "
-            @change="
-              (val: any) =>
-                (editableData[getInternalKey(record)]!.tagConfirmTime = val
-                  ? val.toISOString()
-                  : null)
-            "
-            @ok="
-              (val: any) =>
-                (editableData[getInternalKey(record)]!.tagConfirmTime = val
-                  ? val.toISOString()
-                  : null)
-            "
-          />
+
+        <!-- 洗标出货时间选择器 -->
+        <template #cell-washShipTime="{ record, isEditing, editableData, getInternalKey }">
+          <template v-if="isEditing">
+            <a-date-picker
+              show-time
+              style="width: 100%"
+              placeholder="Select Time"
+              :value="
+                editableData[getInternalKey(record)]!.washShipTime
+                  ? dayjs(editableData[getInternalKey(record)]!.washShipTime)
+                  : null
+              "
+              @change="
+                (val: any) =>
+                  (editableData[getInternalKey(record)]!.washShipTime = val
+                    ? val.toISOString()
+                    : null)
+              "
+              @ok="
+                (val: any) =>
+                  (editableData[getInternalKey(record)]!.washShipTime = val
+                    ? val.toISOString()
+                    : null)
+              "
+            />
+          </template>
         </template>
-      </template>
-    </ManagePage>
+        <!-- 吊牌出货时间选择器 -->
+        <template #cell-tagShipTime="{ record, isEditing, editableData, getInternalKey }">
+          <template v-if="isEditing">
+            <a-date-picker
+              show-time
+              style="width: 100%"
+              placeholder="Select Time"
+              :value="
+                editableData[getInternalKey(record)]!.tagShipTime
+                  ? dayjs(editableData[getInternalKey(record)]!.tagShipTime)
+                  : null
+              "
+              @change="
+                (val: any) =>
+                  (editableData[getInternalKey(record)]!.tagShipTime = val
+                    ? val.toISOString()
+                    : null)
+              "
+              @ok="
+                (val: any) =>
+                  (editableData[getInternalKey(record)]!.tagShipTime = val
+                    ? val.toISOString()
+                    : null)
+              "
+            />
+          </template>
+        </template>
+        <!-- 洗标确认时间选择器 -->
+        <template #cell-washConfirmTime="{ record, isEditing, editableData, getInternalKey }">
+          <template v-if="isEditing">
+            <a-date-picker
+              show-time
+              style="width: 100%"
+              placeholder="Select Time"
+              :value="
+                editableData[getInternalKey(record)]!.washConfirmTime
+                  ? dayjs(editableData[getInternalKey(record)]!.washConfirmTime)
+                  : null
+              "
+              @change="
+                (val: any) =>
+                  (editableData[getInternalKey(record)]!.washConfirmTime = val
+                    ? val.toISOString()
+                    : null)
+              "
+              @ok="
+                (val: any) =>
+                  (editableData[getInternalKey(record)]!.washConfirmTime = val
+                    ? val.toISOString()
+                    : null)
+              "
+            />
+          </template>
+        </template>
+        <!-- 吊牌确认时间选择器 -->
+        <template #cell-tagConfirmTime="{ record, isEditing, editableData, getInternalKey }">
+          <template v-if="isEditing">
+            <a-date-picker
+              show-time
+              style="width: 100%"
+              placeholder="Select Time"
+              :value="
+                editableData[getInternalKey(record)]!.tagConfirmTime
+                  ? dayjs(editableData[getInternalKey(record)]!.tagConfirmTime)
+                  : null
+              "
+              @change="
+                (val: any) =>
+                  (editableData[getInternalKey(record)]!.tagConfirmTime = val
+                    ? val.toISOString()
+                    : null)
+              "
+              @ok="
+                (val: any) =>
+                  (editableData[getInternalKey(record)]!.tagConfirmTime = val
+                    ? val.toISOString()
+                    : null)
+              "
+            />
+          </template>
+        </template>
+      </ManagePage>
+    </div>
 
     <!-- 编辑弹窗 模态框 -->
     <a-modal
@@ -389,6 +418,9 @@ import ManagePage from '@/components/ManagePage.vue'
 import {
   accStore,
   fetchPageByImportId,
+  getQuarters,
+  visibleBatches,
+  visibleQuarters,
   washTotal,
   tagTotal,
   getTotalPriceByImportId,
@@ -398,23 +430,40 @@ import { formatTime } from '@/utils/formatTime'
 import { tableImportStore } from '@/stores/tableImport-store'
 import dayjs from 'dayjs'
 import { noticeGroup } from '@/api/services/webhookTableImport-api'
+import {
+  ImportOutlined,
+  ExportOutlined,
+  FundProjectionScreenOutlined,
+  FormOutlined,
+} from '@ant-design/icons-vue'
+import LoadingYD from './loadingYD.vue'
 
 // 接收父组件的 openImport、openExport、openInfo、openHistory（双向绑定）并提供触发事件
 const props = defineProps<{
   openImport?: boolean
   openExport?: boolean
   openInfo?: boolean
+  openHistory?: boolean
 }>()
-const emit = defineEmits(['update:openImport', 'update:openExport', 'update:openInfo'])
+const emit = defineEmits([
+  'update:openImport',
+  'update:openExport',
+  'update:openInfo',
+  'update:openHistory',
+])
 const onImportClick = () => {
   emit('update:openImport', true)
 }
 const onExportClick = () => {
   emit('update:openExport', true)
 }
+const onHistoryClick = () => {
+  emit('update:openHistory', true)
+}
 const editForm = reactive<Record<string, any>>({})
 const editUploadLoading = ref(false)
 const store = accStore
+
 const rawRows = ref<AccPurchaseContractType[]>([])
 const dataSource = ref<AccPurchaseContractType[]>([])
 
@@ -460,6 +509,7 @@ const columns = computed(() => {
     { title: '品牌', dataIndex: 'brand', width: '100px' },
     { title: '洗标颜色', dataIndex: 'washLabelColor', width: '75px' },
     { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
+    { title: '绳子吊粒', dataIndex: 'threadPellets', width: '75px' },
     {
       title: '工厂',
       dataIndex: 'factory',
@@ -479,8 +529,9 @@ const columns = computed(() => {
         return record.follower === value
       },
     },
-    { title: '数量', dataIndex: 'quantity', width: '75px' },
+    { title: '洗标数量', dataIndex: 'quantity', width: '75px' },
     { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
+    { title: '吊牌数量', dataIndex: 'tagQuantity', width: '75px' },
     { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
     { title: '洗标单价', dataIndex: 'washUnitPrice', width: '75px' },
     { title: '洗标总价', dataIndex: 'washTotalPrice', width: '75px' },
@@ -488,37 +539,11 @@ const columns = computed(() => {
     { title: '吊牌总价', dataIndex: 'tagTotalPrice', width: '75px' },
     { title: '洗标优先级', dataIndex: 'washPriority', width: '90px' },
     { title: '洗标状态', dataIndex: 'washStatus', width: '90px' },
-    {
-      title: '洗标确认时间',
-      dataIndex: 'washConfirmTime',
-      width: '140px',
-      customRender: ({ text }: any) => formatTime(text),
-    },
-    {
-      title: '洗标出货时间',
-      dataIndex: 'washShipTime',
-      width: '140px',
-      customRender: ({ text }: any) => formatTime(text),
-    },
 
     { title: '洗标快递单号', dataIndex: 'washExpressNo', width: '110px' },
 
     { title: '吊牌优先级', dataIndex: 'tagPriority', width: '90px' },
     { title: '吊牌状态', dataIndex: 'tagStatus', width: '90px' },
-    {
-      title: '吊牌确认时间',
-      dataIndex: 'tagConfirmTime',
-      width: '140px',
-      customRender: ({ text }: any) => formatTime(text),
-    },
-    {
-      title: '吊牌出货时间',
-      dataIndex: 'tagShipTime',
-      width: '140px',
-      customRender: ({ text }: any) => formatTime(text),
-    },
-
-    { title: '吊牌快递单号', dataIndex: 'tagExpressNo', width: '110px' },
     { title: '英文品名', dataIndex: 'nameEn', width: '105px' },
     { title: '大面材料', dataIndex: 'materialMain', width: '120px' },
     { title: '里衬材质', dataIndex: 'materialLining', width: '95px' },
@@ -539,7 +564,6 @@ const columns = computed(() => {
       customRender: ({ text }: any) => formatTime(text),
     },
     { title: '备注', dataIndex: 'remark', width: '180px' },
-    { title: '批次id', dataIndex: 'importId', width: '75px' },
   ]
 })
 
@@ -567,7 +591,6 @@ const setTableRows = (rows: AccPurchaseContractType[]) => {
   dataSource.value = safeRows.slice()
 }
 
-
 // 添加编辑按钮的逻辑
 ///
 const selectedRow = ref()
@@ -589,6 +612,14 @@ const selectedTagTotalAmount = computed(() => {
   return selectedRows.value.reduce((sum, row) => {
     const amount = Number(row.tagTotalPrice) || 0
     return sum + amount
+  }, 0)
+})
+
+// 计算选中行的吊牌总数量
+const selectedTagTotalCount = computed(() => {
+  return selectedRows.value.reduce((sum, row) => {
+    const count = Number(row.tagQuantity) || 0
+    return sum + count
   }, 0)
 })
 const openEditModal = ref(false)
@@ -645,34 +676,55 @@ const handleSave = async (record: any) => {
   }
   await accStore.update(record)
   await noticeGroup(record.importId, record.sku)
-  await store.fetchPage()
+  await fetchPageByImportId(
+    selectedBatchId.value || 0,
+    store.currentPage,
+    store.pageSize,
+    selectedQuarterId.value || '',
+  )
 }
-
 // 批次选择框
 const selectedBatchId = ref<number | null>(null)
-
-// 批次选择框的数据源
+const selectedQuarterId = ref<string | null>(null)
+// 批次下拉选项（只显示可见的批次）
 const batchOptions = computed(() => {
-  return tableImportStore.list.map((batch: any) => ({
-    label: `批次：${batch.id}`,
+  return visibleBatches.value.map((batch: any) => ({
+    label: `${batch.fileName}${batch.remark?`--${batch.remark}`:''}`,
     value: batch.id,
   }))
 })
-//  批次选择框改变
+
+// 处理批次切换
 const handleBatchChange = (value: number) => {
   selectedBatchId.value = value
-  fetchPageByImportId(selectedBatchId.value, 0, 0)
-  getTotalPriceByImportId(selectedBatchId.value || 0)
+  fetchPageByImportId(
+    selectedBatchId.value || 0,
+    store.currentPage,
+    store.pageSize,
+    selectedQuarterId.value || '',
+  )
+  // 计算该批次总金额
+  getTotalPriceByImportId(selectedBatchId.value)
 }
-// 页码改变
+// 处理页码变更
 const pageChange = (val: number) => {
   store.currentPage = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  fetchPageByImportId(
+    selectedBatchId.value || 0,
+    store.currentPage,
+    store.pageSize,
+    selectedQuarterId.value!,
+  )
 }
-// 页大小改变
+// 处理每页条数变更
 const pageSizeChange = (val: number) => {
   store.pageSize = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  fetchPageByImportId(
+    selectedBatchId.value || 0,
+    store.currentPage,
+    store.pageSize,
+    selectedQuarterId.value!,
+  )
 }
 
 // 监听数据源改变
@@ -686,11 +738,27 @@ watch(
 
 // 初始化数据
 onMounted(async () => {
-  await store.fetchPage()
+  store.loading = true
+
+  // 加载所有数据
+  await fetchPageByImportId(
+    selectedBatchId.value || 0,
+    store.currentPage,
+    store.pageSize,
+    selectedQuarterId.value || '',
+  )
+
+  // 等待1秒
+  await new Promise((resolve) => setTimeout(resolve, 500))
+  store.loading = false
 })
 </script>
 
 <style scoped>
+/* 工具按钮样式 */
+.custom-tool-btn {
+  margin-left: 5px;
+}
 .changeImgA {
   margin-top: -40px;
   margin-left: 15px;
@@ -745,6 +813,38 @@ onMounted(async () => {
   margin-left: 10px;
   background-color: rgb(255, 221, 201);
   padding: 6px;
+  border-radius: 8px;
+}
+
+.batch-select {
+  padding: 5px;
+  background-color: rgb(225, 225, 225);
+  border-radius: 10px;
+  margin-left: 5px;
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+.edit-btn {
+  margin-left: 2px;
+}
+
+.customer {
+  margin-left: 10px;
+  background: linear-gradient(to bottom, rgb(2, 0, 101), rgb(0, 139, 164));
+  padding: 6px;
   border-radius: 5px;
+  transition-duration: 0.3s;
+  cursor: pointer;
+}
+
+.customer:hover {
+  box-shadow: 1px 1px 15px rgb(0, 139, 164);
+}
+
+.customer:active {
+  box-shadow: 1px 1px 15px rgb(2, 0, 101);
 }
 </style>

@@ -158,12 +158,13 @@ const handleLogin = async () => {
 }
 
 .login-card {
+  padding: 20px;
   background-color: rgba(255, 255, 255, 0.66);
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-radius: 15px;
+  border-radius: 35px;
   backdrop-filter: blur(10px);
 }
 

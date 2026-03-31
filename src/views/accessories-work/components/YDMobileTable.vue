@@ -583,6 +583,7 @@ const editableFields = [
   'materialLining',
   'washLabelColor',
   'washLabelType',
+  'threadPellets',
   'factory',
   'address',
   'follower',
@@ -604,6 +605,7 @@ const fieldLabels: Record<string, string> = {
   materialLining: '里衬材质',
   washLabelColor: '洗标颜色',
   washLabelType: '洗标种类',
+  threadPellets: '绳子吊粒',
   factory: '工厂',
   address: '地址',
   follower: '跟单',
@@ -660,7 +662,7 @@ const pagedList = computed(() => {
 // 搜索
 const handleSearch = async () => {
   if (!searchValue.value.trim()) {
-    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize,'')
     return
   }
   await store.handleSearch({sku: searchValue.value.trim()})
@@ -679,15 +681,15 @@ const handleBatchChange = (value: number) => {
   selectedBatchId.value = value
   store.currentPage = 1
   store.pageSize = 10
-  fetchPageByImportId(selectedBatchId.value, 0, 0)
+  fetchPageByImportId(selectedBatchId.value, 0, 0,'')
 }
 const handlePageChange = (val: number) => {
   store.currentPage = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize,'')
 }
 const handleSizeChange = (val: number) => {
   store.pageSize = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize,'')
 }
 /*
  * 打开编辑弹窗

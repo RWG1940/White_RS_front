@@ -85,6 +85,51 @@
           </template>
         </div>
       </template>
+      <!-- 地址列的渲染插槽 -->
+      <template #cell-profile="{ record, isEditing, editableData, getInternalKey }">
+        <div>
+          <template v-if="!isEditing">
+            {{
+              (() => {
+                try {
+                  const profile = record.profile ? JSON.parse(record.profile) : {}
+                  return profile.address || '-'
+                } catch (e) {
+                  return record.profile || '-'
+                }
+              })()
+            }}
+          </template>
+          <template v-else>
+            <a-input
+              :value="
+                (() => {
+                  const key = getInternalKey(record)
+                  const ed = editableData[key]
+                  if (ed?.addressInput !== undefined) {
+                    return ed.addressInput
+                  }
+                  try {
+                    const profile = ed?.profile ? JSON.parse(ed.profile) : {}
+                    return profile.address || ''
+                  } catch (e) {
+                    return ed?.profile || ''
+                  }
+                })()
+              "
+              size="small"
+              placeholder="请输入地址"
+              @input="
+                (e: any) => {
+                  const key = getInternalKey(record)
+                  editableData[key]!.addressInput = e.target.value
+                }
+              "
+              @blur="onAddressChange(editableData, getInternalKey(record))"
+            />
+          </template>
+        </div>
+      </template>
     </ManagePage>
   </div>
 </template>
@@ -106,6 +151,7 @@ import { batchCheckUsersOnline } from '@/api/services/websocket-api'
 import { roleStore } from '@/stores/role-store'
 import { message } from 'ant-design-vue'
 import { generateName } from '@/utils/randomStr'
+import { refreshAllSupplyDataAddress } from '@/stores/acc-store'
 
 const store = userStore
 
@@ -165,6 +211,19 @@ const columns = computed(() => {
       title: '邮箱',
       dataIndex: 'email',
       width: '160px',
+    },
+    {
+      title: '地址',
+      dataIndex: 'profile',
+      width: '100px',
+      customRender: ({ text }: { text: any }) => {
+        try {
+          const profile = text ? JSON.parse(text) : {}
+          return profile.address || '-'
+        } catch (e) {
+          return text || '-'
+        }
+      },
     },
     {
       title: '手机号',
@@ -262,7 +321,7 @@ const columns = computed(() => {
 // rawRows 保存 LocalRow[]，包含可选的 roles
 const rawRows = ref<LocalRow[]>([])
 const dataSource = ref<any[]>([])
-const editableFields = ['username', 'email', 'phone', 'status', 'roles']
+const editableFields = ['username', 'email', 'phone', 'status', 'roles', 'profile']
 const onlineStatusMap = ref<Record<string, boolean>>({})
 const onlineStatusLoading = ref(false)
 // 所有可选角色（从后端获取）
@@ -349,6 +408,16 @@ const handleAddUser = async () => {
 const handleSave = async (record: any) => {
   try {
     await updateUserWithRoles(record)
+    // 如果是工厂用户，则刷新对应工厂的辅料数据
+    if (record.roles?.some((r: any) => r.id === 5)) {
+      try {
+        const profile = record.profile ? JSON.parse(record.profile) : {}
+        const address = profile.address || ''
+        await refreshAllSupplyDataAddress(record.username, address)
+      } catch (e) {
+        console.error('解析工厂用户地址失败', e)
+      }
+    }
     await store.fetchPage()
   } catch (e) {
     console.error('保存用户失败', e)
@@ -370,6 +439,13 @@ const onRolesChange = (editableDataRef: any, key: string, selectedIds: (string |
   if (!ed) return
   const roles = allRoles.value.filter((r) => selectedIds.includes(r.id as any))
   ed.roles = roles
+}
+// 编辑时地址变化处理：将地址输入转换为 profile JSON 格式
+const onAddressChange = (editableDataRef: any, key: string) => {
+  const ed = editableDataRef[key]
+  if (!ed) return
+  const address = ed.addressInput || ''
+  ed.profile = JSON.stringify({ address })
 }
 // 监听 store.pagedList 变化，将后端返回的 userType[] 转换为 LocalRow[]
 watch(

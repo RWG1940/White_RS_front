@@ -14,7 +14,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/Login.vue').catch(() => import('@/views/NotFound.vue')),
+    component: () => import('@/views/dh-manage/index.vue').catch(() => import('@/views/NotFound.vue')),
     meta: {
       title: '登录',
       requiresAuth: false, // 不需要登录
@@ -127,7 +127,7 @@ router.beforeEach(async (to, from, next) => {
     console.log('需要登陆')
     if (!authStore.isAuthenticated || localStorage.getItem('token') === null) {
       // 未登录，跳转到登录页
-      message.warning('请先登录')
+      //message.warning('请先登录')
       NProgress.done()
       next({
         path: '/login',

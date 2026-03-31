@@ -1,406 +1,442 @@
 <template>
-  <div class="table-container">
-    <a-tabs v-model:activeKey="currentCustomer" type="card" @change="handleCustomerChange">
-      <a-tab-pane
-        v-for="customer in guestInfoStore.list as GuestType[]"
-        :key="customer!.id!"
-        :tab="customer!.name!"
-      ></a-tab-pane>
-    </a-tabs>
-    <ManagePage
-      row-key="id"
-      v-model:data-source="dataSource"
-      :columns="columns"
-      :editable-fields="editableFields"
-      :show-operation="true"
-      :show-add="true"
-      :show-batch-delete="true"
-      :isBordered="true"
-      :search-select-options="searchSelectOptions"
-      v-model:total="store.total"
-      v-model:currentPage="store.currentPage"
-      v-model:pageSize="store.pageSize"
-      v-model:loading="store.loading"
-      search-placeholder="搜索"
-      @search="store.handleSearch"
-      @add="handleAdd"
-      @save="handleSave"
-      @row-delete="handleRowDelete"
-      @batch-delete="handleBatchDelete"
-      @update:currentPage="pageChange"
-      @update:pageSize="pageSizeChange"
-      @selection-change="handleSelectionChange"
-    >
-      <template #custom-tool>
-        <a-button class="custom-tool-btn" type="primary" @click="onImportClick">导入</a-button>
-        <a-button class="custom-tool-btn" type="primary" @click="onExportClick">导出</a-button>
-        <a-button class="custom-tool-btn" type="primary" @click="onHistoryClick">历史</a-button>
-        <a-select
-          v-model="selectedBatchId"
-          :options="batchOptions"
-          class="batch-select"
-          placeholder="选择批次"
-          @change="handleBatchChange"
-        />
-        <a-button class="edit-btn" @click="handleEditClick" :disabled="isEditButtonDisabled"
-          >编辑</a-button
-        >
-        <div v-if="selectedRows.length > 0" class="selected-total">
-          洗标总金额：{{ selectedWashTotalAmount.toFixed(4) }}
-        </div>
-        <div v-if="selectedRows.length > 0" class="selected-total">
-          吊牌总金额：{{ selectedTagTotalAmount.toFixed(4) }}
-        </div>
-        <div class="customer" @click="guestTableVisible = true">
-          <span style="color: white"> <CrownOutlined />&ensp;客户管理&ensp; </span>
-        </div>
-      </template>
+  <div>
+    <LoadingYD v-if="store.loading" />
+    <div v-else class="table-container">
+      <div v-show="!storeVisible">
+      <a-tabs v-model:activeKey="currentCustomer" type="card" @change="handleCustomerChange">
+        <a-tab-pane
+          v-for="customer in guestInfoStore.list as GuestType[]"
+          :key="customer!.id!"
+          :tab="customer!.name!"
+        ></a-tab-pane>
+      </a-tabs>
+      <ManagePage
+        row-key="id"
+        v-model:data-source="dataSource"
+        :columns="columns"
+        :editable-fields="editableFields"
+        :show-operation="true"
+        :show-add="false"
+        :show-batch-delete="true"
+        :isBordered="true"
+        :search-select-options="searchSelectOptions"
+        :show-search = "false"
+        v-model:total="store.total"
+        v-model:currentPage="store.currentPage"
+        v-model:pageSize="store.pageSize"
+        v-model:loading="store.loading"
+    
+        @add="handleAdd"
+        @save="handleSave"
+        @row-delete="handleRowDelete"
+        @batch-delete="handleBatchDelete"
+        @update:currentPage="pageChange"
+        @update:pageSize="pageSizeChange"
+        @selection-change="handleSelectionChange"
+      >
+        <template #custom-tool>
+          <a-button class="edit-btn" @click="handleEditClick" :disabled="isEditButtonDisabled"
+            ><FormOutlined
+          /></a-button>
+          <a-button class="custom-tool-btn" type="primary" @click="onImportClick"
+            ><ImportOutlined />导入</a-button
+          >
+          <a-button class="custom-tool-btn" type="primary" @click="onExportClick"
+            ><ExportOutlined />导出</a-button
+          >
+          <a-button class="custom-tool-btn" type="primary" @click="onHistoryClick"
+            ><FundProjectionScreenOutlined />订单管理</a-button
+          >
+          <a-button class="custom-tool-btn" type="primary" @click="onStoreClick"
+            ><ShoppingCartOutlined /> 商城</a-button
+          >
+          <div class="batch-select">
+            <span style="color: gray">&ensp;查看方式：</span>
+            <a-select
+              style="min-width: 200px"
+              size="small"
+              v-model="selectedBatchId"
+              :options="batchOptions"
+              placeholder="选择批次"
+              @change="handleBatchChange"
+            />
+            <a-select
+              size="small"
+              v-model="selectedQuarterId"
+              :options="quarterOptions"
+              placeholder="选择季度"
+              @change="handleQuarterChange"
+            />
+            <a-button size="small" @click="handleTotalDataClick"><TableOutlined />所有</a-button>
+          </div>
 
-      <template #cell-__index__="{ index }">
-        <span>{{ (index ?? 0) + 1 }}</span>
-      </template>
-
-      <template #cell-washPriority="{ record, isEditing, editableData, getInternalKey }">
-        <template v-if="!isEditing">
-          <div class="priority-container">
-            <div v-show="record.washPriority == 2" class="priority-dot urgent"></div>
-            <div v-show="record.washPriority == 0" class="priority-dot normal"></div>
-            <div v-show="record.washPriority == 1" class="priority-dot medium"></div>
+          <div v-if="selectedRows.length > 0" class="selected-total">
+            洗标总金额：{{ selectedWashTotalAmount.toFixed(4) }}
+          </div>
+          <div v-if="selectedRows.length > 0" class="selected-total">
+            吊牌总金额：{{ selectedTagTotalAmount.toFixed(4) }}
+          </div>
+          <div class="customer" @click="guestTableVisible = true">
+            <span style="color: white"> <CrownOutlined />&ensp;客户管理&ensp; </span>
           </div>
         </template>
-        <template v-else>
-          <a-select v-model:value="editableData[getInternalKey(record)]!.washPriority" size="small">
-            <a-select-option :value="0">正常做</a-select-option>
-            <a-select-option :value="1">有点着急</a-select-option>
-            <a-select-option :value="2">非常着急安排优先</a-select-option>
-          </a-select>
+
+        <template #cell-__index__="{ index }">
+          <span>{{ (index ?? 0) + 1 }}</span>
         </template>
-      </template>
 
-      <template #cell-washStatus="{ record }">
-        <a-tag
-          :color="
-            record.washStatus == 0
-              ? 'lightgrey'
-              : record.washStatus == 1
-                ? 'orange'
-                : record.washStatus == 2
-                  ? 'pink'
-                  : record.washStatus == 3
-                    ? 'green'
-                    : ''
-          "
-        >
-          {{
-            record.washStatus == 0
-              ? '未下单'
-              : record.washStatus == 1
-                ? '做货中'
-                : record.washStatus == 2
-                  ? '货好等付款'
-                  : record.washStatus == 3
-                    ? '已出货'
-                    : ''
-          }}
-        </a-tag>
-      </template>
-
-      <template #cell-tagPriority="{ record, isEditing, editableData, getInternalKey }">
-        <template v-if="!isEditing">
-          <div class="priority-container">
-            <div v-show="record.tagPriority == 2" class="priority-dot urgent"></div>
-            <div v-show="record.tagPriority == 0" class="priority-dot normal"></div>
-            <div v-show="record.tagPriority == 1" class="priority-dot medium"></div>
-          </div>
+        <template #cell-washPriority="{ record, isEditing, editableData, getInternalKey }">
+          <template v-if="!isEditing">
+            <div class="priority-container">
+              <div v-show="record.washPriority == 2" class="priority-dot urgent"></div>
+              <div v-show="record.washPriority == 0" class="priority-dot normal"></div>
+              <div v-show="record.washPriority == 1" class="priority-dot medium"></div>
+            </div>
+          </template>
+          <template v-else>
+            <a-select
+              v-model:value="editableData[getInternalKey(record)]!.washPriority"
+              size="small"
+            >
+              <a-select-option :value="0">正常做</a-select-option>
+              <a-select-option :value="1">有点着急</a-select-option>
+              <a-select-option :value="2">非常着急安排优先</a-select-option>
+            </a-select>
+          </template>
         </template>
-        <template v-else>
-          <a-select v-model:value="editableData[getInternalKey(record)]!.tagPriority" size="small">
-            <a-select-option :value="0">正常做</a-select-option>
-            <a-select-option :value="1">有点着急</a-select-option>
-            <a-select-option :value="2">非常着急安排优先</a-select-option>
-          </a-select>
+
+        <template #cell-washStatus="{ record }">
+          <a-tag
+            :color="
+              record.washStatus == 0
+                ? 'lightgrey'
+                : record.washStatus == 1
+                  ? 'orange'
+                  : record.washStatus == 2
+                    ? 'pink'
+                    : record.washStatus == 3
+                      ? 'green'
+                      : ''
+            "
+          >
+            {{
+              record.washStatus == 0
+                ? '未下单'
+                : record.washStatus == 1
+                  ? '做货中'
+                  : record.washStatus == 2
+                    ? '货好等付款'
+                    : record.washStatus == 3
+                      ? '已出货'
+                      : ''
+            }}
+          </a-tag>
         </template>
-      </template>
 
-      <template #cell-tagStatus="{ record }">
-        <a-tag
-          :color="
-            record.tagStatus == 0
-              ? 'lightgrey'
-              : record.tagStatus == 1
-                ? 'orange'
-                : record.tagStatus == 2
-                  ? 'pink'
-                  : record.tagStatus == 3
-                    ? 'green'
-                    : ''
-          "
-        >
-          {{
-            record.tagStatus == 0
-              ? '未下单'
-              : record.tagStatus == 1
-                ? '做货中'
-                : record.tagStatus == 2
-                  ? '货好等付款'
-                  : record.tagStatus == 3
-                    ? '已出货'
-                    : ''
-          }}
-        </a-tag>
-      </template>
+        <template #cell-tagPriority="{ record, isEditing, editableData, getInternalKey }">
+          <template v-if="!isEditing">
+            <div class="priority-container">
+              <div v-show="record.tagPriority == 2" class="priority-dot urgent"></div>
+              <div v-show="record.tagPriority == 0" class="priority-dot normal"></div>
+              <div v-show="record.tagPriority == 1" class="priority-dot medium"></div>
+            </div>
+          </template>
+          <template v-else>
+            <a-select
+              v-model:value="editableData[getInternalKey(record)]!.tagPriority"
+              size="small"
+            >
+              <a-select-option :value="0">正常做</a-select-option>
+              <a-select-option :value="1">有点着急</a-select-option>
+              <a-select-option :value="2">非常着急安排优先</a-select-option>
+            </a-select>
+          </template>
+        </template>
 
-      <template #cell-imageUrl="{ record, isEditing }">
-        <template v-if="!isEditing">
-          <Transition name="fade">
-            <a-row>
-              <template v-if="record.imageUrl">
-                <a-image
-                  :width="60"
-                  :height="60"
+        <template #cell-tagStatus="{ record }">
+          <a-tag
+            :color="
+              record.tagStatus == 0
+                ? 'lightgrey'
+                : record.tagStatus == 1
+                  ? 'orange'
+                  : record.tagStatus == 2
+                    ? 'pink'
+                    : record.tagStatus == 3
+                      ? 'green'
+                      : ''
+            "
+          >
+            {{
+              record.tagStatus == 0
+                ? '未下单'
+                : record.tagStatus == 1
+                  ? '做货中'
+                  : record.tagStatus == 2
+                    ? '货好等付款'
+                    : record.tagStatus == 3
+                      ? '已出货'
+                      : ''
+            }}
+          </a-tag>
+        </template>
+
+        <template #cell-imageUrl="{ record, isEditing }">
+          <template v-if="!isEditing">
+            <Transition name="fade">
+              <a-row>
+                <template v-if="record.imageUrl">
+                  <a-image
+                    :width="60"
+                    :height="60"
+                    :src="getImageUrl(record.imageUrl, record.updatedAt)"
+                    alt=""
+                    class="image-preview"
+                  >
+                    <template #previewMask>
+                      <EyeOutlined />
+                    </template>
+                  </a-image>
+                </template>
+                <template v-else>
+                  <div class="no-image-placeholder">
+                    <span class="no-image-text">暂无图片</span>
+                  </div>
+                </template>
+              </a-row>
+            </Transition>
+          </template>
+          <template v-else>
+            <Transition name="fade">
+              <a-row>
+                <img
+                  v-show="record.imageUrl && !editUploadFile"
                   :src="getImageUrl(record.imageUrl, record.updatedAt)"
                   alt=""
-                  class="image-preview"
-                >
-                  <template #previewMask>
-                    <EyeOutlined />
-                  </template>
-                </a-image>
-              </template>
-              <template v-else>
-                <div class="no-image-placeholder">
-                  <span class="no-image-text">暂无图片</span>
-                </div>
-              </template>
-            </a-row>
-          </Transition>
-        </template>
-        <template v-else>
-          <Transition name="fade">
-            <a-row>
-              <img
-                v-show="record.imageUrl && !editUploadFile"
-                :src="getImageUrl(record.imageUrl, record.updatedAt)"
-                alt=""
-                class="editable-image"
-              />
-              <img
-                v-show="editUploadFile"
-                :src="editUploadFileList[0]?.url"
-                alt=""
-                class="editable-image"
-              />
-              <!-- 当这行已有图片时展示更换文字 -->
-              <a v-show="record.imageUrl" @click="openEdit = true" class="changeImgA">
-                {{ editUploadFile ? '待保存' : '更换' }}
-              </a>
-              <!-- 当这行没有图片时展示上传文字 -->
-              <a-button v-show="!record.imageUrl" @click="openUpload = true">
-                {{ uploadFile ? '重传' : '上传' }}
-              </a-button>
-              <!-- 上传后显示小的缩略图 -->
-              <a-row v-show="uploadFile" class="upload-preview-row">
-                <a-col :span="16" class="upload-preview-text"> 已传： </a-col>
-                <a-col :span="8">
-                  <a-image :width="20" :src="uploadFileList[0]?.url" />
-                </a-col>
-              </a-row>
-            </a-row>
-          </Transition>
-        </template>
-      </template>
-    </ManagePage>
-    <!-- 上传图片 模态框 -->
-    <a-modal
-      v-model:open="openUpload"
-      title="上传图片"
-      ok-text="确认"
-      cancel-text="取消"
-      @ok="handleAddOk"
-      @cancel="handleAddCancel"
-      :confirmLoading="uploadLoading"
-    >
-      <a-form layout="vertical">
-        <a-form-item label="选择图片" required>
-          <a-upload
-            :before-upload="beforeUpload"
-            :max-count="1"
-            :file-list="uploadFileList"
-            list-type="picture-card"
-            @preview="handlePreview"
-            @remove="handleRemove"
-          >
-            <div v-if="uploadFileList.length < 1">
-              <plus-outlined />
-              <div style="margin-top: 8px">点我上传</div>
-            </div>
-          </a-upload>
-          <a-modal
-            :open="previewVisible"
-            :title="previewTitle"
-            @cancel="handleCancel"
-            :footer="null"
-          >
-            <img style="width: 100%" :src="previewImage" />
-          </a-modal>
-        </a-form-item>
-      </a-form>
-    </a-modal>
-
-    <!-- 图片修改 模态框 -->
-    <a-modal
-      v-model:open="openEdit"
-      title="修改图片"
-      ok-text="确认"
-      cancel-text="取消"
-      @ok="handleEditOk"
-      @cancel="handleEditCancel"
-      :confirmLoading="editUploadLoading"
-    >
-      <a-form layout="vertical">
-        <a-form-item label="选择图片" required>
-          <a-upload
-            :before-upload="beforeEditUpload"
-            :max-count="1"
-            :file-list="editUploadFileList"
-            list-type="picture-card"
-            @preview="handlePreview"
-            @remove="handleRemove"
-          >
-            <div v-if="editUploadFileList.length < 1">
-              <plus-outlined />
-              <div style="margin-top: 8px">点我上传</div>
-            </div>
-          </a-upload>
-          <a-modal
-            :open="previewVisible"
-            :title="previewTitle"
-            @cancel="handleCancel"
-            :footer="null"
-          >
-            <img style="width: 100%" :src="previewImage" />
-          </a-modal>
-        </a-form-item>
-      </a-form>
-    </a-modal>
-
-    <!-- 编辑弹窗 模态框 -->
-    <a-modal
-      v-model:open="openEditModal"
-      title="编辑记录"
-      ok-text="确认"
-      cancel-text="取消"
-      @ok="handleEditSave"
-      @cancel="handleEditCancelBtn"
-      :confirmLoading="editUploadLoading"
-    >
-      <!-- 编辑弹窗中动态生成表单项 -->
-      <a-form layout="vertical" class="edit-modal-form">
-        <a-form-item
-          v-for="field in editableFields"
-          :key="field"
-          :label="columns.find((col: any) => col.dataIndex === field)?.title"
-        >
-          <!-- 洗标状态 -->
-          <a-select
-            v-if="field === 'washStatus'"
-            :value="editForm[field]"
-            @update:value="(val: any) => (editForm[field] = val)"
-            class="status-select"
-          >
-            <a-select-option :value="0">未下单</a-select-option>
-            <a-select-option :value="1">做货中</a-select-option>
-            <a-select-option :value="2">货好等付款</a-select-option>
-            <a-select-option :value="3">已出货</a-select-option>
-          </a-select>
-
-          <!-- 吊牌状态 -->
-          <a-select
-            v-else-if="field === 'tagStatus'"
-            :value="editForm[field]"
-            @update:value="(val: any) => (editForm[field] = val)"
-            class="status-select"
-          >
-            <a-select-option :value="0">未下单</a-select-option>
-            <a-select-option :value="1">做货中</a-select-option>
-            <a-select-option :value="2">货好等付款</a-select-option>
-            <a-select-option :value="3">已出货</a-select-option>
-          </a-select>
-
-          <!-- 洗标优先级 -->
-          <a-select
-            v-else-if="field === 'washPriority'"
-            :value="editForm[field]"
-            @update:value="(val: any) => (editForm[field] = val)"
-            class="status-select"
-          >
-            <a-select-option :value="0">正常做</a-select-option>
-            <a-select-option :value="1">有点着急</a-select-option>
-            <a-select-option :value="2">非常着急安排优先</a-select-option>
-          </a-select>
-
-          <!-- 吊牌优先级 -->
-          <a-select
-            v-else-if="field === 'tagPriority'"
-            :value="editForm[field]"
-            @update:value="(val: any) => (editForm[field] = val)"
-            class="status-select"
-          >
-            <a-select-option :value="0">正常做</a-select-option>
-            <a-select-option :value="1">有点着急</a-select-option>
-            <a-select-option :value="2">非常着急安排优先</a-select-option>
-          </a-select>
-
-          <!-- 图片上传 -->
-          <div v-else-if="field === 'imageUrl'" class="modal-image-upload">
-            <div class="modal-image-container">
-              <a-row v-if="editForm.imageUrl && !modalEditUploadFile" class="modal-image-row">
-                <a-image
-                  :width="60"
-                  :height="60"
-                  :src="getImageUrl(editForm.imageUrl, editForm.updatedAt)"
+                  class="editable-image"
+                />
+                <img
+                  v-show="editUploadFile"
+                  :src="editUploadFileList[0]?.url"
                   alt=""
-                  class="modal-image-preview"
-                >
-                  <template #previewMask>
-                    <EyeOutlined />
-                  </template>
-                </a-image>
+                  class="editable-image"
+                />
+                <!-- 当这行已有图片时展示更换文字 -->
+                <a v-show="record.imageUrl" @click="openEdit = true" class="changeImgA">
+                  {{ editUploadFile ? '待保存' : '更换' }}
+                </a>
+                <!-- 当这行没有图片时展示上传文字 -->
+                <a-button v-show="!record.imageUrl" @click="openUpload = true">
+                  {{ uploadFile ? '重传' : '上传' }}
+                </a-button>
+                <!-- 上传后显示小的缩略图 -->
+                <a-row v-show="uploadFile" class="upload-preview-row">
+                  <a-col :span="16" class="upload-preview-text"> 已传： </a-col>
+                  <a-col :span="8">
+                    <a-image :width="20" :src="uploadFileList[0]?.url" />
+                  </a-col>
+                </a-row>
               </a-row>
-              <a-row v-if="modalEditUploadFile" class="modal-image-row">
-                <a-image
-                  :width="60"
-                  :height="60"
-                  :src="modalEditUploadFileList[0]?.url"
-                  alt=""
-                  class="modal-image-preview"
-                >
-                </a-image>
-                <span class="pending-save-text">待保存</span>
-              </a-row>
-              <a-upload
-                :before-upload="beforeModalEditUpload"
-                :max-count="1"
-                :file-list="modalEditUploadFileList"
-                list-type="text"
-                @remove="handleModalEditRemove"
-              >
-                <a-button>选择图片</a-button>
-              </a-upload>
-            </div>
-          </div>
+            </Transition>
+          </template>
+        </template>
+      </ManagePage>
+      <!-- 上传图片 模态框 -->
+      <a-modal
+        v-model:open="openUpload"
+        title="上传图片"
+        ok-text="确认"
+        cancel-text="取消"
+        @ok="handleAddOk"
+        @cancel="handleAddCancel"
+        :confirmLoading="uploadLoading"
+      >
+        <a-form layout="vertical">
+          <a-form-item label="选择图片" required>
+            <a-upload
+              :before-upload="beforeUpload"
+              :max-count="1"
+              :file-list="uploadFileList"
+              list-type="picture-card"
+              @preview="handlePreview"
+              @remove="handleRemove"
+            >
+              <div v-if="uploadFileList.length < 1">
+                <plus-outlined />
+                <div style="margin-top: 8px">点我上传</div>
+              </div>
+            </a-upload>
+            <a-modal
+              :open="previewVisible"
+              :title="previewTitle"
+              @cancel="handleCancel"
+              :footer="null"
+            >
+              <img style="width: 100%" :src="previewImage" />
+            </a-modal>
+          </a-form-item>
+        </a-form>
+      </a-modal>
 
-          <!-- 普通输入 -->
-          <a-input
-            v-else-if="!field.includes('Time')"
-            :value="editForm[field]"
-            @update:value="(val: any) => (editForm[field] = val)"
-          />
-        </a-form-item>
-      </a-form>
-    </a-modal>
-    <!-- 客户弹窗 -->
-    <YDGuestModal v-model:open="guestTableVisible" />
+      <!-- 图片修改 模态框 -->
+      <a-modal
+        v-model:open="openEdit"
+        title="修改图片"
+        ok-text="确认"
+        cancel-text="取消"
+        @ok="handleEditOk"
+        @cancel="handleEditCancel"
+        :confirmLoading="editUploadLoading"
+      >
+        <a-form layout="vertical">
+          <a-form-item label="选择图片" required>
+            <a-upload
+              :before-upload="beforeEditUpload"
+              :max-count="1"
+              :file-list="editUploadFileList"
+              list-type="picture-card"
+              @preview="handlePreview"
+              @remove="handleRemove"
+            >
+              <div v-if="editUploadFileList.length < 1">
+                <plus-outlined />
+                <div style="margin-top: 8px">点我上传</div>
+              </div>
+            </a-upload>
+            <a-modal
+              :open="previewVisible"
+              :title="previewTitle"
+              @cancel="handleCancel"
+              :footer="null"
+            >
+              <img style="width: 100%" :src="previewImage" />
+            </a-modal>
+          </a-form-item>
+        </a-form>
+      </a-modal>
+
+      <!-- 编辑弹窗 模态框 -->
+      <a-modal
+        v-model:open="openEditModal"
+        title="编辑记录"
+        ok-text="确认"
+        cancel-text="取消"
+        @ok="handleEditSave"
+        @cancel="handleEditCancelBtn"
+        :confirmLoading="editUploadLoading"
+      >
+        <!-- 编辑弹窗中动态生成表单项 -->
+        <a-form layout="vertical" class="edit-modal-form">
+          <a-form-item
+            v-for="field in editableFields"
+            :key="field"
+            :label="columns.find((col: any) => col.dataIndex === field)?.title"
+          >
+            <!-- 洗标状态 -->
+            <a-select
+              v-if="field === 'washStatus'"
+              :value="editForm[field]"
+              @update:value="(val: any) => (editForm[field] = val)"
+              class="status-select"
+            >
+              <a-select-option :value="0">未下单</a-select-option>
+              <a-select-option :value="1">做货中</a-select-option>
+              <a-select-option :value="2">货好等付款</a-select-option>
+              <a-select-option :value="3">已出货</a-select-option>
+            </a-select>
+
+            <!-- 吊牌状态 -->
+            <a-select
+              v-else-if="field === 'tagStatus'"
+              :value="editForm[field]"
+              @update:value="(val: any) => (editForm[field] = val)"
+              class="status-select"
+            >
+              <a-select-option :value="0">未下单</a-select-option>
+              <a-select-option :value="1">做货中</a-select-option>
+              <a-select-option :value="2">货好等付款</a-select-option>
+              <a-select-option :value="3">已出货</a-select-option>
+            </a-select>
+
+            <!-- 洗标优先级 -->
+            <a-select
+              v-else-if="field === 'washPriority'"
+              :value="editForm[field]"
+              @update:value="(val: any) => (editForm[field] = val)"
+              class="status-select"
+            >
+              <a-select-option :value="0">正常做</a-select-option>
+              <a-select-option :value="1">有点着急</a-select-option>
+              <a-select-option :value="2">非常着急安排优先</a-select-option>
+            </a-select>
+
+            <!-- 吊牌优先级 -->
+            <a-select
+              v-else-if="field === 'tagPriority'"
+              :value="editForm[field]"
+              @update:value="(val: any) => (editForm[field] = val)"
+              class="status-select"
+            >
+              <a-select-option :value="0">正常做</a-select-option>
+              <a-select-option :value="1">有点着急</a-select-option>
+              <a-select-option :value="2">非常着急安排优先</a-select-option>
+            </a-select>
+
+            <!-- 图片上传 -->
+            <div v-else-if="field === 'imageUrl'" class="modal-image-upload">
+              <div class="modal-image-container">
+                <a-row v-if="editForm.imageUrl && !modalEditUploadFile" class="modal-image-row">
+                  <a-image
+                    :width="60"
+                    :height="60"
+                    :src="getImageUrl(editForm.imageUrl, editForm.updatedAt)"
+                    alt=""
+                    class="modal-image-preview"
+                  >
+                    <template #previewMask>
+                      <EyeOutlined />
+                    </template>
+                  </a-image>
+                </a-row>
+                <a-row v-if="modalEditUploadFile" class="modal-image-row">
+                  <a-image
+                    :width="60"
+                    :height="60"
+                    :src="modalEditUploadFileList[0]?.url"
+                    alt=""
+                    class="modal-image-preview"
+                  >
+                  </a-image>
+                  <span class="pending-save-text">待保存</span>
+                </a-row>
+                <a-upload
+                  :before-upload="beforeModalEditUpload"
+                  :max-count="1"
+                  :file-list="modalEditUploadFileList"
+                  list-type="text"
+                  @remove="handleModalEditRemove"
+                >
+                  <a-button>选择图片</a-button>
+                </a-upload>
+              </div>
+            </div>
+
+            <!-- 普通输入 -->
+            <a-input
+              v-else-if="!field.includes('Time')"
+              :value="editForm[field]"
+              @update:value="(val: any) => (editForm[field] = val)"
+            />
+          </a-form-item>
+        </a-form>
+      </a-modal>
+      <!-- 客户弹窗 -->
+      <YDGuestModal v-model:open="guestTableVisible" />
+    </div>
+    </div>
+    <div v-show="storeVisible">
+      <YDStore @back="onStoreClick" />
+    </div>
   </div>
 </template>
 
@@ -408,11 +444,30 @@
 import { ref, watch, onMounted, reactive, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData, fetchPageByGuestId } from '@/stores/acc-store'
+import {
+  accStore,
+  editFormData,
+  fetchPageByGuestId,
+  getQuarters,
+  quarters,
+  currentGuestId,
+  visibleBatches,
+  visibleQuarters,
+} from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { getBackendUrl } from '@/utils/getApiUrl'
-import { EyeOutlined, PlusOutlined, CrownOutlined } from '@ant-design/icons-vue'
+import {
+  EyeOutlined,
+  PlusOutlined,
+  CrownOutlined,
+  ImportOutlined,
+  ExportOutlined,
+  FundProjectionScreenOutlined,
+  FormOutlined,
+  TableOutlined,
+  ShoppingCartOutlined
+} from '@ant-design/icons-vue'
 import { addFileWithInfo, updateFileWithInfo } from '@/api/services/acc-api'
 import { guestTableImportStore } from '@/stores/guestTableImport-store'
 import { guestStore } from '@/stores/guest-store'
@@ -420,7 +475,9 @@ import { noticeGroup } from '@/api/services/webhookTableImport-api'
 import YDGuestModal from './YDGuestModal.vue'
 import type { GuestType } from '@/types/guest-type'
 import { generateName } from '@/utils/randomStr'
+import LoadingYD from './loadingYD.vue'
 import { tableImportStore } from '@/stores/tableImport-store'
+import YDStore from './YDStore.vue'
 
 const editForm = reactive<Record<string, any>>({})
 // 图片 URL 处理：只在后端数据变化时改变 URL，避免每次渲染都生成新地址导致整列图片频繁重渲染
@@ -448,14 +505,16 @@ const editUploadFileName = ref('')
 // 编辑弹窗中的图片上传状态
 const modalEditUploadFile = ref<File | null>(null)
 const modalEditUploadFileList = ref<any>([])
-
+const storeVisible = ref(false)
 const store = accStore
 const guestTableStore = guestTableImportStore
 const guestInfoStore = guestStore
 const guestTableVisible = ref(false)
 // 客户相关状态
 const currentCustomer = ref<number>()
-const currentGuestId = ref<number | null>(null)
+
+
+
 
 // 处理客户切换
 const handleCustomerChange = async (customerKey: number) => {
@@ -469,13 +528,24 @@ const handleCustomerChange = async (customerKey: number) => {
     // 使用exact方法根据客户ID获取批次数据
     try {
       await guestTableStore.handleExact({ guest_id: selectedGuest!.id.toString() }).then(() => {
+        // 数据对比处理：tableImportStore.list 和 guestTableStore.searchResults 根据 importId 做匹配
+        if (guestTableStore.searchResults.length > 0 && tableImportStore.list.length > 0) {
+          guestTableStore.searchResults.forEach((guestTableItem: any) => {
+            const matchedImport: any = tableImportStore.list.find(
+              (tableItem: any) => tableItem.id === guestTableItem.importId,
+            )
+            if (matchedImport) {
+              guestTableItem.importName = matchedImport.fileName
+            }
+          })
+        }
         // 清空选中的批次，重新加载数据
         selectedBatchId.value = null
         if (guestTableStore.searchResults.length <= 0) {
           store.pagedList = []
           store.total = 0
         } else {
-          fetchPageByGuestId(selectedGuest.id!, 0, 1, 0)
+          fetchPageByGuestId(selectedGuest.id!, 0, 1, 0, '')
         }
       })
     } catch (error) {
@@ -509,6 +579,7 @@ const columns = computed(() => {
     { title: '里衬材质', dataIndex: 'materialLining', width: '95px' },
     { title: '洗标颜色', dataIndex: 'washLabelColor', width: '75px' },
     { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
+    { title: '绳子吊粒', dataIndex: 'threadPellets', width: '75px' },
     {
       title: '工厂',
       dataIndex: 'factory',
@@ -528,8 +599,9 @@ const columns = computed(() => {
         return record.follower === value
       },
     },
-    { title: '数量', dataIndex: 'quantity', width: '75px' },
+    { title: '洗标数量', dataIndex: 'quantity', width: '75px' },
     { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
+    { title: '吊牌数量', dataIndex: 'tagQuantity', width: '75px' },
     { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
     { title: '洗标单价', dataIndex: 'washUnitPrice', width: '75px' },
     { title: '洗标总价', dataIndex: 'washTotalPrice', width: '75px' },
@@ -630,6 +702,7 @@ const editableFields = [
   'materialLining',
   'washLabelColor',
   'washLabelType',
+  'threadPellets',
   'factory',
   'address',
   'follower',
@@ -638,6 +711,7 @@ const editableFields = [
   'tagPriority',
   'quarter',
   'importId',
+  'tagQuantity',
 ]
 // 设置数据源
 const setTableRows = (rows: AccPurchaseContractType[]) => {
@@ -666,7 +740,7 @@ const handleAdd = async () => {
       importId: selectedBatchId.value,
     }
     await store.createN(payload)
-    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize)
+    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize, '')
   } catch (e) {
     console.error('添加失败', e)
   }
@@ -675,7 +749,7 @@ const handleAdd = async () => {
 const handleRowDelete = async (id: string | number) => {
   try {
     await store.removeN([Number(id)])
-    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize)
+    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize, '')
   } catch (e) {
     console.error('删除失败', e)
   }
@@ -685,7 +759,7 @@ const handleBatchDelete = async ({ keys }: { keys: (string | number)[] }) => {
   try {
     const ids = keys.map((k) => Number(k))
     await store.removeN(ids)
-    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize)
+    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize, '')
   } catch (e) {
     console.error('批量删除失败', e)
   }
@@ -790,7 +864,7 @@ const handleSave = async (record: any) => {
       await accStore.updateN(record)
       await noticeGroup(record.importId, record.sku)
     }
-    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize)
+    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize, '')
   } catch (e) {
     console.error('保存失败', e)
   }
@@ -848,17 +922,46 @@ const handleRemove = (file: any) => {
 }
 // 批次相关状态
 const selectedBatchId = ref<number | null>(null)
-// 批次下拉选项
+const selectedQuarterId = ref<string | null>(null)
+// 批次下拉选项（只显示可见的批次）
 const batchOptions = computed(() => {
-  return guestTableStore.searchResults.map((batch: any) => ({
-    label: `批次：${batch.importId}`,
-    value: batch.importId,
+  // 获取可见批次的ID集合
+  const visibleBatchIds = new Set(visibleBatches.value.map((batch) => batch.id))
+
+  return guestTableStore.searchResults
+    .filter((batch: any) => visibleBatchIds.has(batch.importId))
+    .map((batch: any) => ({
+      label: batch.importName,
+      value: batch.importId,
+    }))
+    .reverse()
+})
+// 季度下拉选项（只显示可见的季度）
+const quarterOptions = computed(() => {
+  return visibleQuarters.value.map((quarter: any) => ({
+    label: quarter.name,
+    value: quarter.name,
   }))
 })
 // 处理批次切换
 const handleBatchChange = (value: number) => {
   selectedBatchId.value = value
-  fetchPageByGuestId(currentGuestId.value!, selectedBatchId.value, 0, 0)
+  fetchPageByGuestId(currentGuestId.value!, selectedBatchId.value, 0, 0, '')
+}
+// 处理季度切换
+const handleQuarterChange = (value: string) => {
+  selectedQuarterId.value = value
+  fetchPageByGuestId(currentGuestId.value!, 0, 0, 0, selectedQuarterId.value)
+}
+// 处理总数据按钮点击
+const handleTotalDataClick = () => {
+  // 清空季度和批次选择
+  selectedBatchId.value = null
+  selectedQuarterId.value = null
+  // 加载该客户的所有数据
+  fetchPageByGuestId(currentGuestId.value!, 0, 0, 0, '')
+  // 已显示为全数据
+  message.info('已显示为该客户的所有数据')
 }
 // 页码相关
 const pageChange = (val: number) => {
@@ -868,16 +971,19 @@ const pageChange = (val: number) => {
     selectedBatchId.value || 0,
     store.currentPage,
     store.pageSize,
+    selectedQuarterId.value!,
   )
 }
 // 分页相关
 const pageSizeChange = (val: number) => {
+  message.info(`切换每页 ${val} 条，如数量过大稍有卡顿，请耐心等待`)
   store.pageSize = val
   fetchPageByGuestId(
     currentGuestId.value!,
     selectedBatchId.value || 0,
     store.currentPage,
     store.pageSize,
+    selectedQuarterId.value!,
   )
 }
 // 添加编辑按钮的逻辑
@@ -932,7 +1038,7 @@ const handleEditSave = async () => {
       await store.updateN(editForm)
     }
     openEditModal.value = false
-    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize)
+    await fetchPageByGuestId(currentGuestId.value!, 0, store.currentPage, store.pageSize, '')
     // 重置表单
     Object.keys(editForm).forEach((k) => delete editForm[k])
     // 强制重新设置表格数据，确保更新
@@ -982,8 +1088,14 @@ const handleModalEditRemove = () => {
   modalEditUploadFileList.value = []
   return true
 }
-
+// 
+const onStoreClick = ()=> {
+  storeVisible.value = !storeVisible.value
+}
 onMounted(async () => {
+  store.loading = true
+  // 加载客户列表
+  await guestInfoStore.fetchAll()
   // 设置默认客户为第一个客户
   if (guestInfoStore.list.length > 0) {
     const firstGuest = (guestInfoStore.list as GuestType[])[0]!
@@ -992,10 +1104,27 @@ onMounted(async () => {
     // 加载该客户的批次数据
     if (firstGuest.id) {
       await guestTableStore.handleExact({ guest_id: firstGuest.id.toString() })
+      // tableImportStore.list 和 guestTableStore.searchResults 根据 importId 做匹配
+      // 将 guestTableStore.searchResults 中每条记录的 importName 设置为匹配的 tableImportStore 的 importName
+      if (guestTableStore.searchResults.length > 0 && tableImportStore.list.length > 0) {
+        guestTableStore.searchResults.forEach((guestTableItem: any) => {
+          const matchedImport: any = tableImportStore.list.find(
+            (tableItem: any) => tableItem.id === guestTableItem.importId,
+          )
+          if (matchedImport) {
+            guestTableItem.importName = matchedImport.fileName
+          }
+        })
+      }
     }
   }
   // 加载该客户的所有数据
-  await fetchPageByGuestId(currentGuestId.value!, 0, 0, 0)
+  await fetchPageByGuestId(currentGuestId.value!, 0, 0, 0, '')
+  // 加载所有季度数据
+  await getQuarters()
+  // 等待1秒
+  await new Promise((resolve) => setTimeout(resolve, 500))
+  store.loading = false
 })
 </script>
 
@@ -1006,8 +1135,14 @@ onMounted(async () => {
 }
 
 .batch-select {
+  padding: 5px;
+  background-color: rgb(225, 225, 225);
+  border-radius: 10px;
   margin-left: 5px;
-  width: 150px;
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
 }
 
 .edit-btn {

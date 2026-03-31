@@ -1,6 +1,8 @@
 <template>
-   <div class="table-container">
-    <ManagePage
+  <div>
+    <LoadingYD v-if="store.loading" />
+    <div v-else class="table-container">
+      <ManagePage
       v-model:data-source="dataSource"
       :columns="columns"
       :editable-fields="editableFields"
@@ -20,13 +22,30 @@
       @update:pageSize="pageSizeChange"
     >
       <template #custom-tool>
-        <a-select
-          v-model="selectedBatchId"
-          :options="batchOptions"
-          style="margin-left: 5px; width: 150px"
-          placeholder="选择批次"
-          @change="handleBatchChange"
-        />
+  
+        <a-button class="custom-tool-btn" type="primary" @click="onHistoryClick"
+          ><FundProjectionScreenOutlined />订单管理</a-button
+        >
+        <div class="batch-select">
+          <span style="color: gray">&ensp;查看方式：</span>
+          <a-select
+          style="min-width: 200px;"
+          size="small"
+            v-model="selectedBatchId"
+            :options="batchOptions"
+
+            placeholder="选择批次"
+            @change="handleBatchChange"
+          />
+          <a-select
+            size="small"
+            v-model="selectedQuarterId"
+            :options="quarterOptions"
+            placeholder="选择季度"
+            @change="handleQuarterChange"
+          />
+          <a-button size="small" @click="handleTotalDataClick"><TableOutlined />所有</a-button>
+        </div>
         <div v-if="selectedRows.length > 0" class="selected-total">
           洗标总金额：{{ selectedWashTotalAmount.toFixed(2) }}
         </div>
@@ -157,7 +176,8 @@
           </span>
         </div>
       </template>
-    </ManagePage>
+      </ManagePage>
+    </div>
   </div>
 </template>
 
@@ -165,16 +185,17 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { message, type TableColumnType } from 'ant-design-vue'
 import ManagePage from '@/components/ManagePage.vue'
-import { accStore, editFormData, fetchPageByImportId } from '@/stores/acc-store'
+import { accStore, editFormData, fetchPageByImportId, selectedBatchId, visibleBatches, visibleQuarters } from '@/stores/acc-store'
 import type { AccPurchaseContractType } from '@/types/acc-type'
 import { formatTime } from '@/utils/formatTime'
 import { getBackendUrl } from '@/utils/getApiUrl'
 import { EyeOutlined } from '@ant-design/icons-vue'
 import { tableImportStore } from '@/stores/tableImport-store'
 import { useAuthStore } from '@/stores/auth-store'
-import { EditOutlined } from '@ant-design/icons-vue'
+import { EditOutlined, FundProjectionScreenOutlined, TableOutlined } from '@ant-design/icons-vue'
 import { noticeGroup } from '@/api/services/webhookTableImport-api'
 import type { factory } from 'typescript'
+import LoadingYD from './loadingYD.vue'
 
 // 接收父组件的 openImport、openExport、openInfo、openHistory（双向绑定）并提供触发事件
 const props = defineProps<{
@@ -189,6 +210,12 @@ const emit = defineEmits([
   'update:openInfo',
   'update:openHistory',
 ])
+
+const onHistoryClick = () => {
+  emit('update:openHistory', true)
+}
+
+const selectedQuarterId = ref<string | null>(null)
 
 // 图片URL处理，基于更新时间戳防止缓存
 const getImageUrl = (imageUrl: string, updatedAt?: string | number) => {
@@ -224,11 +251,14 @@ const columns: TableColumnType<any>[] = [
   { title: '品牌', dataIndex: 'brand', width: '100px' },
   { title: '洗标颜色', dataIndex: 'washLabelColor', width: '75px' },
   { title: '洗标种类', dataIndex: 'washLabelType', width: '100px' },
+  { title: '绳子吊粒', dataIndex: 'threadPellets', width: '75px' },
   { title: '工厂', dataIndex: 'factory', width: '95px' },
   { title: '地址', dataIndex: 'address', width: '110px' },
   { title: '跟单', dataIndex: 'follower', width: '80px' },
-  { title: '数量', dataIndex: 'quantity', width: '75px' },
+  { title: '洗标数量', dataIndex: 'quantity', width: '75px' },
   { title: '吊牌实际出货数量', dataIndex: 'tagShipQuantity', width: '140px' },
+  { title: '吊牌数量', dataIndex: 'tagQuantity', width: '75px' },
+
   { title: '洗标实际出货数量', dataIndex: 'washShipQuantity', width: '130px' },
 
   { title: '洗标单价', dataIndex: 'washUnitPrice', width: '75px' },
@@ -332,32 +362,50 @@ const handleSave = async (record: any) => {
       await noticeGroup(record.importId, record.sku)
     }
     // 无论如何都刷新数据
-    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+    await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize, selectedQuarterId.value || '')
   } catch (e) {
     console.error('保存失败', e)
   }
 }
 
-const selectedBatchId = ref<number | null>(null)
+
 
 const batchOptions = computed(() => {
-  return tableImportStore.list.map((batch: any) => ({
-    label: `批次：${batch.id}`,
+  return visibleBatches.value.map((batch: any) => ({
+    label: batch.fileName,
     value: batch.id,
+  }))
+})
+
+const quarterOptions = computed(() => {
+  return visibleQuarters.value.map((quarter: any) => ({
+    label: quarter.name,
+    value: quarter.name,
   }))
 })
 
 const handleBatchChange = (value: number) => {
   selectedBatchId.value = value
-  fetchPageByImportId(selectedBatchId.value, 0, 0)
+  fetchPageByImportId(selectedBatchId.value, 0, 0, '')
+}
+const handleQuarterChange = (value: string) => {
+  selectedQuarterId.value = value
+  fetchPageByImportId(selectedBatchId.value || 0, 0, 0, selectedQuarterId.value)
+}
+const handleTotalDataClick = () => {
+  // 清空季度选择
+  selectedQuarterId.value = null
+  // 加载当前批次的全部数据
+  fetchPageByImportId(selectedBatchId.value || 0, 0, 0, '')
+  message.info('已显示为所有数据')
 }
 const pageChange = (val: number) => {
   store.currentPage = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize, selectedQuarterId.value || '')
 }
 const pageSizeChange = (val: number) => {
   store.pageSize = val
-  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize, selectedQuarterId.value || '')
 }
 watch(
   () => store.pagedList,
@@ -368,7 +416,11 @@ watch(
 )
 
 onMounted(async () => {
-  await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize)
+  store.loading = true
+  await fetchPageByImportId(selectedBatchId.value || 0, store.currentPage, store.pageSize, selectedQuarterId.value || '')
+  // 等待1秒
+  await new Promise((resolve) => setTimeout(resolve, 500))
+  store.loading = false
 })
 </script>
 
@@ -421,5 +473,19 @@ onMounted(async () => {
   background: linear-gradient(to bottom, rgba(166, 255, 246, 0.572), rgba(174, 228, 232, 0.566));
   padding: 6px;
   border-radius: 5px;
+}
+.custom-tool-btn{
+  margin-left: 5px;
+}
+
+.batch-select {
+  padding: 5px;
+  background-color: rgb(225, 225, 225);
+  border-radius: 10px;
+  margin-left: 5px;
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
 }
 </style>

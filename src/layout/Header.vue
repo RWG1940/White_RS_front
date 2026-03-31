@@ -2,53 +2,42 @@
   <div class="header-container">
     <!-- 头部左侧 -->
     <div class="header-left">
-      <a-button shape="round" type="text" class="trigger" @click="toggleCollapse">
-        <MenuUnfoldOutlined v-if="collapsed" />
-        <MenuFoldOutlined v-else />
-      </a-button>
-      <!-- <a-button shape="round" type="text" @click="handleInformModalClick">
-        <a-row>
-          <a-col>
-            <BellOutlined />
-          </a-col>
-          <a-col style="margin-left: 2px;color:grey;">{{ unreadCount }}</a-col>
-        </a-row>
-      </a-button> -->
-
+      <div class="site-title-container">
+        <div class="site-title">
+          <span class="title-main">{{ appConfig.siteTitle }}</span>
+        </div>
+      </div>
     </div>
     <!-- 头部右侧 -->
     <div class="header-right">
-      <a-dropdown>
+      <div class="user-dropdown-container">
         <a class="user-info" @click.prevent>
-          <a-avatar :src="avatar" :size="32" shape="square" class="user-avatar">
-
-          </a-avatar>
-          <OnlineDot style="margin-left: -8px;margin-top: 25px;" :online="isOnline" title="用户在线" />
-          <span class="username">{{ isOnline ? username : '您已离线,请重新登录' }}&ensp;
-            <CaretDownOutlined />
-          </span>
-
+          <a-avatar :src="avatar" :size="32" shape="" class="user-avatar"> </a-avatar>
+          <OnlineDot
+            style="margin-left: -8px; margin-top: 25px"
+            :online="isOnline"
+            title="用户在线"
+          />
+          <span class="username">{{ isOnline ? username : '您已离线,请重新登录' }}&ensp; </span>
         </a>
-        <template #overlay>
-          <a-menu>
-            <a-menu-item key="profile" @click="handleProfileClick">
-              <UserOutlined />
-              <span>个人中心</span>
-            </a-menu-item>
-            <a-menu-item key="logout" @click="handleLogout">
-              <LogoutOutlined />
-              <span>退出登录</span>
-            </a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
-
+        <!-- 悬浮菜单 -->
+        <div class="user-menu-dropdown">
+          <div class="menu-item" @click="handleProfileClick">
+            <UserOutlined />
+            <span>个人中心</span>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-item" @click="handleLogout">
+            <LogoutOutlined />
+            <span>退出登录</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- 个人中心弹窗 -->
-  <a-modal v-model:open="showProfileModal" title="个人中心" ok-text="确定" cancel-text="取消" @ok="handleProfileSave"
-    :confirmLoading="profileLoading" width="600px">
+  <Modal v-model:visible="showProfileModal" title="个人中心">
     <a-tabs v-model:activeKey="activeTab">
       <!-- 基本信息标签 -->
       <a-tab-pane key="info" tab="基本信息">
@@ -62,7 +51,24 @@
           <a-form-item label="手机号">
             <a-input v-model:value="profileForm.phone" placeholder="请输入手机号" />
           </a-form-item>
+          <a-form-item label="地址">
+            <a-textarea v-model:value="profileForm.address" placeholder="请输入地址" />
+          </a-form-item>
         </a-form>
+        <div
+          style="
+            text-align: right;
+            margin-top: 20px;
+            gap: 8px;
+            display: flex;
+            justify-content: flex-end;
+          "
+        >
+          <a-button @click="showProfileModal = false">取消</a-button>
+          <a-button type="primary" :loading="profileLoading" @click="handleProfileSave"
+            >确定</a-button
+          >
+        </div>
       </a-tab-pane>
 
       <!-- 修改密码标签 -->
@@ -75,124 +81,67 @@
             <a-input-password v-model:value="passwordForm.newPassword" placeholder="请输入新密码" />
           </a-form-item>
           <a-form-item label="确认密码" required>
-            <a-input-password v-model:value="passwordForm.confirmPassword" placeholder="请确认新密码" />
+            <a-input-password
+              v-model:value="passwordForm.confirmPassword"
+              placeholder="请确认新密码"
+            />
           </a-form-item>
         </a-form>
+        <div
+          style="
+            text-align: right;
+            margin-top: 20px;
+            gap: 8px;
+            display: flex;
+            justify-content: flex-end;
+          "
+        >
+          <a-button @click="showProfileModal = false">取消</a-button>
+          <a-button type="primary" :loading="profileLoading" @click="handleProfileSave"
+            >确定</a-button
+          >
+        </div>
       </a-tab-pane>
     </a-tabs>
-  </a-modal>
+  </Modal>
 
-  <!-- 通知弹窗 -->
-  <transition name="inform-modal">
-    <div v-if="informModalVisible" class="informModal">
-      <a-row>
-        <a-col>
-          <a-button type="text" shape="circle" style="margin-left: 8px;" danger @click="informModalVisible = false">
-            <CloseOutlined />
-          </a-button>
-        </a-col>
-      </a-row>
-
-      <a-row style="padding: 0 16px;">
-        <a-col :span="12">
-          <p style="margin: 0; font-size: 26px; font-weight: lighter;">通知中心</p>
-        </a-col>
-        <a-col :span="12" style="text-align: right;">
-          <a-button type="link" size="small" @click="markAllAsRead" :disabled="unreadCount === 0">
-            全部已读
-          </a-button>
-        </a-col>
-      </a-row>
-
-      <a-divider style="margin: 12px 0;" />
-
-      <!-- 通知列表 -->
-      <div class="notification-list">
-        <a-empty v-if="notifications.length === 0" description="暂无通知" />
-        
-        <div v-else class="notification-items">
-          <div v-for="notification in notifications" :key="notification.id" 
-               :class="['notification-item', { 'unread': !notification.read }]"
-               @click="markAsRead(notification.id)">
-            
-            <!-- 通知图标 -->
-            <div class="notification-icon">
-              <InfoCircleOutlined v-if="notification.type === 'info'" style="color: #1890ff;" />
-              <ExclamationCircleOutlined v-else-if="notification.type === 'warning'" style="color: #faad14;" />
-              <CloseCircleOutlined v-else-if="notification.type === 'error'" style="color: #ff4d4f;" />
-              <CheckCircleOutlined v-else-if="notification.type === 'success'" style="color: #52c41a;" />
-            </div>
-            
-            <!-- 通知内容 -->
-            <div class="notification-content">
-              <div class="notification-title">
-                {{ notification.title }}
-                <span v-if="!notification.read" class="unread-dot"></span>
-              </div>
-              <div class="notification-text">{{ notification.content }}</div>
-              <div class="notification-time">
-                <ClockCircleOutlined style="margin-right: 4px;" />
-                {{ notification.time }}
-              </div>
-            </div>
-            
-            <!-- 删除按钮 -->
-            <div class="notification-actions">
-              <a-button type="text" size="small" danger @click.stop="deleteNotification(notification.id)">
-                <CloseOutlined />
-              </a-button>
-            </div>
-          </div>
-        </div>
+  <!-- 退出登录确认弹窗 -->
+  <Modal v-model:visible="showLogoutConfirm" title="确认退出">
+    <div style="text-align: center; padding: 20px 0">
+      <p style="font-size: 16px; color: #262626; margin-bottom: 24px">确定要退出登录吗？</p>
+      <div style="display: flex; justify-content: center; gap: 12px">
+        <a-button @click="showLogoutConfirm = false">取消</a-button>
+        <a-button type="primary" danger @click="confirmLogout">退出登录</a-button>
       </div>
     </div>
-  </transition>
-
+  </Modal>
 </template>
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth-store'
-import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  LogoutOutlined,
-  UserOutlined,
-  CaretDownOutlined,
-  BellOutlined,
-  CloseOutlined
-} from '@ant-design/icons-vue'
-import { Modal, message } from 'ant-design-vue'
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 import OnlineDot from '@/layout/components/onlineDot.vue'
+import Modal from '@/components/Modal.vue'
 import { onMounted, onUnmounted, ref } from 'vue'
-import {
-  OnlineStatusClient,
-  fetchOnlineCount,
-  checkUserOnline,
-} from '@/api/services/websocket-api'
+import { OnlineStatusClient, fetchOnlineCount, checkUserOnline } from '@/api/services/websocket-api'
 import { getBackendUrl } from '@/utils/getApiUrl'
 import { changePassword } from '@/api/services/auth-api'
 import { userStore } from '@/stores/user-store'
-import { CloseCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, CheckCircleOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
-
-
-// 定义props和emit
-defineProps<{
-  collapsed: boolean
-}>()
-// 定义emit
-const emit = defineEmits<{
-  'toggle-collapse': []
-}>()
+import { appConfig } from '@/config'
+import { refreshAllSupplyDataAddress } from '@/stores/acc-store'
 
 // 个人中心弹窗状态
 const showProfileModal = ref(false)
 const activeTab = ref('info')
 const profileLoading = ref(false)
+const showLogoutConfirm = ref(false)
 const profileForm = reactive({
   username: '',
   email: '',
   phone: '',
+  address: '',
 })
 const passwordForm = reactive({
   oldPassword: '',
@@ -215,80 +164,6 @@ const username = computed(() => authStore.user?.username || '用户')
 // 通知弹窗状态
 const informModalVisible = ref(false)
 
-// 通知数据类型
-interface Notification {
-  id: number
-  title: string
-  content: string
-  type: 'info' | 'warning' | 'error' | 'success'
-  time: string
-  read: boolean
-}
-
-// 假数据
-const notifications = ref<Notification[]>([
-  {
-    id: 1,
-    title: '系统更新通知',
-    content: '系统将于今晚 22:00-24:00 进行维护更新，期间服务可能会短暂中断。',
-    type: 'info',
-    time: '2024-01-06 10:30',
-    read: false
-  },
-  {
-    id: 2,
-    title: '工单处理提醒',
-    content: '您有一个新的工单需要处理，请及时查看并处理。',
-    type: 'warning',
-    time: '2024-01-06 09:15',
-    read: false
-  },
-  {
-    id: 3,
-    title: '库存预警',
-    content: '配件 A-001 库存数量低于安全库存，请及时补充。',
-    type: 'error',
-    time: '2024-01-05 16:45',
-    read: true
-  },
-  {
-    id: 4,
-    title: '任务完成通知',
-    content: '您提交的报表生成任务已完成，请前往下载。',
-    type: 'success',
-    time: '2024-01-05 14:20',
-    read: true
-  },
-  {
-    id: 5,
-    title: '新用户注册',
-    content: '新用户 "张三" 已注册成功，请及时审核。',
-    type: 'info',
-    time: '2024-01-05 11:30',
-    read: true
-  }
-])
-
-// 未读通知数量
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
-
-// 标记通知为已读
-const markAsRead = (id: number) => {
-  const notification = notifications.value.find(n => n.id === id)
-  if (notification) {
-    notification.read = true
-  }
-}
-
-// 标记所有通知为已读
-const markAllAsRead = () => {
-  notifications.value.forEach(n => n.read = true)
-}
-
-// 删除通知
-const deleteNotification = (id: number) => {
-  notifications.value = notifications.value.filter(n => n.id !== id)
-}
 // 获取头像
 const avatar = computed(() => {
   const user = authStore.user
@@ -299,20 +174,14 @@ const avatar = computed(() => {
 })
 // 退出登录
 const handleLogout = () => {
-  Modal.confirm({
-    title: '确认退出',
-    content: '确定要退出登录吗？',
-    okText: '确定',
-    cancelText: '取消',
-    onOk: async () => {
-      await authStore.logout()
-      router.push('/login')
-    },
-  })
+  showLogoutConfirm.value = true
 }
-// 切换侧边栏折叠状态
-const toggleCollapse = () => {
-  emit('toggle-collapse')
+
+// 确认退出登录
+const confirmLogout = async () => {
+  showLogoutConfirm.value = false
+  await authStore.logout()
+  router.push('/login')
 }
 
 // 打开个人中心弹窗
@@ -321,6 +190,12 @@ const handleProfileClick = () => {
     profileForm.username = authStore.user.username || ''
     profileForm.email = authStore.user.email || ''
     profileForm.phone = authStore.user.phone || ''
+    try {
+      const profile = authStore.user.profile ? JSON.parse(authStore.user.profile) : {}
+      profileForm.address = profile.address || ''
+    } catch (e) {
+      profileForm.address = authStore.user.profile || ''
+    }
     activeTab.value = 'info'
     showProfileModal.value = true
   }
@@ -333,19 +208,22 @@ const handleProfileSave = async () => {
 
     if (activeTab.value === 'info') {
       // 保存基本信息
-      await userStore.update({
+      await userStore.updateN({
         id: authStore.user!.id,
         username: profileForm.username,
         email: profileForm.email,
         phone: profileForm.phone,
+        profile: JSON.stringify({ address: profileForm.address }),
       })
-      message.success('个人信息修改成功')
       // 更新本地用户信息
       if (authStore.user) {
         authStore.user.username = profileForm.username
         authStore.user.email = profileForm.email
         authStore.user.phone = profileForm.phone
+        authStore.user.profile = JSON.stringify({ address: profileForm.address })
       }
+      // 如果地址变化了，刷新所有辅料数据的地址信息
+      await refreshAllSupplyDataAddress(profileForm.username, profileForm.address)
     } else if (activeTab.value === 'password') {
       // 修改密码
       if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -435,10 +313,6 @@ onUnmounted(() => {
     clearInterval(countTimer)
   }
 })
-// 通知弹窗显示开关
-const handleInformModalClick = () => {
-  informModalVisible.value = !informModalVisible.value
-}
 </script>
 <style scoped>
 .header-container {
@@ -450,6 +324,33 @@ const handleInformModalClick = () => {
 .header-left {
   display: flex;
   align-items: center;
+}
+
+.site-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 10px;
+}
+
+.site-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.title-main {
+  font-size: 30px;
+  font-family: 黑体;
+  font-weight: 600;
+  color: #1890ff;
+  background: linear-gradient(60deg, #1a4dc4e1 100%, #189fff77 0%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+  letter-spacing: -0.5px;
 }
 
 .trigger {
@@ -466,9 +367,16 @@ const handleInformModalClick = () => {
   display: flex;
   align-items: center;
   gap: 16px;
+  background-color: white;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    /* 微弱的底部阴影 */ 0 4px 10px rgba(0, 0, 0, 0.1),
+    /* 更强的阴影 */ 0 8px 24px rgba(0, 0, 0, 0.024); /* 扩展阴影 */
+  border-radius: 20px;
 }
 
 .user-info {
+  border-radius: 20px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -477,6 +385,7 @@ const handleInformModalClick = () => {
 
 .user-info:hover {
   background-color: #e6e6e6;
+  border-radius: 20px;
 }
 
 .user-avatar {
@@ -490,6 +399,75 @@ const handleInformModalClick = () => {
   font-size: 14px;
   color: rgba(0, 0, 0, 0.85);
   font-weight: bold;
+}
+
+/* 用户下拉菜单容器 */
+.user-dropdown-container {
+  position: relative;
+}
+
+/* 悬浮菜单 - iOS/Vision Pro 风格 */
+.user-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 5px;
+  min-width: 180px;
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1000;
+}
+
+/* 菜单项 */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 16px;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(10px);
+}
+
+.menu-item:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.menu-item:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+.menu-item:hover {
+  background: rgba(193, 193, 193, 0.15);
+  backdrop-filter: blur(10px);
+  color: #000000;
+}
+
+/* 菜单分割线 */
+.menu-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 0;
+}
+
+/* 鼠标悬浮时显示菜单 */
+.user-dropdown-container:hover .user-menu-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
 }
 
 .informModal {
@@ -573,7 +551,6 @@ const handleInformModalClick = () => {
   flex-shrink: 0;
   margin-right: 12px;
   font-size: 16px;
- 
 }
 
 .notification-content {
@@ -635,8 +612,4 @@ const handleInformModalClick = () => {
 .notification-list::-webkit-scrollbar-thumb:hover {
   background: rgb(62, 62, 62);
 }
-
-
-
-
 </style>

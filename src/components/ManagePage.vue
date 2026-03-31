@@ -480,18 +480,18 @@ const paginationConfig = computed(() => {
 
     showSizeChanger: true,
     showQuickJumper: true,
-    showTotal: (total: number) => `总共 ${total} 条数据`,
-    pageSizeOptions: ['10', '20', '50', '100'],
+    showTotal: (total: number) => `总共${total}条`,
+    pageSizeOptions: ['10', '50', '100', '1000'],
 
     //  切换页码
     onChange: (page: number, pageSize: number) => {
       emit('update:currentPage', page)
-      emit('update:pageSize', pageSize)
+     
     },
 
     //  切换 pageSize
     onShowSizeChange: (page: number, pageSize: number) => {
-      emit('update:currentPage', page)
+    
       emit('update:pageSize', pageSize)
     },
   }
