@@ -8,6 +8,7 @@
       >
         <div style="display: flex; gap: 16px">
           <a-button @click="handleAsPayInfo">辅料工厂收款信息管理</a-button>
+          <a-button @click="handleAsAllInfo">所有辅料数据管理</a-button>
         </div>
       </a-card>
       <!--若为辅料工厂角色则显示其收款信息-->
@@ -158,7 +159,6 @@
           <div v-if="!collapsedPayInfos[key]" class="batch-list">
             <div v-for="batch in batches" :key="batch.id" class="batch-item">
               <a-tag color="blue">{{ batch.fileName || batch.period }}</a-tag>
-            
             </div>
           </div>
         </a-card>
@@ -197,7 +197,6 @@
         </div>
       </a-card>
 
-
       <!-- 反馈弹窗 -->
       <feedback-modal ref="feedbackModalRef" />
 
@@ -206,6 +205,9 @@
 
       <!-- 支付信息管理弹窗 -->
       <as-pay-info-modal ref="asPayInfoModalRef" />
+
+      <!-- 所有辅料数据弹窗  -->
+       <as-all-info-modal ref="asAllInfoModalRef" />
     </template>
   </scroll-content>
 </template>
@@ -227,12 +229,13 @@ import {
 import { useAsPayInfoStore } from '@/stores/asPayInfo-store'
 import type { AsPayInfoType } from '@/types/asPayInfo-type'
 import { getBackendUrl } from '@/utils/getApiUrl'
+import asAllInfoModal from './home/asAllInfoModal.vue'
 
 const authStore = useAuthStore()
 const feedbackModalRef = ref()
 const instructionModalRef = ref()
 const asPayInfoModalRef = ref()
-
+const asAllInfoModalRef = ref()
 // 收款信息Store
 const asPayInfoStore = useAsPayInfoStore()
 
@@ -257,7 +260,6 @@ const updates = ref([
   { content: '支持查看不同辅料工厂的收款信息' },
 ])
 
-
 // 处理反馈按钮点击
 const handleFeedback = () => {
   feedbackModalRef.value?.open()
@@ -272,7 +274,10 @@ const handleInstruction = () => {
 const handleAsPayInfo = () => {
   asPayInfoModalRef.value?.open()
 }
-
+// 处理辅料所有数据管理按钮点击
+const handleAsAllInfo = () => {
+  asAllInfoModalRef.value?.open()
+}
 // 图片URL处理
 const getImageUrl = (imageUrl: string | undefined) => {
   if (!imageUrl) return ''
@@ -505,7 +510,6 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
 }
-
 
 /* 响应式适配 */
 @media (max-width: 768px) {

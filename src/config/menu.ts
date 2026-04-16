@@ -23,7 +23,6 @@ export interface MenuItem {
 
 // 定义所有菜单项
 export const menuConfig: MenuItem[] = [
-
   {
     key: '/',
     path: '',
@@ -106,17 +105,6 @@ export const menuConfig: MenuItem[] = [
     //只有管理员(3294)可以访问
     allowedRoles: ['3294'],
   },
-  // {
-  //   key: '/aiPromptsManage',
-  //   path: 'aiPromptsManage',
-  //   name: 'aiPromptsManage',
-  //   icon: BulbOutlined,
-  //   label: 'ai提示词管理',
-  //   title: 'ai提示词管理',
-  //   component: () => import('@/views/ai-prompts-admin/aiPromptsManage.vue').catch(() => import('@/views/NotFound.vue')),
-  //   requiresAuth: false,
-  // },
-
   {
     key: '/rsDrive',
     path: 'rsDrive',
@@ -141,6 +129,27 @@ export const menuConfig: MenuItem[] = [
     // 只有管理员(3294)可以访问
     allowedRoles: ['3294'],
   },
+  // {
+  //   key: '/aiPromptsManage',
+  //   path: 'aiPromptsManage',
+  //   name: 'aiPromptsManage',
+  //   icon: BulbOutlined,
+  //   label: 'ai提示词管理',
+  //   title: 'ai提示词管理',
+  //   component: () => import('@/views/ai-prompts-admin/aiPromptsManage.vue').catch(() => import('@/views/NotFound.vue')),
+  //   requiresAuth: false,
+  // },
+  // {
+  //   key: '/',
+  //   path: '',
+  //   name: 'Home',
+  //   icon: HomeOutlined,
+  //   label: '首页',
+  //   title: '首页',
+  //   component: () => import('@/views/seats-manage/index.vue').catch(() => import('@/views/NotFound.vue')),
+  //   requiresAuth: true,
+  //   //首页所有角色都可访问
+  // },
 ]
 
 // 根据角色过滤菜单项
